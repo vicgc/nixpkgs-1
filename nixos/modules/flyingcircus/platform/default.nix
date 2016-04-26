@@ -40,6 +40,7 @@ in
     ./sensu-client.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
+    ./systemd.nix
     ./user.nix
   ];
 
