@@ -7,12 +7,15 @@ import logging
 import os
 import os.path as p
 import shutil
+import subprocess
 import tempfile
 import xmlrpc.client
+
 
 DIRECTORY_URL = (
     'https://{enc[name]}:{enc[parameters][directory_password]}@'
     'directory.fcio.net/v2/api/rg-{enc[parameters][resource_group]}')
+
 
 # TODO
 #
@@ -122,10 +125,11 @@ def build_channel(build_options):
     try:
         if enc:
             channel_url = enc['parameters']['environment_url']
-            os.system('nix-channel --add {} nixos'.format(channel_url))
-        os.system('nix-channel --update')
-        os.system('nixos-rebuild --no-build-output switch {}'.format(
-                  ' '.join(build_options)))
+            subprocess.check_call(
+                ['nix-channel', '--add', channel_url, 'nixos'])
+        subprocess.check_call(['nix-channel', '--update'])
+        subprocess.check_call(
+            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
     except Exception:
         logging.exception('Error switching channel ')
 
@@ -133,17 +137,17 @@ def build_channel(build_options):
 def build_dev(build_options):
     print('Switching to development environment')
     try:
-        os.system(
-            'nix-channel --remove nixos')
+        subprocess.check_call(['nix-channel', '--remove', 'nixos'])
     except Exception:
         logging.exception('Error removing channel ')
-    os.system('nixos-rebuild -I nixpkgs=/root/nixpkgs switch {}'.format(
-              ' '.join(build_options)))
+    subprocess.check_call(
+        ['nixos-rebuild', '-I', 'nixpkgs=/root/nixpkgs', 'switch'] +
+        build_options)
 
 
-def ensure_reboot():
-    if os.path.exists('/reboot'):
-        os.system('systemctl reboot')
+def maintenance():
+    import fc.maintenance.reqmanager
+    fc.maintenance.reqmanager.transaction()
 
 
 def seed_enc(path):
@@ -155,11 +159,11 @@ def seed_enc(path):
 
 
 def collect_garbage(age):
-    os.system('nix-collect-garbage --delete-older-than {}d'.format(age))
+    subprocess.check_call(['nix-collect-garbage', '--delete-older-than',
+                           '{}d'.format(age)])
 
 
 def main():
-    logging.basicConfig()
     build_options = []
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
@@ -171,8 +175,8 @@ def main():
     a.add_argument('-s', '--system-state', default=False, action='store_true',
                    help='dump local system information (like memory size) '
                    'to system_state.json')
-    a.add_argument('-r', '--reboot', default=False, action='store_true',
-                   help='reboot if necessary (if /reboot exists)')
+    a.add_argument('-m', '--maintenance', default=False, action='store_true',
+                   help='run scheduled maintenance')
     a.add_argument('-g', '--garbage', default=0, type=int,
                    help='collect garbage and remove generations older than '
                         '<INT> days')
@@ -185,7 +189,13 @@ def main():
                        action='store_const', const='build_dev',
                        help='switch machine to local checkout in '
                        '/root/nixpkgs')
+    a.add_argument('-v', '--verbose', action='store_true', default=False)
     args = a.parse_args()
+
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=logging.DEBUG if args.verbose else logging.INFO)
+    # this is really annoying
+    logging.getLogger('iso8601').setLevel(logging.INFO)
 
     seed_enc(args.enc_path)
 
@@ -208,9 +218,8 @@ def main():
     if not args.build and not args.directory and not args.system_state:
         a.error('no action specified')
 
-    if args.reboot:
-        ensure_reboot()
-        return
+    if args.maintenance:
+        maintenance()
 
     # Garbage collection is run after a potential reboot.
     if args.garbage:
