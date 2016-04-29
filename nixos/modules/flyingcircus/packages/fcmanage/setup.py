@@ -26,6 +26,7 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=[
+        'fc.maintenance',
         'fc.util',
     ],
     extras_require={
