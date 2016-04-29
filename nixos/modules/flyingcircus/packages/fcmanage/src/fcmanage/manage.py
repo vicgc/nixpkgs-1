@@ -1,5 +1,7 @@
 """Update NixOS system configuration from infrastructure or local sources."""
 
+from fc.util.directory import connect
+
 import argparse
 import filecmp
 import json
@@ -7,12 +9,9 @@ import logging
 import os
 import os.path as p
 import shutil
+import socket
+import subprocess
 import tempfile
-import xmlrpc.client
-
-DIRECTORY_URL = (
-    'https://{enc[name]}:{enc[parameters][directory_password]}@'
-    'directory.fcio.net/v2/api/rg-{enc[parameters][resource_group]}')
 
 # TODO
 #
@@ -29,12 +28,11 @@ DIRECTORY_URL = (
 # - better robustness to not leave non-parsable json files around
 
 enc = None
-directory = None
 
 
 def load_enc(enc_path):
-    """Tries to read enc.json and establish directory connection."""
-    global enc, directory
+    """Tries to read enc.json"""
+    global enc
     try:
         with open(enc_path) as f:
             enc = json.load(f)
@@ -43,15 +41,13 @@ def load_enc(enc_path):
         # i.e. Vagrant. Silently ignore for now.
         return
 
-    directory = xmlrpc.client.Server(DIRECTORY_URL.format(enc=enc))
-
 
 def conditional_update(filename, data):
     """Updates JSON file on disk only if there is different content."""
     with tempfile.NamedTemporaryFile(
             mode='w', suffix='.tmp', prefix=p.basename(filename),
             dir=p.dirname(filename), delete=False) as tf:
-        json.dump(data, tf, ensure_ascii=False, indent=2, sort_keys=True)
+        json.dump(data, tf, ensure_ascii=False, indent=1, sort_keys=True)
         os.chmod(tf.fileno(), 0o640)
     if not(p.exists(filename)):
         os.rename(tf.name, filename)
@@ -59,6 +55,19 @@ def conditional_update(filename, data):
         os.rename(tf.name, filename)
     else:
         os.unlink(tf.name)
+
+
+def inplace_update(filename, data):
+    """Last-resort JSON update for added robustness.
+
+    If there is no free disk space, `conditional_update` will fail
+    because it is not able to create tempfiles. As an emergency measure,
+    we fall back to rewriting the file in-place.
+    """
+    with open(filename, 'r+') as f:
+        f.seek(0)
+        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
+        f.truncate()
 
 
 def write_json(calls):
@@ -70,7 +79,10 @@ def write_json(calls):
         except Exception:
             logging.exception('Error retrieving data:')
             continue
-        conditional_update('/etc/nixos/{}'.format(target), data)
+        try:
+            conditional_update('/etc/nixos/{}'.format(target), data)
+        except IOError:
+            inplace_update('/etc/nixos/{}'.format(target), data)
 
 
 def system_state():
@@ -85,6 +97,15 @@ def system_state():
                         break
         except IOError:
             pass
+        try:
+            with open('/proc/cpuinfo') as f:
+                cores = 0
+                for line in f:
+                    if line.startswith('processor'):
+                        cores += 1
+            result['cores'] = cores
+        except IOError:
+            pass
         return result
 
     write_json([
@@ -93,9 +114,15 @@ def system_state():
 
 
 def update_inventory():
-    if directory is None:
-        print('No directory. Not updating inventory.')
+    if 'directory_password' not in enc['parameters']:
+        print('No directory password. Not updating inventory.')
         return
+    try:
+        directory = connect(enc, enc['parameters']['directory_ring'])
+    except socket.error:
+        print('No directory connection. Not updating inventory.')
+        return
+
     write_json([
         (lambda: directory.lookup_node(enc['name']), 'enc.json'),
         (lambda: directory.list_nodes_addresses(
@@ -111,12 +138,13 @@ def update_inventory():
 def build_channel(build_options):
     print('Switching channel ...')
     try:
-        os.system(
-            'nix-channel --add {} nixos'.format(
-                enc['parameters']['environment_url']))
-        os.system('nix-channel --update')
-        os.system('nixos-rebuild --no-build-output switch {}'.format(
-                  ' '.join(build_options)))
+        if enc:
+            channel_url = enc['parameters']['environment_url']
+            subprocess.check_call(
+                ['nix-channel', '--add', channel_url, 'nixos'])
+        subprocess.check_call(['nix-channel', '--update'])
+        subprocess.check_call(
+            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
     except Exception:
         logging.exception('Error switching channel ')
 
@@ -124,17 +152,17 @@ def build_channel(build_options):
 def build_dev(build_options):
     print('Switching to development environment')
     try:
-        os.system(
-            'nix-channel --remove nixos')
+        subprocess.check_call(['nix-channel', '--remove', 'nixos'])
     except Exception:
         logging.exception('Error removing channel ')
-    os.system('nixos-rebuild -I nixpkgs=/root/nixpkgs switch {}'.format(
-              ' '.join(build_options)))
+    subprocess.check_call(
+        ['nixos-rebuild', '-I', 'nixpkgs=/root/nixpkgs', 'switch'] +
+        build_options)
 
 
-def ensure_reboot():
-    if os.path.exists('/reboot'):
-        os.system('systemctl reboot')
+def maintenance():
+    import fc.maintenance.reqmanager
+    fc.maintenance.reqmanager.transaction()
 
 
 def seed_enc(path):
@@ -146,11 +174,11 @@ def seed_enc(path):
 
 
 def collect_garbage(age):
-    os.system('nix-collect-garbage --delete-older-than {}d'.format(age))
+    subprocess.check_call(['nix-collect-garbage', '--delete-older-than',
+                           '{}d'.format(age)])
 
 
 def main():
-    logging.basicConfig()
     build_options = []
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
@@ -162,8 +190,8 @@ def main():
     a.add_argument('-s', '--system-state', default=False, action='store_true',
                    help='dump local system information (like memory size) '
                    'to system_state.json')
-    a.add_argument('-r', '--reboot', default=False, action='store_true',
-                   help='reboot if necessary (if /reboot exists)')
+    a.add_argument('-m', '--maintenance', default=False, action='store_true',
+                   help='run scheduled maintenance')
     a.add_argument('-g', '--garbage', default=0, type=int,
                    help='collect garbage and remove generations older than '
                         '<INT> days')
@@ -176,7 +204,13 @@ def main():
                        action='store_const', const='build_dev',
                        help='switch machine to local checkout in '
                        '/root/nixpkgs')
+    a.add_argument('-v', '--verbose', action='store_true', default=False)
     args = a.parse_args()
+
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=logging.DEBUG if args.verbose else logging.INFO)
+    # this is really annoying
+    logging.getLogger('iso8601').setLevel(logging.INFO)
 
     seed_enc(args.enc_path)
 
@@ -199,9 +233,8 @@ def main():
     if not args.build and not args.directory and not args.system_state:
         a.error('no action specified')
 
-    if args.reboot:
-        ensure_reboot()
-        return
+    if args.maintenance:
+        maintenance()
 
     # Garbage collection is run after a potential reboot.
     if args.garbage:

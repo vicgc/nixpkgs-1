@@ -1,4 +1,4 @@
-{ pkgs, python34Packages }:
+{ pkgs, python34Packages, nix }:
 
 python34Packages.buildPythonPackage rec {
   name = "fc-manage-${version}";
@@ -7,9 +7,12 @@ python34Packages.buildPythonPackage rec {
   dontStrip = true;
   src = ./.;
   propagatedBuildInputs = with pkgs;
-    [ gptfdisk
+    [ fcmaintenance
+      fcutil
+      gptfdisk
       lvm2
       multipath_tools
+      nix
       utillinux
       xfsprogs
     ];

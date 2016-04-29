@@ -20,7 +20,7 @@ in {
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --garbage 30 --reboot --channel";
+        default = "--directory --system-state --garbage 30 --maintenance --channel";
         description = "Steps to run by the agent.";
       };
     };
@@ -40,20 +40,27 @@ in {
         restartIfChanged = false;
         unitConfig.X-StopOnRemoval = false;
         serviceConfig.Type = "oneshot";
+        path = [config.system.build.nixos-rebuild];
 
         # This configuration is stolen from NixOS' own automatic updater.
         environment = config.nix.envVars // {
           inherit (config.environment.sessionVariables) NIX_PATH SSL_CERT_FILE;
           HOME = "/root";
+          PATH = "/run/current-system/sw/sbin:/run/current-system/sw/bin";
         };
         script = ''
-          ${pkgs.fcmanage}/bin/fc-manage -E ${cfg.enc_path} ${cfg.agent.steps}
-          ${pkgs.fcmanage}/bin/fc-resize-root
+          failed=0
+          ${pkgs.fcmanage}/bin/fc-manage -E ${cfg.enc_path} ${cfg.agent.steps} || failed=1
+          ${pkgs.fcmanage}/bin/fc-resize -E ${cfg.enc_path} || failed=1
+          exit $failed
         '';
       };
 
       # Remove the reboot marker during a reboot.
-      systemd.tmpfiles.rules = [ "r! /reboot" ];
+      systemd.tmpfiles.rules = [
+        "r! /reboot"
+        "R /var/spool/maintenance/archive/* - - - 90d"
+      ];
 
     }
 
@@ -65,7 +72,7 @@ in {
         wantedBy = [ "timers.target" ];
         timerConfig = {
           Unit = "fc-manage.service";
-          # XXX This 10s thing is annoying. There seems to be an issue that
+          # This 15s thing is annoying. There seems to be an issue that
           # networking isn't _really_ up when the timer triggers for the
           # first time even though the 'network-online.target' is waited
           # for.

@@ -34,11 +34,13 @@ in
 {
 
   imports = [
-    ./user.nix
+    ./firewall
+    ./logrotate
     ./network.nix
+    ./sensu-client.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
-    ./sensu-client.nix
+    ./user.nix
   ];
 
   options = {
@@ -151,10 +153,10 @@ in
 
     '';
 
+    services.cron.enable = true;
     sound.enable = false;
     fonts.fontconfig.enable = true;
     environment.systemPackages = with pkgs; [
-        aespipe
         apacheHttpd
         atop
         bc
@@ -164,12 +166,14 @@ in
         cyrus_sasl
         db
         dstat
+        fcmaintenance
         fio
         gcc
         gdbm
         git
         gnupg
         go
+        gptfdisk
         graphviz
         imagemagick
         inetutils
@@ -180,9 +184,11 @@ in
         libxslt
         links
         lsof
+        lvm2
         lynx
         mercurial
         mmv
+        multipath_tools
         nano
         nc6
         ncdu
@@ -198,8 +204,8 @@ in
         psmisc
         pv
         python27Full
-        python27Packages.virtualenv
         python3
+        python34Packages.virtualenv
         screen
         strace
         subversion
@@ -209,8 +215,10 @@ in
         traceroute
         tree
         unzip
+        utillinux
         utillinuxCurses
         vim
+        xfsprogs
         zlib
     ];
 
@@ -281,21 +289,6 @@ in
       "d /tmp - - - 3d"
       "x /tmp/fc-data/*"
       "D /var/tmp - - - 7d"];
-
-    services.logrotate.enable = true;
-    services.logrotate.config = lib.mkOrder 50 ''
-    daily
-    rotate 14
-    create
-    dateext
-    delaycompress
-    compress
-    notifempty
-    nomail
-    noolddir
-    missingok
-    sharedscripts
-    '';
 
     };
 }
