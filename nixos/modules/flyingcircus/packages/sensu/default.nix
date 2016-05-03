@@ -1,4 +1,11 @@
-{ lib, bundlerEnv, ruby_2_0, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig, mysql }:
+{ lib, bundlerEnv, ruby_2_0, python3, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig }:
+
+let
+    pyenv = python3.buildEnv.override {
+      extraLibs = with pkgs.python3Packages;
+        [ pymongo ];
+    } ;
+in
 
 bundlerEnv {
   name = "sensu-0.22.1";
@@ -20,13 +27,21 @@ bundlerEnv {
       buildInputs = [ which graphicsmagick pkgconfig imagemagickBig ];
     };
     mysql = attrs: {
-      buildInputs = [ mysql ];
+      buildInputs = with pkgs; [ mysql ];
     };
-
     redis = attrs: {
-      buildInputs = [ pkgs.redis ];
+      buildInputs = with pkgs; [ redis ];
     };
-
+    mongo = attrs: {
+      buildInputs = with pkgs; [ mongodb ];
+    };
+    sensu-plugins-mongodb = attrs: {
+      buildInputs = [ pyenv ];
+      postPatch = ''
+        # the ruby check runs a python script
+        patchShebangs bin/check-mongodb.py
+      '';
+    };
   };
 
   meta = with lib; {
