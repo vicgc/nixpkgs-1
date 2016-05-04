@@ -1,7 +1,7 @@
-{ config, lib, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }:
 
+with lib;
 {
-
   options = {
 
     flyingcircus.roles.webgateway = {
@@ -19,5 +19,9 @@
   config = mkIf config.flyingcircus.roles.webgateway.enable {
     flyingcircus.roles.nginx.enable = true;
     flyingcircus.roles.haproxy.enable = true;
+
+    environment.systemPackages = with pkgs; [
+      apacheHttpd  # provides htpasswd, ab, ...
+    ];
   };
 }

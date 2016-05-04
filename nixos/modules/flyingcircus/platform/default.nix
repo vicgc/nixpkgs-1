@@ -157,10 +157,8 @@ in
     sound.enable = false;
     fonts.fontconfig.enable = true;
     environment.systemPackages = with pkgs; [
-        apacheHttpd
         atop
         bc
-        bind
         bundler
         curl
         cyrus_sasl
@@ -176,7 +174,6 @@ in
         gptfdisk
         graphviz
         imagemagick
-        inetutils
         iotop
         kerberos
         libmemcached
@@ -184,11 +181,9 @@ in
         libxslt
         links
         lsof
-        lvm2
         lynx
         mercurial
         mmv
-        multipath_tools
         nano
         nc6
         ncdu
@@ -203,9 +198,9 @@ in
         protobuf
         psmisc
         pv
-        python27Full
-        python3
-        python34Packages.virtualenv
+        python2Full
+        pythonPackages.virtualenv
+        python34
         screen
         strace
         subversion
@@ -215,8 +210,6 @@ in
         traceroute
         tree
         unzip
-        utillinux
-        utillinuxCurses
         vim
         xfsprogs
         zlib
