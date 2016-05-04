@@ -97,12 +97,12 @@ def resize_filesystems():
 def set_quota(enc):
     """Ensures only as much space as allotted can be used."""
     print('resize: Ensuring XFS quota')
-    disk = int(enc['parameters'].get('disk', 0))
-    if not disk:
+    disksize = int(enc['parameters'].get('disk', 0))  # GiB
+    if not disksize:
         return
     subprocess.check_call([
         'xfs_quota', '-xc',
-        'limit -p bsoft={d}g bhard={d}g root'.format(d=disk), '/'])
+        'limit -p bsoft={d}g bhard={d}g root'.format(d=disksize), '/'])
 
 
 def real_memory_mb():
