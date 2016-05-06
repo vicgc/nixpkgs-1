@@ -226,7 +226,8 @@ in
     flyingcircus.services.sensu-client.checks = {
       mysql = {
         notification = "MySQL alive";
-        command =  "/var/setuid-wrappers/sudo -u mysql check-mysql-alive.rb -d mysql -u root -p ${lib.readFile root_password_file}";
+        # sensu needs to be in the service class for accessing the root_password_file
+        command =  "/var/setuid-wrappers/sudo -u mysql check-mysql-alive.rb -d mysql -i ${root_password_file}";
       };
     };
   };
