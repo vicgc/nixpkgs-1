@@ -1,8 +1,8 @@
-{ lib, bundlerEnv, ruby_2_0, python3, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig }:
+{ lib, bundlerEnv, ruby_2_0, python2, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig }:
 
 let
-    pyenv = python3.buildEnv.override {
-      extraLibs = with pkgs.python3Packages;
+    pyenv = python2.buildEnv.override {
+      extraLibs = with pkgs.python2Packages;
         [ pymongo ];
     } ;
 in
@@ -39,7 +39,9 @@ bundlerEnv {
       buildInputs = [ pyenv ];
       postPatch = ''
         # the ruby check runs a python script
-        patchShebangs bin/check-mongodb.py
+        # patchShebangs bin/check-mongodb.py
+        substituteInPlace bin/check-mongodb.py \
+        --replace "#!/usr/bin/env python" "#!${pyenv}/bin/python"
       '';
     };
   };
