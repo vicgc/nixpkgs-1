@@ -48,11 +48,33 @@ in {
         '';
       };
 
+      listenAddress = mkOption {
+        default = "0.0.0.0";
+        example = "localhost";
+        type = types.str;
+        description = ''
+          Specifies the bind address on which the jenkins HTTP interface listens.
+          The default is the wildcard address.
+        '';
+      };
+
       port = mkOption {
         default = 8080;
         type = types.int;
         description = ''
-          Specifies port number on which the jenkins HTTP interface listens. The default is 8080.
+          Specifies port number on which the jenkins HTTP interface listens.
+          The default is 8080.
+        '';
+      };
+
+      prefix = mkOption {
+        default = "";
+        example = "/jenkins";
+        type = types.str;
+        description = ''
+          Specifies a urlPrefix to use with jenkins.
+          If the example /jenkins is given, the jenkins server will be
+          accessible using localhost:8080/jenkins.
         '';
       };
 
@@ -80,7 +102,7 @@ in {
       extraOptions = mkOption {
         type = types.listOf types.str;
         default = [ ];
-        example = [ "--debug=9" "--httpListenAddress=localhost" ];
+        example = [ "--debug=9" ];
         description = ''
           Additional command line arguments to pass to Jenkins.
         '';
@@ -134,20 +156,15 @@ in {
       '';
 
       script = ''
-        ${pkgs.jdk}/bin/java -jar ${pkgs.jenkins} --httpPort=${toString cfg.port} ${concatStringsSep " " cfg.extraOptions}
+        ${pkgs.jdk}/bin/java -jar ${pkgs.jenkins} --httpListenAddress=${cfg.listenAddress} \
+                                                  --httpPort=${toString cfg.port} \
+                                                  --prefix=${cfg.prefix} \
+                                                  ${concatStringsSep " " cfg.extraOptions}
       '';
 
       postStart = ''
-        until ${pkgs.curl}/bin/curl -s -L localhost:${toString cfg.port} ; do
-          sleep 10
-        done
-        while true ; do
-          index=`${pkgs.curl}/bin/curl -s -L localhost:${toString cfg.port}`
-          if [[ !("$index" =~ 'Please wait while Jenkins is restarting' ||
-                  "$index" =~ 'Please wait while Jenkins is getting ready to work') ]]; then
-            exit 0
-          fi
-          sleep 30
+        until ${pkgs.curl}/bin/curl -s -L --fail --head http://${cfg.listenAddress}:${toString cfg.port}${cfg.prefix} >/dev/null; do
+            sleep 2
         done
       '';
 
