@@ -33,6 +33,7 @@ in
 
     system.activationScripts.webdata_blackbee = ''
       test -L /home/pricing || ln -s /srv/s-blackbee/pricing /home/pricing
+      test -L /bin/bash || ln -s /run/current-system/sw/bin/bash /bin/bash
     '';
 
     networking.extraHosts = additional_hosts;
