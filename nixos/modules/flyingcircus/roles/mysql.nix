@@ -208,9 +208,11 @@ in
     # MySQL sudo rules
 
     Cmnd_Alias      MYSQL_RESTART = /run/current-system/sw/bin/systemctl restart mysql
+    Cmnd_Alias      CHECK_MYSQL = ${pkgs.sensu}/bin/check-mysql-alive.rb
     %service        ALL=(root) MYSQL_RESTART
     %sudo-srv       ALL=(root) MYSQL_RESTART
     %sensuclient    ALL=(mysql) ALL
+    %sensuclient    ALL=(root) CHECK_MYSQL
     '';
 
     services.udev.extraRules = ''
@@ -226,7 +228,8 @@ in
     flyingcircus.services.sensu-client.checks = {
       mysql = {
         notification = "MySQL alive";
-        command =  "/var/setuid-wrappers/sudo -u mysql check-mysql-alive.rb -d mysql -u root -p ${lib.readFile root_password_file}";
+        # sensu needs to be in the service class for accessing the root_password_file
+        command =  "/var/setuid-wrappers/sudo -u root ${pkgs.sensu}/bin/check-mysql-alive.rb -d mysql -i /root/.my.cnf";
       };
     };
   };
