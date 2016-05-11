@@ -252,18 +252,17 @@ in
         });
       };
 
-    system.activationScripts.flyingcircus_platform = ''
-      # /srv must be accessible for unprivileged users
-      install -d -m 0755 /srv
-    '';
-
     system.activationScripts.journal = ''
       # Ensure journal access for privileged users.
       # This fails if the users are not there (hence || true). This does not
       # matter though: a non existing user/group does not need access.
-      ${pkgs.acl}/bin/setfacl -n \
-        -m g:service:r -m g:admins:r -m g:sudo-srv:r \
-        /var/log/journal/*/system.journal || true
+      # Command line taken from systemd-journald.service(8)
+      ${pkgs.acl}/bin/setfacl -Rn \
+        -m g:sudo-srv:rx,d:g:sudo-srv:rx \
+        -m g:admins:rx,d:g:admins:rx \
+        -m g:wheel:rx,d:g:wheel:rx \
+        -m g:sensuclient:rx,d:g:sensuclient:rx \
+        /var/log/journal/ || true
     '';
 
     environment.etc = (
@@ -280,9 +279,11 @@ in
     systemd.tmpfiles.rules = [
       # d instead of r to a) respect the age rule and b) allow exclusion
       # of fc-data to avoid killing the seeded ENC upon boot.
-      "d /tmp - - - 3d"
+      "d /tmp 1777 root root 3d"
       "x /tmp/fc-data/*"
-      "d /var/tmp - - - 7d"
+      "d /var/tmp 1777 root root 7d"
+      "d /srv"
+      "z /srv 0755 root root"
     ];
   };
 }

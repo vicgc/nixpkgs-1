@@ -181,10 +181,12 @@ in {
       uptime = {
         notification = "Host was down";
         command = "check_uptime";
+        interval = 300;
       };
       users = {
-        notification = "Many users logged in";
+        notification = "Too many users logged in";
         command = "check_users -w 5 -c 10";
+        interval = 300;
       };
       systemd_units = {
         notification = "SystemD has failed units";
@@ -193,6 +195,7 @@ in {
       disk = {
         notification = "Disk usage too high";
         command = "${pkgs.fcsensuplugins}/bin/check_disk -v -w 90 -c 95";
+        interval = 300;
       };
       entropy = {
         notification = "Too little entropy available";
@@ -205,7 +208,7 @@ in {
       journal = {
         notification = "Errors in journal in the last 10 minutes";
         command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -10minutes";
-        interval = 60;
+        interval = 600;
       };
       manage = {
         notification = "The FC manage job is not enabled.";
