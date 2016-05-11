@@ -203,9 +203,9 @@ in {
         command = "check-dns.rb -d ${config.networking.hostName}.gocept.net";
       };
       journal = {
-        notification = "Errors in journal in the last hour";
-        command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -60minutes";
-        interval = 600;
+        notification = "Errors in journal in the last 10 minutes";
+        command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -10minutes";
+        interval = 60;
       };
       manage = {
         notification = "The FC manage job is not enabled.";

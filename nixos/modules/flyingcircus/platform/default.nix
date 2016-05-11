@@ -276,12 +276,13 @@ in
     services.openssh.enable = true;
     services.nscd.enable = true;
 
+    services.journald.extraConfig = "SystemMaxUse=1G";
     systemd.tmpfiles.rules = [
-      # D instead of R to a) respect the age rule and allow exclusion
+      # d instead of r to a) respect the age rule and b) allow exclusion
       # of fc-data to avoid killing the seeded ENC upon boot.
       "d /tmp - - - 3d"
       "x /tmp/fc-data/*"
-      "D /var/tmp - - - 7d"];
-
-    };
+      "d /var/tmp - - - 7d"
+    ];
+  };
 }
