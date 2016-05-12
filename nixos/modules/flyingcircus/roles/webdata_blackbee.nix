@@ -39,9 +39,8 @@ in
     networking.extraHosts = additional_hosts;
 
     environment.systemPackages = [
-
+      pkgs.htop
       pkgs.percona   # client is required on almost all nodes
-
     ];
 
     environment.shellAliases = {
