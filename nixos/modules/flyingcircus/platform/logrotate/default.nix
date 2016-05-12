@@ -24,6 +24,8 @@ let
       sharedscripts
   '';
 
+  users = attrValues cfg.users.users;
+  service_users = builtins.filter (user: user.group == "service") users;
 
 in
 
@@ -57,11 +59,8 @@ in
 
     # We create one directory for each service user. I decided not to remove
     # old directories as this may be manually placed data that I don't want
-    # to accidentally delete.
-    system.activationScripts.logrotate-user = let
-      users = attrValues cfg.users.users;
-      service_users = builtins.filter (user: user.group == "service") users;
-    in stringAfter [ "users" ]
+    # to delete accidentally.
+    system.activationScripts.logrotate-user = stringAfter [ "users" ]
     ''
       # Enable service users to place logrotate snippets.
       install -d -o root -g root -m 0755 /etc/local/logrotate
@@ -69,24 +68,28 @@ in
         (map
           (user: ''
             install -d -m 0755 -o ${user.name} -g service /etc/local/logrotate/${user.name}
-            ${pkgs.systemd}/bin/systemd-run --setenv=XDG_RUNTIME_DIR="/run/user/${toString user.uid}" --uid ${user.name}  ${pkgs.systemd}/bin/systemctl --user daemon-reload
             '')
           service_users)}
       install -d -o root -g service -m 02775 /var/spool/logrotate
     '';
 
-    systemd.user.services.logrotate-user = mkIf (localConfig != null) {
-      description   = "User Logrotate Service";
-      wantedBy      = [ "default.target" ];
-      startAt       = "*-*-* 02:05:00";
+    systemd.services = let
+      units = map (user:
+        { "${user.name}-logrotate" = {
+          description   = "Logrotate Service for ${user.name}";
+          wantedBy      = [ "multi-user.target" ];
+          startAt       = "*-*-* 02:05:00";
 
-      path = [ pkgs.bash pkgs.logrotate ];
+          path = [ pkgs.bash pkgs.logrotate ];
 
-      serviceConfig.Restart = "no";
-      serviceConfig.ExecStart = "${./user-logrotate.sh} ${localConfig}";
-    };
+          serviceConfig.User = "${user.name}";
+          serviceConfig.Restart = "no";
+          serviceConfig.ExecStart = "${./user-logrotate.sh} ${localConfig}";
+          };}) service_users;
+      units_merged = zipAttrsWith (name: values: (last values)) units;
+      in
+        mkIf (localConfig != null) units_merged;
 
   };
-
 
 }
