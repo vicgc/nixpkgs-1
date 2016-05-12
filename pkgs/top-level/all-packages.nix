@@ -2305,6 +2305,8 @@ let
 
   mpage = callPackage ../tools/text/mpage { };
 
+  mprime = callPackage ../tools/misc/mprime { };
+
   mr = callPackage ../applications/version-management/mr { };
 
   mrtg = callPackage ../tools/misc/mrtg { };
@@ -11569,6 +11571,10 @@ let
     debug = config.flashplayer.debug or false;
   };
 
+  flashplayer-standalone = pkgsi686Linux.flashplayer.sa;
+
+  flashplayer-standalone-debugger = (pkgsi686Linux.flashplayer.override { debug = true; }).sa;
+
   fluxbox = callPackage ../applications/window-managers/fluxbox { };
 
   fme = callPackage ../applications/misc/fme {
@@ -14672,7 +14678,7 @@ let
 
   ### SCIENCE / ELECTRONICS
 
-  eagle = callPackage_i686 ../applications/science/electronics/eagle { };
+  eagle = callPackage ../applications/science/electronics/eagle { };
 
   caneda = callPackage ../applications/science/electronics/caneda { };
 

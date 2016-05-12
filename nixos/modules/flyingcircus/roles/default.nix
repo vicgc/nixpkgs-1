@@ -19,12 +19,14 @@ in
      ./dovecot.nix
      ./generic.nix
      ./haproxy.nix
+     ./java.nix
      ./mailserver.nix
      ./mongodb.nix
      ./mysql.nix
      ./nginx.nix
      ./postgresql.nix
      ./powerdns.nix
+     ./redis.nix
      ./sensuserver.nix
      ./servicecheck.nix
      ./statshost.nix

@@ -226,6 +226,9 @@ in
      # ditto for header files, e.g. sqlite
      export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
     '';
+    environment.interactiveShellInit = ''
+      TMOUT=43200
+    '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_3;
 
@@ -285,5 +288,11 @@ in
       "d /srv"
       "z /srv 0755 root root"
     ];
+
+    time.timeZone =
+      if lib.hasAttrByPath ["parameters" "timezone"] cfg.enc
+      then cfg.enc.parameters.timezone
+      else "UTC";
   };
+
 }
