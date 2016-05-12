@@ -41,6 +41,7 @@ in
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
     ./user.nix
+    ./systemd.nix
   ];
 
   options = {
@@ -298,5 +299,6 @@ in
       then cfg.enc.parameters.timezone
       else "UTC";
   };
+
 
 }
