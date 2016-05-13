@@ -105,9 +105,9 @@ let
       userdata;
 
   configure_lingering = userdata:
-    # Service users should have lingering enabled
+    # No users should have lingering enabled
     map
-      (user: " ${config.systemd.package}/bin/loginctl ${if (get_primary_group user) == "service" then "enable" else "disable"}-linger ${user.uid}")
+      (user: " ${config.systemd.package}/bin/loginctl disable-linger ${user.uid}")
       userdata;
 
 in
@@ -223,11 +223,11 @@ in
       %service  ALL=(root) FCMANAGE
     '';
 
-    system.activationScripts.fcio-homedirpermissions =
-      builtins.concatStringsSep "\n" (home_dir_permissions userdata);
+    system.activationScripts.fcio-homedirpermissions = lib.stringAfter [ "users" ]
+      (builtins.concatStringsSep "\n" (home_dir_permissions userdata));
 
-    system.activationScripts.fcio-configure-lingering =
-      builtins.concatStringsSep "\n" (configure_lingering userdata);
+    system.activationScripts.fcio-configure-lingering = lib.stringAfter [ "users" ]
+      (builtins.concatStringsSep "\n" (configure_lingering userdata));
 
   };
 
