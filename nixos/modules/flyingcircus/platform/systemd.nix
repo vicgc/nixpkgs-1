@@ -9,7 +9,7 @@ in {
 
   config = {
 
-    system.activationScripts.haproxy = ''
+    system.activationScripts.systemd_local = ''
       install -d -o root -g service -m 02775 /etc/local/systemd
     '';
 
