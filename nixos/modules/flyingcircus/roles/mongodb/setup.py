@@ -1,12 +1,9 @@
-"""Collection of external monitoring checks."""
-
 from setuptools import setup
 
 
 setup(
     name='check_mongo',
     version='1.0',
-    description=__doc__,
     url='https://github.com/flyingcircus/nixpkgs',
     author='Maksim Bronsky',
     author_email='mb@flyingcircus.io',
