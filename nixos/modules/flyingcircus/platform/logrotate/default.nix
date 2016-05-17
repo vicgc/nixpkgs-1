@@ -78,14 +78,15 @@ in
         { "${user.name}-logrotate" = {
           description   = "Logrotate Service for ${user.name}";
           wantedBy      = [ "multi-user.target" ];
-          startAt       = "*-*-* 02:05:00";
+          startAt       = "*-*-* 00:05:00";
 
           path = [ pkgs.bash pkgs.logrotate ];
 
           serviceConfig.User = "${user.name}";
           serviceConfig.Restart = "no";
           serviceConfig.ExecStart = "${./user-logrotate.sh} ${localConfig}";
-          };}) service_users;
+          };
+        }) service_users;
       units_merged = zipAttrsWith (name: values: (last values)) units;
       in
         mkIf (localConfig != null) units_merged;
