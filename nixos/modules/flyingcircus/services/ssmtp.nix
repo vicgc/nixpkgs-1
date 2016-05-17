@@ -12,7 +12,8 @@ let
 
 in
 {
-  config = mkIf (!cfg.roles.mailserver.enable && mail_out_service != null) {
+  config = mkIf (cfg ? roles && !cfg.roles.mailserver.enable &&
+                 mail_out_service != null) {
 
     networking.defaultMailServer.directDelivery = true;
     networking.defaultMailServer.hostName = mail_out_service.address;
