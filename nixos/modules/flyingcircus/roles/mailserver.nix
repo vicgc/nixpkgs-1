@@ -39,13 +39,5 @@ in
       if cfg.enc.parameters.interfaces ? srv
       then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
       else [];
-  } // mkIf (mail_out_service != null) {
-
-    networking.defaultMailServer.directDelivery = true;
-    networking.defaultMailServer.hostName = mail_out_service.address;
-
-    networking.defaultMailServer.root = "admin@flyingcircus.io";
-    networking.defaultMailServer.domain = "fcio.net";
-
   };
 }
