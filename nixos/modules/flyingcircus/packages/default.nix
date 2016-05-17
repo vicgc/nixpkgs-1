@@ -30,6 +30,7 @@
     uchiwa = pkgs.callPackage ./uchiwa { };
 
     mc = pkgs.callPackage ./mc.nix { };
+    mailx = pkgs.callPackage ./mailx.nix { };
 
   };
 }
