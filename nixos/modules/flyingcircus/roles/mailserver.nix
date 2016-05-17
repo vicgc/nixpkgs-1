@@ -7,11 +7,6 @@ let
   cfg = config.flyingcircus;
   fclib = import ../lib;
 
-  mail_out_service = lib.findFirst
-    (s: s.service == "mailserver-mailout")
-    null
-    config.flyingcircus.enc_services;
-
 in
 {
   options = {
