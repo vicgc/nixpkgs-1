@@ -32,8 +32,8 @@ in
      ./servicecheck.nix
      ./statshost.nix
      ./varnish.nix
-     ./webgateway.nix
      ./webdata_blackbee.nix
+     ./webgateway.nix
     ];
 
   options = {
