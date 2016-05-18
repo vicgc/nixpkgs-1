@@ -1,7 +1,6 @@
 """Update NixOS system configuration from infrastructure or local sources."""
 
 from fc.util.directory import connect
-
 import argparse
 import filecmp
 import json
@@ -9,9 +8,12 @@ import logging
 import os
 import os.path as p
 import shutil
+import signal
 import socket
 import subprocess
+import sys
 import tempfile
+
 
 # TODO
 #
@@ -181,6 +183,11 @@ def collect_garbage(age):
                            '{}d'.format(age)])
 
 
+def exit_timeout(signum, frame):
+    print("Execution timed out. Exiting.")
+    sys.exit()
+
+
 def main():
     build_options = []
     a = argparse.ArgumentParser(description=__doc__)
@@ -198,6 +205,8 @@ def main():
     a.add_argument('-g', '--garbage', default=0, type=int,
                    help='collect garbage and remove generations older than '
                         '<INT> days')
+    a.add_argument('-t', '--timeout', default=10 * 60, type=int,
+                   help='abort execution after <INT> seconds')
 
     build = a.add_mutually_exclusive_group()
     build.add_argument('-c', '--channel', default=False, dest='build',
@@ -209,6 +218,9 @@ def main():
                        '/root/nixpkgs')
     a.add_argument('-v', '--verbose', action='store_true', default=False)
     args = a.parse_args()
+
+    signal.signal(signal.SIGALRM, exit_timeout)
+    signal.alarm(args.timeout)
 
     logging.basicConfig(format='%(levelname)s: %(message)s',
                         level=logging.DEBUG if args.verbose else logging.INFO)
