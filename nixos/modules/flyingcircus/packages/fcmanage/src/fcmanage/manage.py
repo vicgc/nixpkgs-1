@@ -205,7 +205,7 @@ def main():
     a.add_argument('-g', '--garbage', default=0, type=int,
                    help='collect garbage and remove generations older than '
                         '<INT> days')
-    a.add_argument('-t', '--timeout', default=10 * 60, type=int,
+    a.add_argument('-t', '--timeout', default=30 * 60, type=int,
                    help='abort execution after <INT> seconds')
 
     build = a.add_mutually_exclusive_group()
