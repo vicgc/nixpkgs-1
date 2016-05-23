@@ -4,9 +4,7 @@ let
 
 in
 {
-
   options = {
-
     flyingcircus.roles.java = {
 
       enable = mkOption {
@@ -16,14 +14,9 @@ in
       };
 
     };
-
   };
 
   config = mkIf cfg.enable {
-
-    environment.systemPackages = [
-      pkgs.jdk
-    ];
-
-};
+    environment.systemPackages = [ pkgs.jdk ];
+  };
 }
