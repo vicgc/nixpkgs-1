@@ -50,16 +50,15 @@ in {
         };
         script = ''
           failed=0
-          ${pkgs.fcmanage}/bin/fc-manage -E ${cfg.enc_path} ${cfg.agent.steps} || failed=1
-          ${pkgs.fcmanage}/bin/fc-resize -E ${cfg.enc_path} || failed=1
+          ${pkgs.fcmanage}/bin/fc-manage -E ${cfg.enc_path} ${cfg.agent.steps} || failed=$?
+          ${pkgs.fcmanage}/bin/fc-resize -E ${cfg.enc_path} || failed=$?
           exit $failed
         '';
       };
 
-      # Remove the reboot marker during a reboot.
       systemd.tmpfiles.rules = [
         "r! /reboot"
-        "R /var/spool/maintenance/archive/* - - - 90d"
+        "d /var/spool/maintenance/archive - - - 90d"
       ];
 
     }

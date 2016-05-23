@@ -78,7 +78,6 @@ in
     else "default";
 
   services.openssh.permitRootLogin = "without-password";
-  services.journald.extraConfig = "SystemMaxUse=5%";
 
   fileSystems."/".device = "/dev/disk/by-label/root";
   fileSystems."/tmp".device = "/dev/disk/by-label/tmp";
