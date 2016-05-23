@@ -13,19 +13,34 @@ with lib;
 
   config = {
     flyingcircus.static.vlans = {
+      # management (grey): BMC, switches, tftp, remote console
       "1" = "mgm";
+      # frontend (yellow): public Internet
       "2" = "fe";
+      # servers/backend (red): RG-internal (app, database, ...)
       "3" = "srv";
+      # storage (black): VM storage access
       "4" = "sto";
+      # workstation (green): office network
       "5" = "ws";
+      # transfer (blue): router-router
       "6" = "tr";
+      # guest (green): office/WLAN for unknown users
       "7" = "gue";
+      # storage backend (yellow): Ceph replication and migration
       "8" = "stb";
+      # transfer (blue): additional transfer net (e.g., gocept)
       "14" = "tr2";
+      # gocept office
       "15" = "gocept";
+      # frontend (yellow): additional fe needed on some switches
       "16" = "fe2";
+      # servers/backend (red): additional srv needed on some switches
       "17" = "srv2";
+      # transfer (blue): additional tr for location chaining
       "18" = "tr3";
+      # dynamic hardware pool: custom connection to Kamp services
+      "19" = "dhp";
     };
 
     flyingcircus.static.nameservers = {
