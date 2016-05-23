@@ -15,16 +15,9 @@ import time
 
 class RebootActivity(Activity):
 
-    started = None
-
-    def __init__(self, action):
+    def __init__(self, action='reboot'):
         assert action in ['reboot', 'poweroff']
         self.action = action
-        try:
-            with open('starttime') as f:
-                self.started = float(f.read().strip())
-        except (IOError, ValueError):
-            pass
         # small allowance for VM clock skew
         self.initial_boottime = self.boottime() + 1
 
@@ -50,8 +43,12 @@ class RebootActivity(Activity):
         self.stdout = 'booted at {} UTC'.format(
             time.asctime(time.gmtime(self.boottime())))
         self.returncode = 0
-        if self.started:
-            self.duration = time.time() - self.started
+        try:
+            with open('starttime') as f:
+                started = float(f.read().strip())
+                self.duration = time.time() - started
+        except (IOError, ValueError):
+            pass
 
 
 def main():
