@@ -19,9 +19,5 @@ with lib;
   config = mkIf config.flyingcircus.roles.webgateway.enable {
     flyingcircus.roles.nginx.enable = true;
     flyingcircus.roles.haproxy.enable = true;
-
-    environment.systemPackages = with pkgs; [
-      apacheHttpd  # provides htpasswd, ab, ...
-    ];
   };
 }

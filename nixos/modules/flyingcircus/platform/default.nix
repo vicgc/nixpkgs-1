@@ -144,7 +144,7 @@ in
 
         Support:   support@flyingcircus.io or +49 345 219401-0
         Status:    http://status.flyingcircus.io/
-        Docs:      http://flyingcircus.io/doc/
+        Docs:      https://flyingcircus.io/doc/
         Release:   ${config.system.nixosVersion}
 
     '' + lib.optionalString (enc ? name) ''
@@ -157,8 +157,10 @@ in
     sound.enable = false;
     fonts.fontconfig.enable = true;
     environment.systemPackages = with pkgs; [
+        apacheHttpd
         atop
         bc
+        bind
         bundler
         curl
         cyrus_sasl
@@ -274,7 +276,6 @@ in
         "directory.secret".mode = "0600";}) //
       { "nixos/configuration.nix".text = lib.readFile ../files/etc_nixos_configuration.nix; };
 
-    services.nixosManual.enable = false;
     services.openssh.enable = true;
     services.nscd.enable = true;
 
