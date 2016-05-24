@@ -12,24 +12,35 @@ with lib;
   };
 
   config = {
+
+    flyingcircus.static.locations = {
+      "whq" = { id = 0; site = "Halle"; };
+      "yard" = { id = 1; site = "Halle"; };
+      "rzob" = { id = 2; site = "Oberhausen"; };
+      "dev" = { id = 3; site = "Halle"; };
+      "rzrl1" = { id = 4; site = "Norderstedt"; };
+    };
+
+    # Note: this list of VLAN classes should be kept in sync with
+    # fc.directory/src/fc/directory/vlan.py
     flyingcircus.static.vlans = {
       # management (grey): BMC, switches, tftp, remote console
       "1" = "mgm";
-      # frontend (yellow): public Internet
+      # frontend (yellow): access from public Internet
       "2" = "fe";
       # servers/backend (red): RG-internal (app, database, ...)
       "3" = "srv";
-      # storage (black): VM storage access
+      # storage (black): VM storage access (Ceph)
       "4" = "sto";
       # workstation (green): office network
       "5" = "ws";
-      # transfer (blue): router-router
+      # transfer (blue): primary router uplink
       "6" = "tr";
-      # guest (green): office/WLAN for unknown users
+      # guest (green): office wifi for unknown users
       "7" = "gue";
       # storage backend (yellow): Ceph replication and migration
       "8" = "stb";
-      # transfer (blue): additional transfer net (e.g., gocept)
+      # transfer 2 (blue): secondary router-router connection
       "14" = "tr2";
       # gocept office
       "15" = "gocept";
@@ -37,9 +48,9 @@ with lib;
       "16" = "fe2";
       # servers/backend (red): additional srv needed on some switches
       "17" = "srv2";
-      # transfer (blue): additional tr for location chaining
+      # transfer 3 (blue): tertiary router-router connection
       "18" = "tr3";
-      # dynamic hardware pool: custom connection to Kamp services
+      # dynamic hardware pool: local endpoints for Kamp DHP tunnels
       "19" = "dhp";
     };
 
