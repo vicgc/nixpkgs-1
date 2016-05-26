@@ -5,6 +5,8 @@ looking up the device by checking the root partition by label first.
 """
 
 import argparse
+import fc.maintenance
+import fc.maintenance.lib.reboot
 import json
 import re
 import subprocess
@@ -75,6 +77,7 @@ class Disk(object):
 
 
 def resize_filesystems():
+    """Grows root filesystem if the underlying blockdevice has been resized."""
     try:
         partition = subprocess.check_output(['blkid', '-L', 'root']).decode()
     except subprocess.CalledProcessError as e:
@@ -91,35 +94,45 @@ def resize_filesystems():
     d.grow()
 
 
-def quota_enabled():
-    """Returns True if the root volume has quota support enabled.
-
-    Keep the expression in sync with that one in
-    infrastructure/fcio/quota.nix.
-    """
-    with open('/proc/self/mounts') as f:
-        for line in f:
-            dev, mountpoint, fstype, options, _rest = line.split(None, 4)
-            if mountpoint != '/':
-                continue
-            if 'usrquota' in options and 'prjquota' in options:
-                return True
-    return False
-
-
-def set_quota(enc_path):
-    with open(enc_path) as f:
-        enc = json.load(f)
-    if 'disk' not in enc['parameters']:
+def set_quota(enc):
+    """Ensures only as much space as allotted can be used."""
+    print('resize: Ensuring XFS quota')
+    disksize = int(enc['parameters'].get('disk', 0))  # GiB
+    if not disksize:
         return
-    disk = int(enc['parameters']['disk'])
-    if not disk:
-        return
-    print('resize: Setting XFS quota to {} GiB'.format(disk))
-
     subprocess.check_call([
         'xfs_quota', '-xc',
-        'limit -p bsoft={d}g bhard={d}g root'.format(d=disk), '/'])
+        'limit -p bsoft={d}g bhard={d}g root'.format(d=disksize), '/'])
+
+
+def real_memory_mb():
+    """Returns real memory rounded to multiples of 128 MiB."""
+    with open('/proc/meminfo') as f:
+        for line in f:
+            if line.startswith('MemTotal:'):
+                mem_kb = int(line.split()[1])
+                break
+    if not mem_kb:
+        raise RuntimeError('failed to determine memory size')
+    return 128 * round(mem_kb / 1024 / 128)
+
+
+def memory_change(enc):
+    """Schedules reboot if the memory size has changed."""
+    enc_memory = int(enc['parameters'].get('memory', 0))
+    if not enc_memory:
+        return
+    real_memory = real_memory_mb()
+    if abs(real_memory - enc_memory) < 128:
+        return
+    msg = 'Reboot to change memory from {} MiB to {} MiB'.format(
+        real_memory, enc_memory)
+    print('resize:', msg)
+    with fc.maintenance.ReqManager() as rm:
+        if rm.find_by_comment(msg):
+            return
+        rm.add(fc.maintenance.Request(
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 600, msg))
 
 
 def main():
@@ -130,8 +143,11 @@ def main():
 
     resize_filesystems()
 
-    if args.enc_path and quota_enabled():
-        set_quota(args.enc_path)
+    if args.enc_path:
+        with open(args.enc_path) as f:
+            enc = json.load(f)
+        set_quota(enc)
+        memory_change(enc)
 
 
 if __name__ == '__main__':

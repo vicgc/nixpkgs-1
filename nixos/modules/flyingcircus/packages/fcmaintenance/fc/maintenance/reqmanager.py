@@ -106,6 +106,11 @@ class ReqManager:
         request.save()
         return request
 
+    def find_by_comment(self, comment):
+        for r in self.requests.values():
+            if r.comment == comment:
+                return r
+
     @require_lock
     @require_directory
     def schedule(self):
@@ -247,4 +252,6 @@ retrylimit exceeded (r), hard error (e), deleted (d), postponed (p).
 
     rm = ReqManager(args.spooldir)
     rm.scan()
-    print(str(rm))
+    out = str(rm)
+    if out:
+        print(out)
