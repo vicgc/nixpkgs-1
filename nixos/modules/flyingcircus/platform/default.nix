@@ -277,7 +277,11 @@ in
         "directory.secret".mode = "0600";}) //
       { "nixos/configuration.nix".text = lib.readFile ../files/etc_nixos_configuration.nix; };
 
-    services.openssh.enable = true;
+    services.openssh = {
+      enable = true;
+      challengeResponseAuthentication = false;
+      passwordAuthentication = false;
+    };
     services.nscd.enable = true;
 
     services.journald.extraConfig = "SystemMaxUse=1G";
