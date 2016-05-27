@@ -53,19 +53,20 @@ let
   get_policy_routing_for_interface = interfaces: interface_name:
     map (network:
     let
-      addresses = getAttr network (getAttr interface_name interfaces).networks;
+      ifconfig = interfaces.${interface_name};
+      addresses = ifconfig.networks.${network};
     in
     {
-       priority =
+      priority =
         if builtins.length addresses == 0
         then 1000
         else lib.attrByPath [ interface_name ] 100 routing_priorities;
-       network = network;
-       interface = interface_name;
-       gateway = getAttr network (getAttr interface_name interfaces).gateways;
-       addresses = addresses;
-       family = if (fclib.isIp4 network) then "4" else "6";
-     }) (attrNames interfaces.${interface_name}.gateways);
+      network = network;
+      interface = interface_name;
+      gateway = ifconfig.gateways.${network};
+      addresses = addresses;
+      family = if (fclib.isIp4 network) then "4" else "6";
+    }) (attrNames interfaces.${interface_name}.gateways);
 
 
   # Those policy routing rules ensure that we can run multiple IP networks
@@ -86,23 +87,29 @@ let
   # have an address for it.)
   policy_routing_rules = ruleset:
     let
-      address_rules = if (builtins.length ruleset.addresses != 0) then
+      ip = "ip -${ruleset.family}";
+      rs = ruleset;
+      address_rules = if (builtins.length rs.addresses != 0) then
         (lib.concatMapStrings
           (address:
             ''
-              ip -${ruleset.family} rule add priority ${toString (ruleset.priority)} from ${address} lookup ${ruleset.interface}
+              ip -${rs.family} rule add priority ${toString (rs.priority)} from ${address} lookup ${rs.interface}
             '')
-          ruleset.addresses) else "";
-      gateway_rule = if (builtins.length ruleset.addresses != 0) then
+          rs.addresses) else "";
+      defroute = "default via ${rs.gateway} dev eth${rs.interface}";
+      gateway_rules = if (builtins.length rs.addresses != 0) then
         ''
-          ip -${ruleset.family} route add default via ${ruleset.gateway} table ${ruleset.interface} || true
+          ${ip} route add ${defroute} table ${rs.interface} || true
+          ${ip} route add ${defroute} metric ${toString rs.priority} || true
         '' else "";
     in
     ''
-      # policy routing rules for ${ruleset.interface}/IPv${ruleset.family}
+      # ${rs.interface}/IPv${rs.family}
+      ${ip} rule add priority ${
+        toString rs.priority} from all to ${rs.network} lookup ${
+        rs.interface}
       ${address_rules}
-      ip -${ruleset.family} rule add priority ${toString ruleset.priority} from all to ${ruleset.network} lookup ${ruleset.interface}
-      ${gateway_rule}
+      ${gateway_rules}
     '';
 
   get_policy_routing = interfaces:
@@ -112,7 +119,7 @@ let
           (get_policy_routing_for_interface interfaces)
           (attrNames interfaces));
 
-  rt_tables = toFile "rt_tables" ''
+  rt_tables = ''
     # reserved values
     #
     255 local
@@ -126,7 +133,7 @@ let
       lib.mapAttrsToList (n : vlan : "${n} ${vlan}")
       cfg.static.vlans
     )}
-    '';
+  '';
 
   # default route
   get_default_gateway = version_filter: interfaces:
@@ -157,6 +164,7 @@ in
   };
 
   config = rec {
+    environment.etc."iproute2/rt_tables".text = rt_tables;
 
     services.udev.extraRules = (lib.concatStrings
       (lib.mapAttrsToList (n : vlan : ''
@@ -210,9 +218,6 @@ in
         lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
       then
         ''
-          mkdir -p /etc/iproute2
-          ln -sf ${rt_tables} /etc/iproute2/rt_tables
-
           ip -4 rule flush
           ip -4 rule add priority 32766 lookup main
           ip -4 rule add priority 32767 lookup default

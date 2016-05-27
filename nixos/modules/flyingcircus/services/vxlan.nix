@@ -17,9 +17,10 @@ in
 {
   systemd.services."network-external-${tunneldev}" = {
     description = "VxLAN tunnel ${tunneldev}";
-    after = [ "network.target" ];
-    wantedBy = [ "multiuser.target" ];
+    after = [ "network-addresses-${realdev}.service" ];
+    wantedBy = [ "network.target" ];
     bindsTo = [ "sys-subsystem-net-devices-${realdev}.device" ];
+
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeScript "network-external-${tunneldev}-start" ''

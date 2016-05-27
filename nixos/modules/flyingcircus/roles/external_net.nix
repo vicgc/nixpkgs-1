@@ -1,5 +1,10 @@
 # Gateway to external networks. This includes VxLAN tunnels to Kamp DHP and
 # OpenVPN.
+
+# Assumes that the address ranges for network extensions are within
+# - 10.0.0.0/8
+# - fde6:1c0f:70c3::/48
+
 { config, lib, pkgs, ... }:
 
 let
@@ -25,16 +30,19 @@ in
         net4 = lib.mkOption {
           description = ''
             IPv4 network range to allocate to VxLAN hosts via DHCP. Must be a
-            subset of 10/8.
+            subnet of 10.0.0.0/8.
           '';
           type = types.string;
           example = "10.1.2.0/24";
         };
 
         net6 = lib.mkOption {
-          description = "IPv6 network range to allocate to VxLAN hosts via RA";
+          description = ''
+            IPv6 network range to allocate to VxLAN hosts via RA. Must be a
+            subnet of fde6:1c0f:70c3::/48.
+          '';
           type = types.string;
-          example = "2001:db8:1:2::/64";
+          example = "fde6:1c0f:70c3:4c32::/64";
         };
 
         local = lib.mkOption {
@@ -86,6 +94,11 @@ in
           '';
         }).out);
 
+      domain =
+        if lib.hasAttrByPath [ "parameters" "resource_group" ] cfg.enc
+        then "${cfg.enc.parameters.resource_group}.fcio.net"
+        else "local";
+
       dnsmasq = {
         services.dnsmasq.enable = true;
         services.dnsmasq.extraConfig = ''
@@ -99,13 +112,12 @@ in
           dhcp-option=option:mtu,1430
           dhcp-option=option:ntp-server,0.0.0.0
           dhcp-range=::,constructor:${tunneldev},ra-names
-          dhcp-range=${lib.concatStringsSep "," params.dhcp},1h
-          domain=${cfg.enc.parameters.resource_group}.fcio.net
+          dhcp-range=${lib.concatStringsSep "," params.dhcp},24h
+          domain=${domain}
           domain-needed
           enable-ra
           interface=${tunneldev}
           local-ttl=60
-          log-dhcp
         '';
       };
     in
@@ -117,7 +129,13 @@ in
       // dnsmasq
       // {
         boot.kernel.sysctl = { "net.ipv4.ip_forward" = true; };
-        networking.firewall.allowedUDPPorts = [ 67 68 8472 ];
+        networking.firewall.allowedUDPPorts = [ 53 67 68 8472 ];
+        networking.firewall.extraCommands = ''
+          iptables -t nat -F POSTROUTING
+          iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -o ethfe -j MASQUERADE
+          ip6tables -t nat -F POSTROUTING
+          ip6tables -t nat -A POSTROUTING -s fde6:1c0f:70c3::/48 -o ethfe -j MASQUERADE
+        '';
       }
     );
 }
