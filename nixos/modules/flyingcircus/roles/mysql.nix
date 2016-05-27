@@ -221,6 +221,7 @@ in
     '';
 
     environment.systemPackages = [
+        pkgs.innotop
         pkgs.qpress
         pkgs.xtrabackup
     ];
