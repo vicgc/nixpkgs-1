@@ -66,6 +66,7 @@ in
       net4 = vxlan_cfg.net4;
       net6 = vxlan_cfg.net6;
       tunneldev = "nx0";
+      ip = "${pkgs.iproute}/bin/ip";
 
       # This is a hack. Computing all the network nets and addresses with Nix is
       # a pain. Rather use a Python script which dumps the stuff into a JSON
@@ -102,7 +103,6 @@ in
       dnsmasq = {
         services.dnsmasq.enable = true;
         services.dnsmasq.extraConfig = ''
-          bogus-priv
           dhcp-authoritative
           dhcp-fqdn
           dhcp-leasefile=/var/lib/dnsmasq.leases
@@ -120,15 +120,8 @@ in
           local-ttl=60
         '';
       };
-    in
-      import ../services/vxlan.nix {
-        inherit (vxlan_cfg) vid local remote;
-        inherit (params) gw4 gw6;
-        inherit tunneldev lib pkgs;
-      }
-      // dnsmasq
-      // {
-        boot.kernel.sysctl = { "net.ipv4.ip_forward" = true; };
+
+      firewall = {
         networking.firewall.allowedUDPPorts = [ 53 67 68 8472 ];
         networking.firewall.extraCommands = ''
           iptables -t nat -F POSTROUTING
@@ -136,6 +129,17 @@ in
           ip6tables -t nat -F POSTROUTING
           ip6tables -t nat -A POSTROUTING -s fde6:1c0f:70c3::/48 -o ethfe -j MASQUERADE
         '';
+      };
+    in
+      import ../../services/vxlan.nix {
+        inherit (vxlan_cfg) vid local remote;
+        inherit (params) gw4 gw6;
+        inherit tunneldev lib pkgs;
+      }
+      // dnsmasq
+      // firewall
+      // {
+        boot.kernel.sysctl = { "net.ipv4.ip_forward" = true; };
       }
     );
 }

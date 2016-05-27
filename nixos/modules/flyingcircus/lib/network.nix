@@ -4,7 +4,7 @@
 
 { lib }:
 
-{
+rec {
   stripNetmask = cidr: builtins.elemAt (lib.splitString "/" cidr) 0;
 
   prefixLength = cidr:
@@ -29,4 +29,7 @@
           (map (addr: addr.address) interface_config.ip4) ++
           (map (addr: addr.address) interface_config.ip6)
       else [];
+
+  # choose the correct iptables version for addr
+  iptables = addr: if isIp4 addr then "iptables" else "ip6tables";
 }

@@ -7,9 +7,6 @@ let
 
   fclib = import ../lib;
 
-  # choose the correct iptables version for addr
-  iptables = addr: if fclib.isIp4 addr then "iptables" else "ip6tables";
-
   _ip_interface_configuration = networks: network:
       map (
         ip_address: {
@@ -46,8 +43,8 @@ let
   # Policy routing
 
   routing_priorities = {
-    fe = 20;
-    srv = 30;
+    fe = 200;
+    srv = 300;
   };
 
   get_policy_routing_for_interface = interfaces: interface_name:
@@ -59,8 +56,8 @@ let
     {
       priority =
         if builtins.length addresses == 0
-        then 1000
-        else lib.attrByPath [ interface_name ] 100 routing_priorities;
+        then 900
+        else lib.attrByPath [ interface_name ] 1000 routing_priorities;
       network = network;
       interface = interface_name;
       gateway = ifconfig.gateways.${network};
@@ -87,13 +84,13 @@ let
   # have an address for it.)
   policy_routing_rules = ruleset:
     let
-      ip = "ip -${ruleset.family}";
       rs = ruleset;
+      ip = "ip -${rs.family}";
       address_rules = if (builtins.length rs.addresses != 0) then
         (lib.concatMapStrings
           (address:
             ''
-              ip -${rs.family} rule add priority ${toString (rs.priority)} from ${address} lookup ${rs.interface}
+              ${ip} rule add priority ${toString (rs.priority)} from ${address} lookup ${rs.interface}
             '')
           rs.addresses) else "";
       defroute = "default via ${rs.gateway} dev eth${rs.interface}";
@@ -108,6 +105,7 @@ let
       ${ip} rule add priority ${
         toString rs.priority} from all to ${rs.network} lookup ${
         rs.interface}
+      ${ip} route add ${rs.network} dev eth${rs.interface} table ${rs.interface} || true
       ${address_rules}
       ${gateway_rules}
     '';
@@ -134,21 +132,8 @@ let
       cfg.static.vlans
     )}
   '';
-
-  # default route
-  get_default_gateway = version_filter: interfaces:
-    (head
-    (sort
-      (ruleset_a: ruleset_b: lessThan ruleset_a.priority ruleset_b.priority)
-      (filter
-        (ruleset:
-         (ruleset.priority != null) &&
-         (version_filter ruleset.network))
-        (lib.concatMap
-          (get_policy_routing_for_interface interfaces)
-          (attrNames interfaces))))).gateway;
-
 in
+
 {
 
   options = {
@@ -174,19 +159,6 @@ in
     );
 
     networking.domain = "gocept.net";
-
-    networking.defaultGateway =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp4 cfg.enc.parameters.interfaces
-      else null;
-    networking.defaultGateway6 =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp6 cfg.enc.parameters.interfaces
-      else null;
 
     # Only set nameserver if there is an enc set.
     networking.nameservers =
@@ -241,7 +213,7 @@ in
         rules = lib.optionalString
           (lib.hasAttr "ethsrv" networking.interfaces)
           (lib.concatMapStrings (a: ''
-            ${iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
+            ${fclib.iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
               } -j nixos-fw-accept
             '')
             addrs);
