@@ -221,8 +221,8 @@ in
     '';
 
     environment.systemPackages = [
-    pkgs.xtrabackup
-    pkgs.qpress
+        pkgs.qpress
+        pkgs.xtrabackup
     ];
 
     flyingcircus.services.sensu-client.checks = {
