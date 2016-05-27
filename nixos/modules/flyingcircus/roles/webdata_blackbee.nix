@@ -40,6 +40,7 @@ in
 
     environment.systemPackages = [
       pkgs.htop
+      pkgs.innotop
       pkgs.mailx
       pkgs.mc
       pkgs.percona   # client is required on almost all nodes
