@@ -145,7 +145,7 @@ in
 
         Support:   support@flyingcircus.io or +49 345 219401-0
         Status:    http://status.flyingcircus.io/
-        Docs:      http://flyingcircus.io/doc/
+        Docs:      https://flyingcircus.io/doc/
         Release:   ${config.system.nixosVersion}
 
     '' + lib.optionalString (enc ? name) ''
@@ -177,7 +177,6 @@ in
         gptfdisk
         graphviz
         imagemagick
-        inetutils
         iotop
         kerberos
         libmemcached
@@ -185,11 +184,9 @@ in
         libxslt
         links
         lsof
-        lvm2
         lynx
         mercurial
         mmv
-        multipath_tools
         nano
         nc6
         ncdu
@@ -204,9 +201,9 @@ in
         protobuf
         psmisc
         pv
-        python27Full
-        python3
-        python34Packages.virtualenv
+        python2Full
+        pythonPackages.virtualenv
+        python34
         screen
         strace
         subversion
@@ -216,8 +213,6 @@ in
         traceroute
         tree
         unzip
-        utillinux
-        utillinuxCurses
         vim
         xfsprogs
         zlib
@@ -263,18 +258,17 @@ in
         });
       };
 
-    system.activationScripts.flyingcircus_platform = ''
-      # /srv must be accessible for unprivileged users
-      install -d -m 0755 /srv
-    '';
-
     system.activationScripts.journal = ''
       # Ensure journal access for privileged users.
       # This fails if the users are not there (hence || true). This does not
       # matter though: a non existing user/group does not need access.
-      ${pkgs.acl}/bin/setfacl -n \
-        -m g:service:r -m g:admins:r -m g:sudo-srv:r \
-        /var/log/journal/*/system.journal || true
+      # Command line taken from systemd-journald.service(8)
+      ${pkgs.acl}/bin/setfacl -Rn \
+        -m g:sudo-srv:rx,d:g:sudo-srv:rx \
+        -m g:admins:rx,d:g:admins:rx \
+        -m g:wheel:rx,d:g:wheel:rx \
+        -m g:sensuclient:rx,d:g:sensuclient:rx \
+        /var/log/journal/ || true
     '';
 
     environment.etc = (
@@ -283,16 +277,23 @@ in
         "directory.secret".mode = "0600";}) //
       { "nixos/configuration.nix".text = lib.readFile ../files/etc_nixos_configuration.nix; };
 
-    services.nixosManual.enable = false;
-    services.openssh.enable = true;
+    services.openssh = {
+      enable = true;
+      challengeResponseAuthentication = false;
+      passwordAuthentication = false;
+    };
     services.nscd.enable = true;
 
+    services.journald.extraConfig = "SystemMaxUse=1G";
     systemd.tmpfiles.rules = [
-      # D instead of R to a) respect the age rule and allow exclusion
+      # d instead of r to a) respect the age rule and b) allow exclusion
       # of fc-data to avoid killing the seeded ENC upon boot.
-      "d /tmp - - - 3d"
+      "d /tmp 1777 root root 3d"
       "x /tmp/fc-data/*"
-      "D /var/tmp - - - 7d"];
+      "d /var/tmp 1777 root root 7d"
+      "d /srv"
+      "z /srv 0755 root root"
+    ];
 
     time.timeZone =
       if lib.hasAttrByPath ["parameters" "timezone"] cfg.enc

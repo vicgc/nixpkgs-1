@@ -86,6 +86,19 @@ def test_scan_invalid(tmpdir):
     assert True
 
 
+def test_find_by_comment(reqmanager):
+    with reqmanager as rm:
+        rm.add(Request(Activity(), 1, 'comment 1'))
+        req2 = rm.add(Request(Activity(), 1, 'comment 2'))
+    with reqmanager as rm:
+        assert req2 == rm.find_by_comment('comment 2')
+
+
+def test_find_by_comment_returns_none_on_mismatch(reqmanager):
+    with reqmanager as rm:
+        assert rm.find_by_comment('no such comment') is None
+
+
 @unittest.mock.patch('fc.util.directory.connect')
 def test_schedule_empty(connect, reqmanager):
     rpccall = connect().schedule_maintenance

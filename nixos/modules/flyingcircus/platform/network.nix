@@ -7,9 +7,6 @@ let
 
   fclib = import ../lib;
 
-  # choose the correct iptables version for addr
-  iptables = addr: if fclib.isIp4 addr then "iptables" else "ip6tables";
-
   _ip_interface_configuration = networks: network:
       map (
         ip_address: {
@@ -46,26 +43,27 @@ let
   # Policy routing
 
   routing_priorities = {
-    fe = 20;
-    srv = 30;
+    fe = 200;
+    srv = 300;
   };
 
   get_policy_routing_for_interface = interfaces: interface_name:
     map (network:
     let
-      addresses = getAttr network (getAttr interface_name interfaces).networks;
+      ifconfig = interfaces.${interface_name};
+      addresses = ifconfig.networks.${network};
     in
     {
-       priority =
+      priority =
         if builtins.length addresses == 0
-        then 1000
-        else lib.attrByPath [ interface_name ] 100 routing_priorities;
-       network = network;
-       interface = interface_name;
-       gateway = getAttr network (getAttr interface_name interfaces).gateways;
-       addresses = addresses;
-       family = if (fclib.isIp4 network) then "4" else "6";
-     }) (attrNames interfaces.${interface_name}.gateways);
+        then 900
+        else lib.attrByPath [ interface_name ] 1000 routing_priorities;
+      network = network;
+      interface = interface_name;
+      gateway = ifconfig.gateways.${network};
+      addresses = addresses;
+      family = if (fclib.isIp4 network) then "4" else "6";
+    }) (attrNames interfaces.${interface_name}.gateways);
 
 
   # Those policy routing rules ensure that we can run multiple IP networks
@@ -86,23 +84,30 @@ let
   # have an address for it.)
   policy_routing_rules = ruleset:
     let
-      address_rules = if (builtins.length ruleset.addresses != 0) then
+      rs = ruleset;
+      ip = "ip -${rs.family}";
+      address_rules = if (builtins.length rs.addresses != 0) then
         (lib.concatMapStrings
           (address:
             ''
-              ip -${ruleset.family} rule add priority ${toString (ruleset.priority)} from ${address} lookup ${ruleset.interface}
+              ${ip} rule add priority ${toString (rs.priority)} from ${address} lookup ${rs.interface}
             '')
-          ruleset.addresses) else "";
-      gateway_rule = if (builtins.length ruleset.addresses != 0) then
+          rs.addresses) else "";
+      defroute = "default via ${rs.gateway} dev eth${rs.interface}";
+      gateway_rules = if (builtins.length rs.addresses != 0) then
         ''
-          ip -${ruleset.family} route add default via ${ruleset.gateway} table ${ruleset.interface} || true
+          ${ip} route add ${defroute} table ${rs.interface} || true
+          ${ip} route add ${defroute} metric ${toString rs.priority} || true
         '' else "";
     in
     ''
-      # policy routing rules for ${ruleset.interface}/IPv${ruleset.family}
+      # ${rs.interface}/IPv${rs.family}
+      ${ip} rule add priority ${
+        toString rs.priority} from all to ${rs.network} lookup ${
+        rs.interface}
+      ${ip} route add ${rs.network} dev eth${rs.interface} table ${rs.interface} || true
       ${address_rules}
-      ip -${ruleset.family} rule add priority ${toString ruleset.priority} from all to ${ruleset.network} lookup ${ruleset.interface}
-      ${gateway_rule}
+      ${gateway_rules}
     '';
 
   get_policy_routing = interfaces:
@@ -112,7 +117,7 @@ let
           (get_policy_routing_for_interface interfaces)
           (attrNames interfaces));
 
-  rt_tables = toFile "rt_tables" ''
+  rt_tables = ''
     # reserved values
     #
     255 local
@@ -126,22 +131,9 @@ let
       lib.mapAttrsToList (n : vlan : "${n} ${vlan}")
       cfg.static.vlans
     )}
-    '';
-
-  # default route
-  get_default_gateway = version_filter: interfaces:
-    (head
-    (sort
-      (ruleset_a: ruleset_b: lessThan ruleset_a.priority ruleset_b.priority)
-      (filter
-        (ruleset:
-         (ruleset.priority != null) &&
-         (version_filter ruleset.network))
-        (lib.concatMap
-          (get_policy_routing_for_interface interfaces)
-          (attrNames interfaces))))).gateway;
-
+  '';
 in
+
 {
 
   options = {
@@ -157,6 +149,7 @@ in
   };
 
   config = rec {
+    environment.etc."iproute2/rt_tables".text = rt_tables;
 
     services.udev.extraRules = (lib.concatStrings
       (lib.mapAttrsToList (n : vlan : ''
@@ -166,19 +159,6 @@ in
     );
 
     networking.domain = "gocept.net";
-
-    networking.defaultGateway =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp4 cfg.enc.parameters.interfaces
-      else null;
-    networking.defaultGateway6 =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp6 cfg.enc.parameters.interfaces
-      else null;
 
     # Only set nameserver if there is an enc set.
     networking.nameservers =
@@ -210,9 +190,6 @@ in
         lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
       then
         ''
-          mkdir -p /etc/iproute2
-          ln -sf ${rt_tables} /etc/iproute2/rt_tables
-
           ip -4 rule flush
           ip -4 rule add priority 32766 lookup main
           ip -4 rule add priority 32767 lookup default
@@ -228,19 +205,25 @@ in
     # firewall configuration: generic options
 
     # allow srv access for machines in the same RG
-    networking.firewall.allowPing = true;
-    networking.firewall.rejectPackets = true;
     networking.firewall.extraCommands =
       let
         addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
         rules = lib.optionalString
           (lib.hasAttr "ethsrv" networking.interfaces)
           (lib.concatMapStrings (a: ''
-            ${iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
+            ${fclib.iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
               } -j nixos-fw-accept
             '')
             addrs);
-      in "# Accept traffic within the same resource group.\n${rules}";
+      in ''
+        # Don't break the Internet - allow ICMP
+        iptables -A nixos-fw -p icmp -j nixos-fw-accept
+
+        # Accept traffic within the same resource group
+        ${rules}
+      '';
+    networking.firewall.rejectPackets = true;
+    networking.firewall.checkReversePath = false;
 
     # DHCP settings: never use implicitly, never do IPv4ll
     networking.useDHCP = false;

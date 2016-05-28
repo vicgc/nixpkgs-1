@@ -181,10 +181,12 @@ in {
       uptime = {
         notification = "Host was down";
         command = "check_uptime";
+        interval = 300;
       };
       users = {
-        notification = "Many users logged in";
+        notification = "Too many users logged in";
         command = "check_users -w 5 -c 10";
+        interval = 300;
       };
       systemd_units = {
         notification = "SystemD has failed units";
@@ -193,6 +195,7 @@ in {
       disk = {
         notification = "Disk usage too high";
         command = "${pkgs.fcsensuplugins}/bin/check_disk -v -w 90 -c 95";
+        interval = 300;
       };
       entropy = {
         notification = "Too little entropy available";
@@ -203,8 +206,8 @@ in {
         command = "check-dns.rb -d ${config.networking.hostName}.gocept.net";
       };
       journal = {
-        notification = "Errors in journal in the last hour";
-        command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -60minutes";
+        notification = "Errors in journal in the last 10 minutes";
+        command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -10minutes";
         interval = 600;
       };
       manage = {

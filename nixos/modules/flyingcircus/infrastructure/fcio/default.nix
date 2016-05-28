@@ -78,7 +78,6 @@ in
     else "default";
 
   services.openssh.permitRootLogin = "without-password";
-  services.journald.extraConfig = "SystemMaxUse=5%";
 
   fileSystems."/".device = "/dev/disk/by-label/root";
   fileSystems."/tmp".device = "/dev/disk/by-label/tmp";
@@ -121,7 +120,6 @@ in
   # Configure time keeping;
   services.ntp.enable = false;
   services.chrony.enable = true;
-
   services.chrony.servers = config.flyingcircus.static.ntpservers.${config.flyingcircus.enc.parameters.location};
-
+  environment.systemPackages = with pkgs; [ chrony ];
 }
