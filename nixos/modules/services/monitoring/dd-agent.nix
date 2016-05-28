@@ -80,9 +80,9 @@ let
     })
    cfg.additionalConfig;
 
-  additionalConfigStringEtc = concatStringsSep "\n"
+  additionalConfigDependencies =
     (map
-      (elem: "${elem.target}: ${elem.text}")
+      (elem: "/etc/dd-agent/conf.d/${elem.target}")
       additionalConfigEtc);
 
   etcfiles =
@@ -187,7 +187,7 @@ in {
         Restart = "always";
         RestartSec = 2;
       };
-      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigStringEtc ];
+      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigDependencies ];
     };
 
     systemd.services.dogstatsd = {
@@ -204,7 +204,7 @@ in {
         RestartSec = 2;
       };
       environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
-      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigStringEtc ];
+      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigDependencies ];
     };
 
     environment.etc = etcfiles;
