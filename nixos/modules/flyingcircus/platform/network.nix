@@ -205,8 +205,6 @@ in
     # firewall configuration: generic options
 
     # allow srv access for machines in the same RG
-    networking.firewall.allowPing = true;
-    networking.firewall.rejectPackets = true;
     networking.firewall.extraCommands =
       let
         addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
@@ -217,7 +215,15 @@ in
               } -j nixos-fw-accept
             '')
             addrs);
-      in "# Accept traffic within the same resource group.\n${rules}";
+      in ''
+        # Don't break the Internet - allow ICMP
+        iptables -A nixos-fw -p icmp -j nixos-fw-accept
+
+        # Accept traffic within the same resource group
+        ${rules}
+      '';
+    networking.firewall.rejectPackets = true;
+    networking.firewall.checkReversePath = false;
 
     # DHCP settings: never use implicitly, never do IPv4ll
     networking.useDHCP = false;

@@ -73,7 +73,7 @@ in
       # which is read in turn into a Nix attrset.
       params = builtins.fromJSON (builtins.readFile (
         stdenv.mkDerivation {
-          name = "computeExternalNetworkParams";
+          name = "external-network-params.json";
           # expects net4 and net6 as command line arguments, returns a JSON
           # containg all kinds of VxLAN/dnsmasq addresses/networks
           script = ''
@@ -100,7 +100,7 @@ in
         then "${cfg.enc.parameters.resource_group}.fcio.net"
         else "local";
 
-      dnsmasq = {
+      svc = {
         services.dnsmasq.enable = true;
         services.dnsmasq.extraConfig = ''
           dhcp-authoritative
@@ -115,20 +115,25 @@ in
           dhcp-range=${lib.concatStringsSep "," params.dhcp},24h
           domain=${domain}
           domain-needed
-          enable-ra
           interface=${tunneldev}
           local-ttl=60
+        '';
+
+        services.chrony.extraConfig = ''
+          allow 10.0.0.0/8
+          allow fde6:1c0f:70c3::/48
         '';
       };
 
       firewall = {
-        networking.firewall.allowedUDPPorts = [ 53 67 68 8472 ];
+        networking.firewall.allowedUDPPorts = [ 53 67 68 123 8472 ];
         networking.firewall.extraCommands = ''
           iptables -t nat -F POSTROUTING
           iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -o ethfe -j MASQUERADE
           ip6tables -t nat -F POSTROUTING
           ip6tables -t nat -A POSTROUTING -s fde6:1c0f:70c3::/48 -o ethfe -j MASQUERADE
         '';
+        boot.kernel.sysctl = { "net.ipv4.ip_forward" = true; };
       };
     in
       import ../../services/vxlan.nix {
@@ -136,10 +141,7 @@ in
         inherit (params) gw4 gw6;
         inherit tunneldev lib pkgs;
       }
-      // dnsmasq
+      // svc
       // firewall
-      // {
-        boot.kernel.sysctl = { "net.ipv4.ip_forward" = true; };
-      }
     );
 }
