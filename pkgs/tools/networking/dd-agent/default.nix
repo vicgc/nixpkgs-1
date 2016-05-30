@@ -24,6 +24,7 @@ stdenv.mkDerivation rec {
     pythonPackages.requests
     pythonPackages.pymongo
     pythonPackages.docker
+    pythonPackages.pymysql
   ];
   propagatedBuildInputs = [ python tornado ];
 
