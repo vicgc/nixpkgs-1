@@ -123,7 +123,8 @@ def memory_change(enc):
     if not enc_memory:
         return
     real_memory = real_memory_mb()
-    if abs(real_memory - enc_memory) < 128:
+    # XXX Needs inverstigation why it differs in the first place
+    if float(real_memory) / enc_memory > 0.9:
         return
     msg = 'Reboot to change memory from {} MiB to {} MiB'.format(
         real_memory, enc_memory)
