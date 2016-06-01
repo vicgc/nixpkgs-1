@@ -5,6 +5,7 @@
 { nixpkgs ? { outPath = ./..; revCount = 56789; shortRev = "gfedcba"; }
 , stableBranch ? false
 , supportedSystems ? [ "x86_64-linux" ] # no i686-linux
+, buildImage ? true
 }:
 
 with import ../lib;
@@ -40,7 +41,6 @@ let
   versionSuffix =
     (if stableBranch then "." else "pre") + "${toString (nixpkgs.revCount - 67824)}.${nixpkgs.shortRev}";
 
-in rec {
   # A bootable Flying Circus disk image (raw) that can be extracted onto
   # Ceph RBD volume.
   flyingcircus_vm_image =
@@ -68,6 +68,12 @@ in rec {
           ln -s $image/image.qcow2.bz2 $out/
         '');
 
+  flyingcircus_vm_image_build =
+    if buildImage
+    then { flyingcircus_vm_image = flyingcircus_vm_image; }
+    else {};
+
+in rec {
   nixos = {
     inherit (nixos')
       channel
@@ -169,9 +175,11 @@ in rec {
       let all = x: map (system: x.${system}) supportedSystems; in
       [ nixpkgs.tarball
         (all nixpkgs.jdk)
-        flyingcircus_vm_image
       ]
-      ++ lib.collect lib.isDerivation nixos;
+      ++ lib.collect lib.isDerivation nixos
+      ++ (if buildImage
+         then [flyingcircus_vm_image]
+         else []);
   });
 
-}
+} // flyingcircus_vm_image_build
