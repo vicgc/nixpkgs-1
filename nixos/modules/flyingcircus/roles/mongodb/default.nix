@@ -48,6 +48,9 @@ in
       echo always > /sys/kernel/mm/transparent_hugepage/defrag
   '';
 
+  systemd.services.mongodb.serviceConfig.LimitNOFILE = 64000;
+  systemd.services.mongodb.serviceConfig.LimitNPROC = 32000;
+
   users.users.mongodb = {
     shell = "/run/current-system/sw/bin/bash";
     home = "/srv/mongodb";
