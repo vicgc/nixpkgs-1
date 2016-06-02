@@ -16,6 +16,7 @@ in
   imports =
     [
      ./compat.nix
+     ./datadog.nix
      ./dovecot.nix
      ./generic.nix
      ./haproxy.nix
