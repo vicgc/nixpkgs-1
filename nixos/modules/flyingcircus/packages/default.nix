@@ -29,5 +29,7 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
+    mc = pkgs.callPackage ./mc.nix { };
+
   };
 }

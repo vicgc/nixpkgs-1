@@ -16,7 +16,10 @@ in
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable the Flying Circus mailserver *out* role.";
+        description = ''
+          Enable the Flying Circus mailserver out role and configure
+          mailout on all nodes in this RG/location.
+        '';
       };
 
     };

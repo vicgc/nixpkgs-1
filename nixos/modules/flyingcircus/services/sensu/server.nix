@@ -19,13 +19,6 @@ let
   sensu_server_json = pkgs.writeText "sensu-server.json"
     ''
     {
-      "mailer": {
-        "mail_from": "admin@flyingcircus.io",
-        "mail_to": "admin@flyingcircus.io",
-        "smtp_address": "mail.gocept.net",
-        "smtp_port": "25",
-        "smtp_domain": "flyingcircus.io"
-      },
       "rabbitmq": {
         "host": "${config.networking.hostName}.gocept.net",
         "user": "sensu-server",
@@ -33,18 +26,12 @@ let
         "vhost": "/sensu"
       },
       "handlers": {
-        "mailer": {
-          "type": "pipe",
-          "command": "${pkgs.sensu}/bin/handler-mailer.rb"
-        },
         "directory": {
           "type": "pipe",
           "command": "/var/setuid-wrappers/sudo ${directory_handler}"
         },
         "default": {
-          "handlers": [
-            "mailer"
-          ],
+          "handlers": [],
           "type": "set"
         }
       }

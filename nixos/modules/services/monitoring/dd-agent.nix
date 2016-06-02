@@ -72,7 +72,19 @@ let
   postgresqlConfig = pkgs.writeText "postgres.yaml" cfg.postgresqlConfig;
   nginxConfig = pkgs.writeText "nginx.yaml" cfg.nginxConfig;
   mongoConfig = pkgs.writeText "mongo.yaml" cfg.mongoConfig;
-  
+
+  additionalConfigEtc = mapAttrsToList
+    (name: value: {
+      text = value;
+      target = "dd-agent/conf.d/" + name;
+    })
+   cfg.additionalConfig;
+
+  additionalConfigDependencies =
+    (map
+      (elem: "/etc/dd-agent/conf.d/${elem.target}")
+      additionalConfigEtc);
+
   etcfiles =
     [ { source = ddConf;
         target = "dd-agent/datadog.conf";
@@ -94,7 +106,8 @@ let
     (optional (cfg.mongoConfig != null)
       { source = mongoConfig;
         target = "dd-agent/conf.d/mongo.yaml";
-      });
+      }) ++
+    additionalConfigEtc;
 
 in {
   options.services.dd-agent = {
@@ -141,6 +154,13 @@ in {
       default = null;
       type = types.uniq (types.nullOr types.string);
     };
+
+    additionalConfig = mkOption {
+      description = "Mapping of filename -> data for arbitrary .yaml files.";
+      default = {};
+      type = types.attrs;
+    };
+
   };
 
   config = mkIf cfg.enable {
@@ -167,7 +187,7 @@ in {
         Restart = "always";
         RestartSec = 2;
       };
-      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig ];
+      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigDependencies ];
     };
 
     systemd.services.dogstatsd = {
@@ -184,7 +204,7 @@ in {
         RestartSec = 2;
       };
       environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
-      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig ];
+      restartTriggers = [ pkgs.dd-agent ddConf diskConfig networkConfig postgresqlConfig nginxConfig mongoConfig additionalConfigDependencies ];
     };
 
     environment.etc = etcfiles;

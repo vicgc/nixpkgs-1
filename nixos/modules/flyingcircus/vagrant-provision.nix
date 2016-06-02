@@ -11,6 +11,11 @@ with config;
 
   flyingcircus.network.policy_routing.enable = false;
 
+  swapDevices = [
+    { device = "/var/swapfile";
+      size = 2048; }
+  ];
+
   flyingcircus.enc = {
     parameters = {
       location = "vagrant";
