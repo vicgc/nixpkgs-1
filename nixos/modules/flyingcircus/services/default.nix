@@ -11,6 +11,5 @@
      ./sensu/client.nix
      ./sensu/server.nix
      ./sensu/uchiwa.nix
-     ./ssmtp.nix
     ];
 }
