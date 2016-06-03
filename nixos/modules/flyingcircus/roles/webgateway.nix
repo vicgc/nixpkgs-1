@@ -1,7 +1,7 @@
-{ config, lib, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }:
 
+with lib;
 {
-
   options = {
 
     flyingcircus.roles.webgateway = {
