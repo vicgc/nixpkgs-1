@@ -20,5 +20,14 @@ in
 
     networking.defaultMailServer.root = "admin@flyingcircus.io";
     networking.defaultMailServer.domain = "fcio.net";
+
+    # Other parts of nixos (cron, mail) expect a suidwrapper for sendmail.
+    services.mail.sendmailSetuidWrapper = {
+      group = "root";
+      owner = "root";
+      permissions = "u+rx,g+x,o+x";
+      program = "sendmail";
+      setgid = false;
+      setuid = false; };
   };
 }
