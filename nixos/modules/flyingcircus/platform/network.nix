@@ -225,11 +225,10 @@ in
         ''
         else "";
 
-    # firewall configuration: generic options
 
-    # allow srv access for machines in the same RG
-    networking.firewall.allowPing = true;
-    networking.firewall.rejectPackets = true;
+    # FC: allow srv access for machines in the same RG
+    # I'd like to move this into our firewall module but for some reason the
+    # access to networking.interfaces then fails. :/
     networking.firewall.extraCommands =
       let
         addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
@@ -240,7 +239,10 @@ in
               } -j nixos-fw-accept
             '')
             addrs);
-      in "# Accept traffic within the same resource group.\n${rules}";
+      in ''
+      # Accept traffic within the same resource group.
+      ${rules}
+      '';
 
     # DHCP settings: never use implicitly, never do IPv4ll
     networking.useDHCP = false;
