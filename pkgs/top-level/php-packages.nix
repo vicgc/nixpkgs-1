@@ -33,6 +33,21 @@ let self = with self; {
     buildInputs = with pkgs; [ pkgconfig cyrus_sasl ];
   };
 
+  mongodb = buildPecl {
+    name = "mongodb-1.1.7";
+    sha256 = "0jcvrxqpg8v5xn39hr2h49946nq5v5dhh1rgl117cfm5v5jbbgv5";
+
+    configureFlags = [
+      "--with-mongodb=${pkgs.mongodb}"
+    ];
+
+    buildInputs = [
+       pkgs.pkgconfig
+       pkgs.openssl
+    ];
+  };
+
+
   xdebug = buildPecl {
     name = "xdebug-2.3.1";
 
