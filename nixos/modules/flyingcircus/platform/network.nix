@@ -156,108 +156,124 @@ in
 
   };
 
-  config = rec {
+  config = lib.mkMerge [
+    {
+      # Generic network config for standard managed and in-transit nodes.
 
-    services.udev.extraRules = (lib.concatStrings
-      (lib.mapAttrsToList (n : vlan : ''
-        KERNEL=="eth*", ATTR{address}=="02:00:00:${
-          fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
-      '') cfg.static.vlans)
-    );
+      services.udev.extraRules = (lib.concatStrings
+        (lib.mapAttrsToList (n : vlan : ''
+          KERNEL=="eth*", ATTR{address}=="02:00:00:${
+            fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
+        '') cfg.static.vlans)
+      );
 
-    networking.domain = "gocept.net";
+      networking.domain = "gocept.net";
+      # firewall configuration: generic options
+      networking.firewall.allowPing = true;
+      networking.firewall.rejectPackets = true;
 
-    networking.defaultGateway =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp4 cfg.enc.parameters.interfaces
-      else null;
-    networking.defaultGateway6 =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_default_gateway fclib.isIp6 cfg.enc.parameters.interfaces
-      else null;
+      # DHCP settings: never use implicitly, never do IPv4ll
+      networking.useDHCP = false;
+      networking.dhcpcd.extraConfig = ''
+        # IPv4ll gets in the way if we really do not want
+        # an IPv4 address on some interfaces.
+        noipv4ll
+      '';
 
-    # Only set nameserver if there is an enc set.
-    networking.nameservers =
-      if lib.hasAttrByPath ["parameters" "location"] cfg.enc
-      then
-        if hasAttr cfg.enc.parameters.location cfg.static.nameservers
-        then cfg.static.nameservers.${cfg.enc.parameters.location}
-        else []
-      else [];
-    networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
+      boot.kernel.sysctl = {
+        "net.ipv4.ip_local_port_range" = "32768 60999";
+        "net.ipv4.ip_local_reserved_ports" = "61000-61999";
+        "net.ipv4.conf.all.accept_redirects" = 0;
+        "net.ipv4.conf.default.accept_redirects" = 0;
+        "net.ipv6.conf.all.accept_redirects" = 0;
+        "net.ipv6.conf.default.accept_redirects" = 0;
+      };
+    }
 
-    # If there is no enc data, we are probably not on FC platform.
-    networking.search =
-      if lib.hasAttrByPath ["parameters" "location"] cfg.enc
-      then ["${cfg.enc.parameters.location}.gocept.net"
-            "gocept.net"]
-      else [];
+    (lib.mkIf (!config.flyingcircus.enc.parameters.in_transit) rec {
+      # Standard, managed network config
 
-    # data structure for all configured interfaces with their IP addresses:
-    # { ethfe = { ... }; ethsrv = { }; ... }
-    networking.interfaces =
-      if lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then get_network_configuration cfg.enc.parameters.interfaces
-      else {};
+      networking.defaultGateway =
+        if
+          cfg.network.policy_routing.enable &&
+          lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
+        then get_default_gateway fclib.isIp4 cfg.enc.parameters.interfaces
+        else null;
+      networking.defaultGateway6 =
+        if
+          cfg.network.policy_routing.enable &&
+          lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
+        then get_default_gateway fclib.isIp6 cfg.enc.parameters.interfaces
+        else null;
 
-    networking.localCommands =
-      if
-        cfg.network.policy_routing.enable &&
-        lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
-      then
-        ''
-          mkdir -p /etc/iproute2
-          ln -sf ${rt_tables} /etc/iproute2/rt_tables
+      # Only set nameserver if there is an enc set.
+      networking.nameservers =
+        if lib.hasAttrByPath ["parameters" "location"] cfg.enc
+        then
+          if hasAttr cfg.enc.parameters.location cfg.static.nameservers
+          then cfg.static.nameservers.${cfg.enc.parameters.location}
+          else []
+        else [];
+      networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
 
-          ip -4 rule flush
-          ip -4 rule add priority 32766 lookup main
-          ip -4 rule add priority 32767 lookup default
+      # If there is no enc data, we are probably not on FC platform.
+      networking.search =
+        if lib.hasAttrByPath ["parameters" "location"] cfg.enc
+        then ["${cfg.enc.parameters.location}.gocept.net"
+              "gocept.net"]
+        else [];
 
-          ip -6 rule flush
-          ip -6 rule add priority 32766 lookup main
-          ip -6 rule add priority 32767 lookup default
+      # data structure for all configured interfaces with their IP addresses:
+      # { ethfe = { ... }; ethsrv = { }; ... }
+      networking.interfaces =
+        if lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
+        then get_network_configuration cfg.enc.parameters.interfaces
+        else {};
 
-          ${lib.concatStrings (get_policy_routing cfg.enc.parameters.interfaces)}
-        ''
-        else "";
+      networking.localCommands =
+        if
+          cfg.network.policy_routing.enable &&
+          lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
+        then
+          ''
+            mkdir -p /etc/iproute2
+            ln -sf ${rt_tables} /etc/iproute2/rt_tables
 
-    # firewall configuration: generic options
+            ip -4 rule flush
+            ip -4 rule add priority 32766 lookup main
+            ip -4 rule add priority 32767 lookup default
 
-    # allow srv access for machines in the same RG
-    networking.firewall.allowPing = true;
-    networking.firewall.rejectPackets = true;
-    networking.firewall.extraCommands =
-      let
-        addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
-        rules = lib.optionalString
-          (lib.hasAttr "ethsrv" networking.interfaces)
-          (lib.concatMapStrings (a: ''
-            ${iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
-              } -j nixos-fw-accept
-            '')
-            addrs);
-      in "# Accept traffic within the same resource group.\n${rules}";
+            ip -6 rule flush
+            ip -6 rule add priority 32766 lookup main
+            ip -6 rule add priority 32767 lookup default
 
-    # DHCP settings: never use implicitly, never do IPv4ll
-    networking.useDHCP = false;
-    networking.dhcpcd.extraConfig = ''
-      # IPv4ll gets in the way if we really do not want
-      # an IPv4 address on some interfaces.
-      noipv4ll
-    '';
+            ${lib.concatStrings (get_policy_routing cfg.enc.parameters.interfaces)}
+          ''
+          else "";
 
-    boot.kernel.sysctl = {
-      "net.ipv4.ip_local_port_range" = "32768 60999";
-      "net.ipv4.ip_local_reserved_ports" = "61000-61999";
-      "net.ipv4.conf.all.accept_redirects" = 0;
-      "net.ipv4.conf.default.accept_redirects" = 0;
-      "net.ipv6.conf.all.accept_redirects" = 0;
-      "net.ipv6.conf.default.accept_redirects" = 0;
-    };
+      # allow srv access for machines in the same RG
+      networking.firewall.extraCommands =
+        let
+          addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
+          rules = lib.optionalString
+            (lib.hasAttr "ethsrv" networking.interfaces)
+            (lib.concatMapStrings (a: ''
+              ${iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
+                } -j nixos-fw-accept
+              '')
+              addrs);
+        in "# Accept traffic within the same resource group.\n${rules}";
+    })
 
-  };
+    (lib.mkIf (config.flyingcircus.enc.parameters.in_transit) {
+      # In-transit network config
+      #
+      # We really don't much care about "correct" configuration. We want
+      # SRV to be reasonably functional.
+      #
+      # At the moment this is only for VMs. For physical machines we'd want this
+      # to be MGM.
+      networking.interfaces.ethsrv.useDHCP = true;
+    })
+  ];
 }
