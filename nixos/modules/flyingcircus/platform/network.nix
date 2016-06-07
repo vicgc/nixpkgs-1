@@ -202,9 +202,10 @@ in
         ''
         else "";
 
-    # firewall configuration: generic options
 
-    # allow srv access for machines in the same RG
+    # FC: allow srv access for machines in the same RG
+    # I'd like to move this into our firewall module but for some reason the
+    # access to networking.interfaces then fails. :/
     networking.firewall.extraCommands =
       let
         addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
@@ -216,14 +217,9 @@ in
             '')
             addrs);
       in ''
-        # Don't break the Internet - allow ICMP
-        iptables -A nixos-fw -p icmp -j nixos-fw-accept
-
-        # Accept traffic within the same resource group
-        ${rules}
+      # Accept traffic within the same resource group.
+      ${rules}
       '';
-    networking.firewall.rejectPackets = true;
-    networking.firewall.checkReversePath = false;
 
     # DHCP settings: never use implicitly, never do IPv4ll
     networking.useDHCP = false;
