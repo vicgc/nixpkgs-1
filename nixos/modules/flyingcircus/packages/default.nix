@@ -21,6 +21,7 @@
 
     mc = pkgs.callPackage ./mc.nix { };
     mongodb32 = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+    graylog = pkgs.callPackage ./graylog.nix { };
 
     nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
 
