@@ -44,6 +44,7 @@
     mc = pkgs.callPackage ./mc.nix { };
     mailx = pkgs.callPackage ./mailx.nix { };
     mongodb32 = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+    graylog = pkgs.callPackage ./graylog.nix { };
 
     nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
 
