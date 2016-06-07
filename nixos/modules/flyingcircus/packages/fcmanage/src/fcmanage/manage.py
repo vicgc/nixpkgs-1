@@ -150,6 +150,9 @@ def build_channel(build_options):
         subprocess.check_call(['nix-channel', '--update'])
         subprocess.check_call(
             ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
+        subprocess.check_call(
+            ['systemctl', 'isolate', 'multi-user.target'])
+
     except Exception:
         logging.exception('Error switching channel ')
 
@@ -163,6 +166,8 @@ def build_dev(build_options):
     subprocess.check_call(
         ['nixos-rebuild', '-I', 'nixpkgs=/root/nixpkgs', 'switch'] +
         build_options)
+    subprocess.check_call(
+        ['systemctl', 'isolate', 'multi-user.target'])
 
 
 def maintenance():
