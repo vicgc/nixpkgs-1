@@ -21,8 +21,6 @@
 
     powerdns = pkgs.callPackage ./powerdns.nix { };
 
-    proftpd = pkgs.callPackage ./proftpd.nix { };
-
     qemu = pkgs.callPackage ./qemu-2.5.nix {
       inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
       x86Only = true;
