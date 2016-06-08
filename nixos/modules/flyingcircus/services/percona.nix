@@ -31,6 +31,14 @@ let
     ${cfg.extraOptions}
   '';
 
+  mysqlInit =
+    if versionAtLeast mysql.mysqlVersion "5.7"
+    then
+        "${mysql}/bin/mysqld --initialize-insecure ${mysqldOptions}"
+      else
+        "${pkgs.perl}/bin/perl ${mysql}/bin/mysql_install_db ${mysqldOptions}";
+
+
 in
 
 {
@@ -171,7 +179,7 @@ in
             if ! test -e ${cfg.dataDir}/mysql; then
                 mkdir -m 0700 -p ${cfg.dataDir}
                 chown -R ${cfg.user} ${cfg.dataDir}
-                ${mysql}/bin/mysqld --initialize-insecure ${mysqldOptions}
+                ${mysqlInit}
                 touch /tmp/mysql_init
             fi
 
