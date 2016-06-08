@@ -60,6 +60,14 @@ in
         '';
       };
 
+      package = mkOption {
+        type = types.package;
+        example = literalExample "pkgs.percona";
+        description = "Which MySQL derivation to use.";
+        default = pkgs.percona;
+      };
+
+
     };
 
   };
@@ -68,7 +76,7 @@ in
 
     services.percona = {
       enable = true;
-      package = pkgs.percona;
+      package = cfg.package;
       rootPassword = root_password_file;
       dataDir = "/srv/mysql";
       extraOptions = ''
