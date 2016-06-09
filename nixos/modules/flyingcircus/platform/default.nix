@@ -163,6 +163,7 @@ in
         bc
         bind
         bundler
+        certbot
         curl
         cyrus_sasl
         db

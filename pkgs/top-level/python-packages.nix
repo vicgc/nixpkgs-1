@@ -16,6 +16,8 @@ let
 
   buildPythonPackage = makeOverridable (callPackage ../development/python-modules/generic { });
 
+  buildPythonApplication = args: buildPythonPackage ({namePrefix="";} // args );
+
   # Unique python version identifier
   pythonName =
     if isPy26 then "python26" else
@@ -34,7 +36,7 @@ let
 
   pythonPackages = modules // {
 
-  inherit python isPy26 isPy27 isPy33 isPy34 isPyPy isPy3k pythonName buildPythonPackage;
+  inherit python isPy26 isPy27 isPy33 isPy34 isPyPy isPy3k pythonName buildPythonPackage buildPythonApplication;
 
   # helpers
 
@@ -81,6 +83,20 @@ let
   setuptools = callPackage ../development/python-modules/setuptools { };
 
   # packages defined elsewhere
+
+  acme = buildPythonPackage rec {
+    inherit (pkgs.certbot) src version;
+
+    name = "acme-${version}";
+
+    propagatedBuildInputs = with self; [
+      cryptography pyasn1 pyopenssl pyRFC3339 pytz requests2 six werkzeug mock
+      ndg-httpsclient
+    ];
+
+    buildInputs = with self; [ nose ];
+    postUnpack = "sourceRoot=\${sourceRoot}/acme";
+  };
 
   blivet = callPackage ../development/python-modules/blivet { };
 
@@ -4325,6 +4341,30 @@ let
     };
   };
 
+  ndg-httpsclient = buildPythonPackage rec {
+     version = "0.4.0";
+     name = "ndg-httpsclient-${version}";
+
+     propagatedBuildInputs = with self; [ pyopenssl ];
+
+     src = pkgs.fetchFromGitHub {
+       owner = "cedadev";
+       repo = "ndg_httpsclient";
+       rev = "v${version}";
+       sha256 = "1prv4j3wcy9kl5ndd5by543xp4cji9k35qncsl995w6sway34s1a";
+     };
+
+     # uses networking
+     doCheck = false;
+
+     meta = {
+       homepage = https://github.com/cedadev/ndg_httpsclient/;
+       description = "Provide enhanced HTTPS support for httplib and urllib2 using PyOpenSSL";
+       license = licenses.bsd2;
+       maintainers = with maintainers; [ DamienCassou ];
+     };
+   };
+
   netcdf4 = buildPythonPackage rec {
     name = "netCDF4-${version}";
     version = "1.1.8";
@@ -6149,6 +6189,61 @@ let
       maintainers = with maintainers; [ iElectric ];
     };
   });
+
+  python2-pythondialog = buildPythonPackage rec {
+    name = "python2-pythondialog-${version}";
+    version = "3.3.0";
+    disabled = !isPy27;
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/python2-pythondialog/python2-pythondialog-${version}.tar.gz";
+      sha256 = "1yhkagsh99bfi592ymczf8rnw8rk6n9hdqy3dd98m3yrx8zmjvry";
+    };
+
+    patchPhase = ''
+      substituteInPlace dialog.py ":/bin:/usr/bin" ":$out/bin"
+    '';
+
+    meta = with stdenv.lib; {
+      homepage = "http://pythondialog.sourceforge.net/";
+    };
+  };
+
+  pyRFC3339 = buildPythonPackage rec {
+    name = "pyRFC3339-${version}";
+    version = "0.2";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/pyRFC3339/pyRFC3339-${version}.tar.gz";
+      sha256 = "1pp648xsjaw9h1xq2mgwzda5wis2ypjmzxlksc1a8grnrdmzy155";
+    };
+
+    propagatedBuildInputs = with self; [ pytz ];
+    buildInputs = with self; [ nose ];
+  };
+
+  ConfigArgParse = buildPythonPackage rec {
+    name = "ConfigArgParse-${version}";
+    version = "0.9.3";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/C/ConfigArgParse/ConfigArgParse-${version}.tar.gz";
+      sha256 = "0a984pvv7370yz7zbkl6s6i7yyl9myahx0m9jkjvg3hz5q8mf70l";
+    };
+
+    # no tests in tarball
+    doCheck = false;
+    propagatedBuildInputs = with self; [
+
+    ];
+    buildInputs = with self; [
+
+    ];
+
+    meta = with stdenv.lib; {
+      homepage = "https://github.com/zorro3/ConfigArgParse";
+    };
+  };
 
   jsonschema = buildPythonPackage (rec {
     version = "2.4.0";
@@ -10166,6 +10261,26 @@ let
     };
   };
 
+  psutil3 = buildPythonPackage rec {
+    name = "psutil-${version}";
+    version = "3.4.2";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/psutil/${name}.tar.gz";
+      sha256 = "b17fa01aa766daa388362d0eda5c215d77e03a8d37676b68971f37bf3913b725";
+    };
+
+    # Certain tests fail due to being in a chroot.
+    # See also the older issue: https://code.google.com/p/psutil/issues/detail?id=434
+    doCheck = false;
+
+    buildInputs = with self; [ mock ] ++ optionals stdenv.isDarwin [ pkgs.darwin.IOKit ];
+
+    meta = {
+      description = "Process and system utilization information interface for python";
+      homepage = http://code.google.com/p/psutil/;
+    };
+  };
 
   psycopg2 = buildPythonPackage rec {
     name = "psycopg2-2.5.4";
@@ -13728,7 +13843,7 @@ let
       homepage = "https://www.github.com/statsmodels/statsmodels";
       license = licenses.bsd3;
     };
-    
+
     # Many tests fail when using latest numpy and pandas.
     # See also https://github.com/statsmodels/statsmodels/issues/2602
     doCheck = false;

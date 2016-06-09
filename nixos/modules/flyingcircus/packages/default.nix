@@ -10,6 +10,8 @@
 
     boost159 = pkgs.callPackage ./boost-1.59.nix { };
 
+    certbot = pkgs.callPackage ./certbot.nix { };
+
     easyrsa3 = pkgs.callPackage ./easyrsa { };
 
     fcmaintenance = pkgs.callPackage ./fcmaintenance { };
