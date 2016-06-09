@@ -1,3 +1,5 @@
+"""Calculates Memory from dmidecode"""
+
 import string
 from subprocess import check_output
 
