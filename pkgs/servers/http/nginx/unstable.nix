@@ -79,7 +79,8 @@ stdenv.mkDerivation rec {
   LUAJIT_LIB = if ngx_lua then "${luajit}/lib" else "";
   LUAJIT_INC = if ngx_lua then "${luajit}/include/luajit-2.0" else "";
 
-  patches = if syslog then [ "${syslog-ext}/syslog-1.5.6.patch" ] else [];
+  patches = [ ./nginx-vuln-1.3.9-1.9.12.patch ]
+  ++ (if syslog then [ "${syslog-ext}/syslog-1.5.6.patch" ] else []);
 
   configureFlags = [
     "--with-http_ssl_module"
