@@ -51,6 +51,12 @@ in
         gopricing = "cd /home/pricing && sudo -u s-blackbee bash";
     };
 
+    systemd.extraConfig = ''
+      DefaultLimitNOFILE=64000
+      DefaultLimitNPROC=64173
+      DefaultLimitSIGPENDING=64173
+    '';
+
   };
 
 }
