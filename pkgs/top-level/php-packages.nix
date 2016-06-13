@@ -47,6 +47,19 @@ let self = with self; {
     ];
   };
 
+  ssh2 =  buildPecl {
+    name = "ssh2-0.13";
+    sha256 = "1gn1wqi3b4awmk0g701rrgj622lp9bm0dpx8v2y3cnqbhjmvhb6b";
+
+    configureFlags = [
+      "--with-ssh2=${pkgs.libssh2}"
+    ];
+
+    buildInputs = [
+       pkgs.libssh2
+    ];
+  };
+
 
   xdebug = buildPecl {
     name = "xdebug-2.3.1";
