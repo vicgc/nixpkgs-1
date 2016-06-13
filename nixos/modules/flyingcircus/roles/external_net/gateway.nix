@@ -16,6 +16,7 @@ in
 {
   options = {
     flyingcircus.roles.external_net = {
+
       enable = lib.mkEnableOption {
         description = "Enable the Flying Circus external network gateway role";
       };
@@ -23,8 +24,9 @@ in
       vxlan = {
         vid = lib.mkOption {
           description = "VxLAN ID";
-          type = types.int;
+          type = types.nullOr types.int;
           example = 2;
+          default = null;
         };
 
         net4 = lib.mkOption {
@@ -60,7 +62,9 @@ in
     };
   };
 
-  config = lib.mkIf cfg.roles.external_net.enable (
+  config = lib.mkIf (
+      cfg.roles.external_net.enable &&
+      cfg.roles.external_net.vxlan.vid != null) (
     let
       vxlan_cfg = cfg.roles.external_net.vxlan;
       net4 = vxlan_cfg.net4;
