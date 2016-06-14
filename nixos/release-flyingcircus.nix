@@ -94,7 +94,12 @@ in rec {
       flyingcircus = {
             percona = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.callPackage ./modules/flyingcircus/packages/percona/percona.nix { };
                   inherit system; });
+            percona_56 = hydraJob
+                (import modules/flyingcircus/tests/percona.nix {
+                    percona = pkgs.callPackage ./modules/flyingcircus/packages/percona/percona_56.nix { };
+                    inherit system; });
             sensuserver = hydraJob
               (import modules/flyingcircus/tests/sensu.nix {
                   inherit system; });
