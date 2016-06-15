@@ -6,6 +6,7 @@
 , stableBranch ? false
 , supportedSystems ? [ "x86_64-linux" ] # no i686-linux
 , buildImage ? true
+, buildInstaller ? true
 }:
 
 with import ../lib;
@@ -73,6 +74,18 @@ let
     then { flyingcircus_vm_image = flyingcircus_vm_image; }
     else {};
 
+  installer = {
+    inherit (nixos'.tests.installer)
+      lvm
+      separateBoot
+      simple;
+  };
+
+  installer_build =
+    if buildInstaller
+    then { installer = installer; }
+    else {};
+
 in rec {
   nixos = {
     inherit (nixos')
@@ -119,12 +132,7 @@ in rec {
           sit
           vlan;
       };
-      installer = {
-        inherit (nixos'.tests.installer)
-          lvm
-          separateBoot
-          simple;
-      };
+
       latestKernel = {
         inherit (nixos'.tests.latestKernel)
           login;
@@ -182,4 +190,6 @@ in rec {
          else []);
   });
 
-} // flyingcircus_vm_image_build
+}
+// flyingcircus_vm_image_build
+// installer_build
