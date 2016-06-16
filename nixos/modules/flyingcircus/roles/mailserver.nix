@@ -7,6 +7,12 @@ let
   cfg = config.flyingcircus;
   fclib = import ../lib;
 
+  mail_out_service = lib.findFirst
+    (s: s.service == "mailserver-mailout")
+    null
+    config.flyingcircus.enc_services;
+
+
 in
 {
   options = {
@@ -25,14 +31,36 @@ in
     };
   };
 
-  config = mkIf cfg.roles.mailserver.enable {
-    services.postfix.enable = true;
+  config = mkMerge [
+    (mkIf cfg.roles.mailserver.enable {
+      services.postfix.enable = true;
 
-    # Allow all networks on the SRV interface. We expect only trusted machines
-    # can reach us there (firewall).
-    services.postfix.networks =
-      if cfg.enc.parameters.interfaces ? srv
-      then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
-      else [];
-  };
+      # Allow all networks on the SRV interface. We expect only trusted machines
+      # can reach us there (firewall).
+      services.postfix.networks =
+        if cfg.enc.parameters.interfaces ? srv
+        then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
+        else [];
+    })
+
+    (mkIf (!cfg.roles.mailserver.enable &&
+           mail_out_service != null) {
+
+      networking.defaultMailServer.directDelivery = true;
+      networking.defaultMailServer.hostName = mail_out_service.address;
+
+      networking.defaultMailServer.root = "admin@flyingcircus.io";
+      networking.defaultMailServer.domain = "fcio.net";
+
+      # Other parts of nixos (cron, mail) expect a suidwrapper for sendmail.
+      services.mail.sendmailSetuidWrapper = {
+        group = "root";
+        owner = "root";
+        permissions = "u+rx,g+x,o+x";
+        program = "sendmail";
+        setgid = false;
+        setuid = false; };
+
+    })
+  ];
 }
