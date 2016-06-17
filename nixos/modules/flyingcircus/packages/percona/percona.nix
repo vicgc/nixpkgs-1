@@ -4,11 +4,11 @@
 
 stdenv.mkDerivation rec {
   name = "percona-${version}";
-  version = "5.7.10-3";
+  version = "5.7.12-5";
 
   src = fetchurl {
-    url = "https://www.percona.com/downloads/Percona-Server-5.7/Percona-Server-5.7.10-3/source/tarball/percona-server-5.7.10-3.tar.gz";
-    sha256 = "15xvrz33q7cg6ygc3pi269f73w20zbmpvcayspdawh658bwhb3nj";
+    url = "https://www.percona.com/downloads/Percona-Server-5.7/Percona-Server-${version}/source/tarball/percona-server-${version}.tar.gz";
+    sha256 = "1840b60878c2a11538c1a8793d8679c538c796ec840fedf191716149f381fada";
   };
 
   preConfigure = stdenv.lib.optional stdenv.isDarwin ''
