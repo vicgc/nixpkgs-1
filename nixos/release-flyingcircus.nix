@@ -144,6 +144,7 @@ in rec {
       nodejs
       openssh
       php
+      php55
       postgresql92
       postgresql93
       postgresql94
