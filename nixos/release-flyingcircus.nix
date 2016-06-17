@@ -138,7 +138,8 @@ in rec {
           login;
       };
     };
-  };
+  }
+  // installer_build;
 
   nixpkgs = {
     inherit (nixpkgs')
@@ -191,4 +192,3 @@ in rec {
 
 }
 // flyingcircus_vm_image_build
-// installer_build
