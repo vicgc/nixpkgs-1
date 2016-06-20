@@ -1,4 +1,9 @@
-{ pkgs, python3Packages, nix }:
+{ pkgs ? import <nixpkgs> { }
+, python3Packages ? pkgs.python3Packages
+, fcmaintenance ? import ../fcmaintenance { inherit pkgs; }
+, fcutil ? import ../fcutil { inherit pkgs; }
+, nix
+}:
 
 python3Packages.buildPythonPackage rec {
   name = "fc-manage-${version}";
@@ -19,9 +24,8 @@ python3Packages.buildPythonPackage rec {
       xfsprogs
     ];
   checkPhase = ''
-    runHook preCheck
-
-    ${python}/bin/py.test
-
-    runHook postCheck
+    export PYTHONPATH="${src}/src:$PYTHONPATH"
+    py.test
+  '';
+  #doCheck = false;
 }
