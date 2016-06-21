@@ -75,12 +75,16 @@ in
 
 
   flyingcircus.services.sensu-client.checks = {
-      mongodb = {
-       notification = "MongoDB alive";
-       command =  "/var/setuid-wrappers/sudo -u mongodb ${mongo_check}/bin/check_mongo -d mongodb";
-     };
+    mongodb = {
+     notification = "MongoDB alive";
+     command =  "/var/setuid-wrappers/sudo -u mongodb ${mongo_check}/bin/check_mongo -d mongodb";
+   };
   };
 
+  flyingcircus.services.sensu-client.expectedConnections = {
+    warning = 60000;
+    critical = 63000;
   };
 
+};
 }

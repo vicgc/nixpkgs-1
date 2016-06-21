@@ -113,6 +113,22 @@ in {
           Extra options used when launching sensu.
         '';
       };
+      expectedConnections = {
+        warning = mkOption {
+          type = types.int;
+          description = ''
+            Set the warning limit for connections on this host.
+          '';
+          default = 500;
+        };
+        critical = mkOption {
+          type = types.int;
+          description = ''
+            Set the critical limit for connections on this host.
+          '';
+          default = 1000;
+        };
+      };
     };
   };
 
@@ -219,7 +235,7 @@ in {
       };
       netstat_tcp = {
         notification = "Netstat TCP connections";
-        command = "check-netstat-tcp.rb";
+        command = "check-netstat-tcp.rb -w ${toString cfg.expectedConnections.warning} -c ${toString cfg.expectedConnections.critical}";
       };
       ethsrv_mtu = {
         notification = "ethsrv MTU @ 1500";
