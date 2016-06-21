@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }: with lib;
 
 let
-  cfg = config.flyingcircus.roles.varnish;
+  cfg = config.flyingcircus.roles.webproxy;
 
   nonEmptyString = string: if stringLength string > 0 then true else false;
   configFromFile = file: default:
@@ -25,7 +25,7 @@ in
 
   options = {
 
-    flyingcircus.roles.varnish = {
+    flyingcircus.roles.webproxy = {
 
       enable = mkOption {
         type = types.bool;
