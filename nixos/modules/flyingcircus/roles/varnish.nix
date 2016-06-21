@@ -1,6 +1,8 @@
 { config, lib, pkgs, ... }: with lib;
 
 let
+  cfg = config.flyingcircus.roles.varnish;
+
   nonEmptyString = string: if stringLength string > 0 then true else false;
   configFromFile = file: default:
     findFirst (nonEmptyString) default [
@@ -8,14 +10,13 @@ let
        then builtins.readFile file
        else "")
       ];
-
-varnishCfg = configFromFile /etc/varnish/default.vcl
-  ''
-  vcl 4.0;
-  backend test {
-    .host = "127.0.0.1";
-    .port = "8080";
-  }
+  varnishCfg = configFromFile /etc/local/varnish/default.vcl example;
+  example = ''
+    vcl 4.0;
+    backend test {
+      .host = "127.0.0.1";
+      .port = "8080";
+    }
   '';
 
 in
@@ -36,25 +37,26 @@ in
 
   };
 
-  config = mkIf config.flyingcircus.roles.varnish.enable {
+  config = mkIf cfg.enable {
 
     services.varnish.enable = true;
     services.varnish.http_address = "localhost:8008";
     services.varnish.config = varnishCfg;
 
-    jobs.fcio-stubs-varnish = {
-      description = "Create FC IO stubs for varnish.";
-      task = true;
+    system.activationScripts.varnish = ''
+      install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
+    '';
 
-      startOn = "started networking";
 
-      script =
-      ''
-      install -d -o vagrant /etc/varnish
-      touch /etc/varnish/default.vcl
-      chown vagrant: /etc/varnish/default.vcl
+    environment.etc = {
+      "local/varnish/README.txt".text = ''
+        Varnish is enabled on this machine.
+
+        Varnish is listening on: ${config.services.varnish.http_address}
+
+        Put your configuration into `default.vcl`.
       '';
+      "local/varnish/default.vcl.example".text = example;
     };
-
   };
 }
