@@ -12,8 +12,23 @@ let
     null
     config.flyingcircus.enc_services;
 
-  export = "/srv/nfs/share";
-  mount_point = "/mnt/nfs/share";
+  export = "/srv/nfs/shared";
+  mount_point = "/mnt/nfs/shared";
+
+  service_clients = filter
+    (s: s.service == "nfs_rg_share-server")
+    config.flyingcircus.enc_service_clients;
+
+  # This is a bit different than on Gentoo. We allow export to all nodes in the
+  # RG, regardles of the node actually being a client.
+  export_to_clients =
+    let
+      flags = "rw,sync,root_squash,no_subtree_check";
+    in
+      lib.concatStringsSep " "
+        (map
+          (s: "${s.node}(${flags})")
+          service_clients);
 
 in
 {
@@ -53,7 +68,7 @@ in
     (mkIf cfg.nfs_rg_client.enable {
       # mount service.address
       fileSystems = {
-        "/mnt/nfs/share" = {
+        "${mount_point}" = {
           device = "${service.address}:${export}";
           fsType = "nfs";
           options = "intr,soft,bg,rsize=8192,wsize=8192";
@@ -66,6 +81,14 @@ in
     })
 
     (mkIf cfg.nfs_rg_share.enable {
+      services.nfs.server.enable = true;
+      services.nfs.server.exports = ''
+        ${export}  ${export_to_clients}
+      '';
+
+      system.activationScripts.nfs_rg_share = ''
+        install -d -g service -m 775 ${export}
+      '';
     })
   ];
 }
