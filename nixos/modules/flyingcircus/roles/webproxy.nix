@@ -5,13 +5,9 @@ let
 
   nonEmptyString = string: if stringLength string > 0 then true else false;
   configFromFile = file: default:
-    findFirst (nonEmptyString) default [
-      (if (builtins.pathExists file)
-       then builtins.readFile file
-       else "")
-      ];
-  varnishCfg = configFromFile /etc/local/varnish/default.vcl example;
-  example = ''
+    if builtins.pathExists file then builtins.readFile file else default;
+  varnishCfg = configFromFile /etc/local/varnish/default.vcl vcl_example;
+  vcl_example = ''
     vcl 4.0;
     backend test {
       .host = "127.0.0.1";
@@ -47,7 +43,6 @@ in
       install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
     '';
 
-
     environment.etc = {
       "local/varnish/README.txt".text = ''
         Varnish is enabled on this machine.
@@ -56,7 +51,7 @@ in
 
         Put your configuration into `default.vcl`.
       '';
-      "local/varnish/default.vcl.example".text = example;
+      "local/varnish/default.vcl.example".text = vcl_example;
     };
   };
 }
