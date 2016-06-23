@@ -14,7 +14,8 @@ python3Packages.buildPythonPackage rec {
 
   buildInputs = with pkgs.python3Packages; [ covCore pytest pytestcov ];
   propagatedBuildInputs = with pkgs;
-    [ fcmaintenance
+    [ dmidecode
+      fcmaintenance
       fcutil
       gptfdisk
       lvm2
@@ -27,5 +28,4 @@ python3Packages.buildPythonPackage rec {
     export PYTHONPATH="${src}/src:$PYTHONPATH"
     py.test
   '';
-  #doCheck = false;
 }

@@ -5,13 +5,12 @@ looking up the device by checking the root partition by label first.
 """
 
 import argparse
-import fcmanage.dmidecodeparser
+import fcmanage.dmi_memory
 import fc.maintenance
 import fc.maintenance.lib.reboot
 import json
 import re
 import subprocess
-
 
 
 class Disk(object):
@@ -112,7 +111,7 @@ def memory_change(enc):
     enc_memory = int(enc['parameters'].get('memory', 0))
     if not enc_memory:
         return
-    real_memory = fcmanage.dmidecodeparser.main()
+    real_memory = fcmanage.dmi_memory.main()
     if real_memory == enc_memory:
         return
     msg = 'Reboot to change memory from {} MiB to {} MiB'.format(
