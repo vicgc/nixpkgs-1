@@ -136,14 +136,9 @@ in {
     ids.gids.sensuclient = 207;
     ids.uids.sensuclient = 207;
 
-    jobs.fcio-stubs-sensu-client = {
-        description = "Create FC IO stubs for sensu";
-        task = true;
-        startOn = "started networking";
-        script = ''
-          install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
-        '';
-    };
+    system.activationScripts.sensu-client = ''
+      install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
+    '';
 
     users.extraGroups.sensuclient.gid = config.ids.gids.sensuclient;
 
