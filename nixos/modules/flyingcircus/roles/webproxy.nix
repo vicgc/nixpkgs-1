@@ -3,10 +3,10 @@
 let
   cfg = config.flyingcircus.roles.webproxy;
 
-  nonEmptyString = string: if stringLength string > 0 then true else false;
   configFromFile = file: default:
     if builtins.pathExists file then builtins.readFile file else default;
   varnishCfg = configFromFile /etc/local/varnish/default.vcl vcl_example;
+
   vcl_example = ''
     vcl 4.0;
     backend test {
@@ -22,13 +22,11 @@ in
   options = {
 
     flyingcircus.roles.webproxy = {
-
       enable = mkOption {
         type = types.bool;
         default = false;
         description = "Enable the Flying Circus varnish server role.";
       };
-
     };
 
   };
@@ -53,5 +51,6 @@ in
       '';
       "local/varnish/default.vcl.example".text = vcl_example;
     };
+
   };
 }
