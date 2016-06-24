@@ -31,9 +31,9 @@ in
      ./sensuserver.nix
      ./servicecheck.nix
      ./statshost.nix
-     ./varnish.nix
-     ./webgateway.nix
      ./webdata_blackbee.nix
+     ./webgateway.nix
+     ./webproxy.nix
     ];
 
   options = {
