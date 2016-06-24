@@ -218,9 +218,9 @@ in
       %sudo-srv ALL=(root) REBOOT
 
       # Allow applying config and restarting services to service users
-      Cmnd_Alias  FCMANAGE = ${pkgs.systemd}/bin/systemctl start fc-manage
-      %sudo-srv ALL=(root) FCMANAGE
-      %service  ALL=(root) FCMANAGE
+      Cmnd_Alias  SYSTEMCTL = ${pkgs.systemd}/bin/systemctl
+      %sudo-srv ALL=(root) SYSTEMCTL
+      %service  ALL=(root) SYSTEMCTL
     '';
 
     system.activationScripts.fcio-homedirpermissions = lib.stringAfter [ "users" ]
