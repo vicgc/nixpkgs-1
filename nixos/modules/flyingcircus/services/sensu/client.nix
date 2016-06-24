@@ -136,14 +136,34 @@ in {
     ids.gids.sensuclient = 207;
     ids.uids.sensuclient = 207;
 
-    jobs.fcio-stubs-sensu-client = {
-        description = "Create FC IO stubs for sensu";
-        task = true;
-        startOn = "started networking";
-        script = ''
-          install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
-        '';
-    };
+    system.activationScripts.sensu-client = ''
+      install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
+    '';
+    environment.etc."local/sensu-client/README.txt".text = ''
+      Put local sensu checks here.
+
+      This directory is passed to sensu as additional config directory. You
+      can add .json files for your checks.
+
+      Example:
+
+        {
+         "checks" : {
+            "my-custom-check" : {
+               "notification" : "custom check broken",
+               "command" : "/srv/user/bin/nagios_compatible_check",
+               "interval": 60,
+               "standalone" : true
+            },
+            "my-other-custom-check" : {
+               "notification" : "custom check broken",
+               "command" : "/srv/user/bin/nagios_compatible_other_check",
+               "interval": 600,
+               "standalone" : true
+            }
+          }
+        }
+    '';
 
     users.extraGroups.sensuclient.gid = config.ids.gids.sensuclient;
 
