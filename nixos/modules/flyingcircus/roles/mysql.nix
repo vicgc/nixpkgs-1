@@ -123,7 +123,9 @@ in
         innodb_read_io_threads          = ${toString (cores * 4)}
         innodb_write_io_threads         = ${toString (cores * 4)}
         # Percentage. Probably needs local tuning depending on the workload.
-        innodb_change_buffer_max_size   = 50
+        ${lib.optionalString
+          (lib.versionAtLeast cfg.package.mysqlVersion "5.6")
+          "innodb_change_buffer_max_size   = 50"}
         innodb_doublewrite              = 1
         innodb_log_file_size            = 512M
         innodb_log_files_in_group       = 4
