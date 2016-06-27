@@ -127,6 +127,9 @@ in rec {
                     };
                   inherit system; }
             );
+            mysql-55 = hydraJob
+              (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.mysql55;
                   inherit system; }
             );
             sensuserver = hydraJob
