@@ -14,6 +14,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({
       { pkgs, config, ... }:
 
       {
+        virtualisation.memorySize = 2048;
+
         imports = [ ../static/default.nix
                     ../roles/default.nix
                     ../services/default.nix
