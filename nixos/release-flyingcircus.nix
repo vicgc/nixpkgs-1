@@ -114,13 +114,19 @@ in rec {
             percona-57 = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
                   percona = pkgs.callPackage
-                    ./modules/flyingcircus/packages/percona/5.7.nix { };
+                    ./modules/flyingcircus/packages/percona/5.7.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
                   inherit system; }
             );
             percona-56 = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
                   percona = pkgs.callPackage
-                    ./modules/flyingcircus/packages/percona/5.6.nix { };
+                    ./modules/flyingcircus/packages/percona/5.6.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
+                  inherit system; }
+            );
                   inherit system; }
             );
             sensuserver = hydraJob
