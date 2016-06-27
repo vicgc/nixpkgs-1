@@ -263,11 +263,7 @@ in
               ${optionalString (cfg.rootPassword != null)
                 ''
                   # Change root password
-
-                  ( echo "use mysql;"
-                    echo "update user set authentication_string=password('$(cat ${cfg.rootPassword})') where User='root';"
-                    echo "flush privileges;"
-                  ) | ${mysql}/bin/mysql -u root -N
+                  ${mysql}/bin/mysqladmin --no-defaults password "$(cat ${cfg.rootPassword})"
                 ''}
 
             rm /run/mysql_init
