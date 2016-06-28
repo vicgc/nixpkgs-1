@@ -135,6 +135,9 @@ in {
       description = "sensu client daemon user";
       uid = config.ids.uids.sensuclient;
       group = "sensuclient";
+      # Allow sensuclient to interact with services. This especially helps to
+      # check supervisor with a group-writable socket:
+      extraGroups = ["service"];
     };
 
     systemd.services.sensu-client = {
@@ -142,7 +145,7 @@ in {
       path = [ pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash pkgs.lm_sensors ];
       serviceConfig = {
         User = "sensuclient";
-        ExecStart = "${sensu}/bin/sensu-client -L warn  -c ${client_json} ${local_sensu_configuration}";
+        ExecStart = "${sensu}/bin/sensu-client -L warn -c ${client_json} ${local_sensu_configuration}";
         Restart = "always";
         RestartSec = "5s";
       };
