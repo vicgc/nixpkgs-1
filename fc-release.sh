@@ -31,4 +31,5 @@ git merge --no-ff -m "$msg" $prod
 
 echo "$0: created changes:"
 git log -n 2 --decorate --stat
-echo "$0: issue 'git push origin $dev $stag $prod' if this looks correct"
+echo "$0: If this looks correct, issue:"
+echo "    git push origin $dev $stag $prod'"
