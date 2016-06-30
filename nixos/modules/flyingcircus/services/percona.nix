@@ -218,8 +218,8 @@ in
                   exit 1
               fi
 
-              echo "MySQL daemon not yet started after $count s. Waiting..."
-              count=$((count++))
+              echo "No MySQL server contact after $count attempts. Waiting..."
+              count=$((count+1))
               sleep 3
           done
 
@@ -263,7 +263,7 @@ in
               ${optionalString (cfg.rootPassword != null)
                 ''
                   # Change root password
-                  ${mysql}/bin/mysqladmin --no-defaults password "$(cat ${cfg.rootPassword})"
+                  ${mysql}/bin/mysqladmin --no-defaults password "$(< ${cfg.rootPassword})"
                 ''}
 
             rm /run/mysql_init
