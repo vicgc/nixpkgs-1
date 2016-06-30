@@ -25,7 +25,9 @@ let
   '';
 
   users = attrValues cfg.users.users;
-  service_users = builtins.filter (user: user.group == "service") users;
+  service_users = builtins.filter
+    (user: user.group == "service" || user.group == "vagrant")
+    users;
 
 in
 
