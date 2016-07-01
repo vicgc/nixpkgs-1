@@ -25,6 +25,9 @@ bundlerEnv {
     redis = attrs: {
       buildInputs = with pkgs; [ redis ];
     };
+    memcached = attrs: {
+      buildInputs = with pkgs; [ cyrus_sasl ];
+    };
 };
 
   meta = with lib; {

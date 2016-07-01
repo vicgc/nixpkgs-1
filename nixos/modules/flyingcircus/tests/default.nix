@@ -2,6 +2,8 @@
 
 {
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
+  
+  memcached = hydraJob (import ./memcached.nix { inherit system; }) ;
 
   login = hydraJob (import ./login.nix { inherit system; }) ;
 
