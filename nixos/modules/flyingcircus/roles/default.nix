@@ -24,6 +24,7 @@ in
      ./mailserver.nix
      ./mongodb
      ./mysql.nix
+     ./nfs.nix
      ./nginx.nix
      ./postgresql.nix
      ./powerdns.nix
