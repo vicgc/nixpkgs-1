@@ -1,15 +1,19 @@
+# NFS resource group share.
+# Note that activating both nfs_rg_share and nfs_rg_client currently fails due
+# to a race condition. Re-run fc-manage in this case.
+# RG shares exported from a NixOS server cannot be written to by service users
+# running Gentoo and vice versa.
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-
   cfg = config.flyingcircus.roles;
   fclib = import ../lib;
 
   service = lib.findFirst
     (s: s.service == "nfs_rg_share-server")
-    null
+    {}
     config.flyingcircus.enc_services;
 
   export = "/srv/nfs/shared";
@@ -43,7 +47,6 @@ in
           Enable the Flying Circus nfs client role.
 
           This mounts /srv/nfs/shared from the server to /mnt/nfs/shared.
-
         '';
       };
     };
@@ -57,7 +60,6 @@ in
           Enable the Flying Circus nfs server role.
 
           This exports /srv/nfs/shared.
-
         '';
       };
 
@@ -67,10 +69,10 @@ in
   config = mkMerge [
     (mkIf cfg.nfs_rg_client.enable {
       # mount service.address
-      fileSystems = {
+      fileSystems = assert service != {}; {
         "${mount_point}" = {
           device = "${service.address}:${export}";
-          fsType = "nfs";
+          fsType = "nfs4";
           options = "intr,soft,bg,rsize=8192,wsize=8192";
         };
       };
@@ -85,7 +87,6 @@ in
       services.nfs.server.exports = ''
         ${export}  ${export_to_clients}
       '';
-
       system.activationScripts.nfs_rg_share = ''
         install -d -g service -m 775 ${export}
       '';
