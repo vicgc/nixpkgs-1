@@ -78,7 +78,7 @@ in
       };
 
       system.activationScripts.nfs_rg_client = ''
-        install -d -g service -m 775 ${mount_point}
+        mkdir -p "${mount_point}"
       '';
     })
 
