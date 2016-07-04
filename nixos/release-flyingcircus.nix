@@ -5,6 +5,8 @@
 { nixpkgs ? { outPath = ./..; revCount = 56789; shortRev = "gfedcba"; }
 , stableBranch ? false
 , supportedSystems ? [ "x86_64-linux" ] # no i686-linux
+, buildImage ? true
+, buildInstaller ? true
 }:
 
 with import ../lib;
@@ -40,7 +42,6 @@ let
   versionSuffix =
     (if stableBranch then "." else "pre") + "${toString (nixpkgs.revCount - 67824)}.${nixpkgs.shortRev}";
 
-in rec {
   # A bootable Flying Circus disk image (raw) that can be extracted onto
   # Ceph RBD volume.
   flyingcircus_vm_image =
@@ -68,6 +69,24 @@ in rec {
           ln -s $image/image.qcow2.bz2 $out/
         '');
 
+  flyingcircus_vm_image_build =
+    if buildImage
+    then { flyingcircus_vm_image = flyingcircus_vm_image; }
+    else {};
+
+  installer = {
+    inherit (nixos'.tests.installer)
+      lvm
+      separateBoot
+      simple;
+  };
+
+  installer_build =
+    if buildInstaller
+    then { installer = installer; }
+    else {};
+
+in rec {
   nixos = {
     inherit (nixos')
       channel
@@ -92,12 +111,31 @@ in rec {
         simple;
 
       flyingcircus = {
-            percona = hydraJob
+            percona-57 = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
-                  inherit system; });
+                  percona = pkgs.callPackage
+                    ./modules/flyingcircus/packages/percona/5.7.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
+                  inherit system; }
+            );
+            percona-56 = hydraJob
+              (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.callPackage
+                    ./modules/flyingcircus/packages/percona/5.6.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
+                  inherit system; }
+            );
+            mysql-55 = hydraJob
+              (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.mysql55;
+                  inherit system; }
+            );
             sensuserver = hydraJob
               (import modules/flyingcircus/tests/sensu.nix {
-                  inherit system; });
+                  inherit system; }
+            );
       };
 
       networking.scripted = {
@@ -113,18 +151,14 @@ in rec {
           sit
           vlan;
       };
-      installer = {
-        inherit (nixos'.tests.installer)
-          lvm
-          separateBoot
-          simple;
-      };
+
       latestKernel = {
         inherit (nixos'.tests.latestKernel)
           login;
       };
     };
-  };
+  }
+  // installer_build;
 
   nixpkgs = {
     inherit (nixpkgs')
@@ -169,9 +203,12 @@ in rec {
       let all = x: map (system: x.${system}) supportedSystems; in
       [ nixpkgs.tarball
         (all nixpkgs.jdk)
-        flyingcircus_vm_image
       ]
-      ++ lib.collect lib.isDerivation nixos;
+      ++ lib.collect lib.isDerivation nixos
+      ++ (if buildImage
+         then [flyingcircus_vm_image]
+         else []);
   });
 
 }
+// flyingcircus_vm_image_build

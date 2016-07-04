@@ -113,6 +113,22 @@ in {
           Extra options used when launching sensu.
         '';
       };
+      expectedConnections = {
+        warning = mkOption {
+          type = types.int;
+          description = ''
+            Set the warning limit for connections on this host.
+          '';
+          default = 500;
+        };
+        critical = mkOption {
+          type = types.int;
+          description = ''
+            Set the critical limit for connections on this host.
+          '';
+          default = 1000;
+        };
+      };
     };
   };
 
@@ -120,14 +136,34 @@ in {
     ids.gids.sensuclient = 207;
     ids.uids.sensuclient = 207;
 
-    jobs.fcio-stubs-sensu-client = {
-        description = "Create FC IO stubs for sensu";
-        task = true;
-        startOn = "started networking";
-        script = ''
-          install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
-        '';
-    };
+    system.activationScripts.sensu-client = ''
+      install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
+    '';
+    environment.etc."local/sensu-client/README.txt".text = ''
+      Put local sensu checks here.
+
+      This directory is passed to sensu as additional config directory. You
+      can add .json files for your checks.
+
+      Example:
+
+        {
+         "checks" : {
+            "my-custom-check" : {
+               "notification" : "custom check broken",
+               "command" : "/srv/user/bin/nagios_compatible_check",
+               "interval": 60,
+               "standalone" : true
+            },
+            "my-other-custom-check" : {
+               "notification" : "custom check broken",
+               "command" : "/srv/user/bin/nagios_compatible_other_check",
+               "interval": 600,
+               "standalone" : true
+            }
+          }
+        }
+    '';
 
     users.extraGroups.sensuclient.gid = config.ids.gids.sensuclient;
 
@@ -135,6 +171,9 @@ in {
       description = "sensu client daemon user";
       uid = config.ids.uids.sensuclient;
       group = "sensuclient";
+      # Allow sensuclient to interact with services. This especially helps to
+      # check supervisor with a group-writable socket:
+      extraGroups = ["service"];
     };
 
     systemd.services.sensu-client = {
@@ -142,7 +181,7 @@ in {
       path = [ pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash pkgs.lm_sensors ];
       serviceConfig = {
         User = "sensuclient";
-        ExecStart = "${sensu}/bin/sensu-client -L warn  -c ${client_json} ${local_sensu_configuration}";
+        ExecStart = "${sensu}/bin/sensu-client -L warn -c ${client_json} ${local_sensu_configuration}";
         Restart = "always";
         RestartSec = "5s";
       };
@@ -216,7 +255,7 @@ in {
       };
       netstat_tcp = {
         notification = "Netstat TCP connections";
-        command = "check-netstat-tcp.rb";
+        command = "check-netstat-tcp.rb -w ${toString cfg.expectedConnections.warning} -c ${toString cfg.expectedConnections.critical}";
       };
       ethsrv_mtu = {
         notification = "ethsrv MTU @ 1500";

@@ -1,13 +1,21 @@
-{ pkgs, python34Packages, nix }:
+{ pkgs ? import <nixpkgs> { }
+, python3Packages ? pkgs.python3Packages
+, fcmaintenance ? import ../fcmaintenance { inherit pkgs; }
+, fcutil ? import ../fcutil { inherit pkgs; }
+, nix
+}:
 
-python34Packages.buildPythonPackage rec {
+python3Packages.buildPythonPackage rec {
   name = "fc-manage-${version}";
   version = "1.0";
   namePrefix = "";
   dontStrip = true;
   src = ./.;
+
+  buildInputs = with pkgs.python3Packages; [ covCore pytest pytestcov ];
   propagatedBuildInputs = with pkgs;
-    [ fcmaintenance
+    [ dmidecode
+      fcmaintenance
       fcutil
       gptfdisk
       lvm2
@@ -16,4 +24,8 @@ python34Packages.buildPythonPackage rec {
       utillinux
       xfsprogs
     ];
+  checkPhase = ''
+    export PYTHONPATH="${src}/src:$PYTHONPATH"
+    py.test
+  '';
 }
