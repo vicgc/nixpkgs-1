@@ -141,6 +141,17 @@ let
           (get_policy_routing_for_interface interfaces)
           (attrNames interfaces))))).gateway;
 
+  # add srv addresses from my own resource group to /etc/hosts
+  hostsFromEncAddresses = enc_addresses:
+    let
+      recordToEtcHostsLine = r:
+        "${fclib.stripNetmask r.ip} ${r.name}.${config.networking.domain} ${r.name}";
+    in
+      # always mention IPv6 addresses first to get predictable behaviour
+      lib.concatMapStringsSep "\n" recordToEtcHostsLine
+        ((builtins.filter (a: fclib.isIp6 a.ip) enc_addresses) ++
+         (builtins.filter (a: fclib.isIp4 a.ip) enc_addresses));
+
 in
 {
 
@@ -249,6 +260,10 @@ in
       # an IPv4 address on some interfaces.
       noipv4ll
     '';
+
+    networking.extraHosts = lib.optionalString
+      (cfg.enc_addresses.srv != [])
+      (hostsFromEncAddresses cfg.enc_addresses.srv);
 
     boot.kernel.sysctl = {
       "net.ipv4.ip_local_port_range" = "32768 60999";
