@@ -11,13 +11,14 @@ let
   cfg = config.flyingcircus.roles;
   fclib = import ../lib;
 
-  service = lib.findFirst
+  service = findFirst
     (s: s.service == "nfs_rg_share-server")
     {}
     config.flyingcircus.enc_services;
 
   export = "/srv/nfs/shared";
-  mount_point = "/mnt/nfs/shared";
+  mountpoint = "/mnt/nfs";
+  mountopts = "rw,soft,intr,rsize=8192,wsize=8192";
 
   service_clients = filter
     (s: s.service == "nfs_rg_share-server")
@@ -28,18 +29,14 @@ let
   export_to_clients =
     let
       flags = "rw,sync,root_squash,no_subtree_check";
+      clientWithFlags = c: "${c.node}(${flags})";
     in
-      lib.concatStringsSep " "
-        (map
-          (s: "${s.node}(${flags})")
-          service_clients);
+      concatMapStringsSep " " clientWithFlags service_clients;
 
 in
 {
   options = {
-
     flyingcircus.roles.nfs_rg_client = {
-
       enable = mkOption {
         type = types.bool;
         default = false;
@@ -52,7 +49,6 @@ in
     };
 
     flyingcircus.roles.nfs_rg_share = {
-
       enable = mkOption {
         type = types.bool;
         default = false;
@@ -62,24 +58,22 @@ in
           This exports /srv/nfs/shared.
         '';
       };
-
     };
   };
 
   config = mkMerge [
     (mkIf cfg.nfs_rg_client.enable {
-      # mount service.address
-      fileSystems = assert service != {}; {
-        "${mount_point}" = {
+      boot.supportedFilesystems = [ "nfs4" ];
+      fileSystems = {
+        "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
           fsType = "nfs4";
-          options = "intr,soft,bg,rsize=8192,wsize=8192";
+          options = "x-systemd.automount,x-systemd.idle-timeout=20,${mountopts}";
         };
       };
-
-      system.activationScripts.nfs_rg_client = ''
-        mkdir -p "${mount_point}"
-      '';
+      systemd.tmpfiles.rules = [
+        "d ${mountpoint}"
+      ];
     })
 
     (mkIf cfg.nfs_rg_share.enable {
@@ -89,6 +83,7 @@ in
       '';
       system.activationScripts.nfs_rg_share = ''
         install -d -g service -m 775 ${export}
+        ${pkgs.nfs-utils}/bin/exportfs -ra
       '';
     })
   ];
