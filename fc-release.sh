@@ -13,7 +13,14 @@ stag="fc-15.09-staging"
 prod="fc-15.09-production"
 echo "$0: performing release based on $stag"
 
-git remote update -p
+if ! git remote -v | egrep -q "^origin\s.*github.com.flyingcircusio/nixpkgs"
+then
+    echo "$0: please perform release in a clean checkout with proper origin" >&2
+    exit 64
+fi
+git fetch --all --tags --prune
+git checkout $dev
+git merge --ff-only  # expected to fail on unclean/unpushed workdirs
 
 git checkout $stag
 git merge --ff-only
@@ -25,7 +32,6 @@ msg="Merge branch '$stag' into $prod for release $releaseid"
 git merge -m "$msg" $stag
 
 git checkout $dev
-git merge --ff-only
 msg="Backmerge branch '$prod' into $dev for release $releaseid"
 git merge --no-ff -m "$msg" $prod
 
