@@ -26,8 +26,6 @@ import tempfile
 #   - validate the next version and decide whether to switch automatically
 #     or whether to create a maintenance window and let the current one stay
 #     for now, but keep updating ENC data.
-#
-# - better robustness to not leave non-parsable json files around
 
 enc = None
 
@@ -38,7 +36,7 @@ def load_enc(enc_path):
     try:
         with open(enc_path) as f:
             enc = json.load(f)
-    except OSError:
+    except (OSError, ValueError):
         # This environment doesn't seem to support an ENC,
         # i.e. Vagrant. Silently ignore for now.
         return
@@ -50,10 +48,11 @@ def conditional_update(filename, data):
             mode='w', suffix='.tmp', prefix=p.basename(filename),
             dir=p.dirname(filename), delete=False) as tf:
         json.dump(data, tf, ensure_ascii=False, indent=1, sort_keys=True)
+        tf.write('\n')
         os.chmod(tf.fileno(), 0o640)
-    if not(p.exists(filename)):
-        os.rename(tf.name, filename)
-    elif not(filecmp.cmp(filename, tf.name)):
+    if not(p.exists(filename)) or not(filecmp.cmp(filename, tf.name)):
+        with open(tf.name, 'a') as f:
+            os.fsync(f.fileno())
         os.rename(tf.name, filename)
     else:
         os.unlink(tf.name)
@@ -68,8 +67,10 @@ def inplace_update(filename, data):
     """
     with open(filename, 'r+') as f:
         f.seek(0)
-        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
+        json.dump(data, f, ensure_ascii=False)
+        f.flush()
         f.truncate()
+        os.fsync(f.fileno())
 
 
 def write_json(calls):
@@ -83,7 +84,7 @@ def write_json(calls):
             continue
         try:
             conditional_update('/etc/nixos/{}'.format(target), data)
-        except IOError:
+        except (IOError, OSError):
             inplace_update('/etc/nixos/{}'.format(target), data)
 
 
