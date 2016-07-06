@@ -3,8 +3,7 @@ let
   enc = config.flyingcircus.enc;
 
 in
-{
-
+lib.mkIf (enc.parameters ? location && enc.parameters ? resource_group ) {
   services.collectd.enable = true;
   services.collectd.extraConfig = ''
     Interval     5
@@ -33,7 +32,6 @@ in
 
     <Plugin "disk">
       Disk "/^[sv]d[a-z]$|^vg.*-./"
-      UdevNameAttr "DM_NAME"
     </Plugin>
 
     <Plugin "write_graphite">
@@ -54,8 +52,6 @@ in
           </Plugin>
          '')
         (builtins.attrNames config.networking.interfaces))}
-
     }
   '';
-
 }
