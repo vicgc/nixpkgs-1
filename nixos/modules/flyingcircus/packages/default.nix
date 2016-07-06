@@ -33,5 +33,7 @@
 
     mc = pkgs.callPackage ./mc.nix { };
 
+    osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
+
   };
 }
