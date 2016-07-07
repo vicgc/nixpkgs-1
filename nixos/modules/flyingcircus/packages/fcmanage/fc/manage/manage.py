@@ -189,8 +189,7 @@ def exit_timeout(signum, frame):
     sys.exit()
 
 
-def main():
-    build_options = []
+def parse_args():
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
                    help='path to enc.json (default: %(default)s)')
@@ -218,8 +217,15 @@ def main():
                        help='switch machine to local checkout in '
                        '/root/nixpkgs')
     a.add_argument('-v', '--verbose', action='store_true', default=False)
-    args = a.parse_args()
 
+    args = a.parse_args()
+    if not args.build and not args.directory and not args.system_state:
+        a.error('no action specified')
+    return args
+
+
+def main():
+    args = parse_args()
     signal.signal(signal.SIGALRM, exit_timeout)
     signal.alarm(args.timeout)
 
@@ -230,6 +236,7 @@ def main():
 
     seed_enc(args.enc_path)
 
+    build_options = []
     if args.show_trace:
         build_options.append('--show-trace')
 
@@ -245,9 +252,6 @@ def main():
 
     if args.build:
         globals()[args.build](build_options)
-
-    if not args.build and not args.directory and not args.system_state:
-        a.error('no action specified')
 
     if args.maintenance:
         maintenance()
