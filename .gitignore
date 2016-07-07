@@ -18,6 +18,7 @@ pip-selfcheck.json
 /pkgs/desktops/plasma-*/tmp/
 /pkgs/development/libraries/kde-frameworks-*/tmp/
 /pkgs/development/libraries/qt-5/*/tmp/
+pyvenv.cfg
 __pycache__
 result
 result-*

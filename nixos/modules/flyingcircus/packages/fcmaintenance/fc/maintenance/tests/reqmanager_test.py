@@ -33,7 +33,7 @@ def request_population(n, dir):
     with ReqManager(str(dir)) as reqmanager:
         requests = []
         for i in range(n):
-            req = Request(Activity(), 60)
+            req = Request(Activity(), 60, comment=str(i))
             req._reqid = shortuuid.encode(uuid.UUID(int=i))
             reqmanager.add(req)
             requests.append(req)
@@ -97,6 +97,21 @@ def test_find_by_comment(reqmanager):
 def test_find_by_comment_returns_none_on_mismatch(reqmanager):
     with reqmanager as rm:
         assert rm.find_by_comment('no such comment') is None
+
+
+def test_dont_add_two_reqs_with_identical_comments(reqmanager):
+    with reqmanager as rm:
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is not None
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is None
+        assert len(rm.requests) == 1
+
+
+def test_do_add_two_reqs_with_identical_comments(reqmanager):
+    with reqmanager as rm:
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is not None
+        assert rm.add(Request(Activity(), 1, 'comment 1'),
+                      skip_same_comment=False) is not None
+        assert len(rm.requests) == 2
 
 
 @unittest.mock.patch('fc.util.directory.connect')

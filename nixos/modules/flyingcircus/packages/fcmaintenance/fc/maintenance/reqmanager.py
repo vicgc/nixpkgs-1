@@ -100,7 +100,17 @@ class ReqManager:
                           p.basename(d))
                 os.rename(d, p.join(self.archivedir, p.basename(d)))
 
-    def add(self, request):
+    def add(self, request, skip_same_comment=True):
+        """Adds a Request object to the local queue.
+
+        If skip_same_comment is True, a request is not added if a
+        requests with the same comment already exists in the queue.
+
+        Returns modified Request object or None if nothing was added.
+        """
+        if (skip_same_comment and request.comment and
+                self.find_by_comment(request.comment)):
+            return None
         self.requests[request.id] = request
         request.dir = self.dir(request)
         request.save()
