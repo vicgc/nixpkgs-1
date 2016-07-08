@@ -22,6 +22,7 @@
     nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
 
     powerdns = pkgs.callPackage ./powerdns.nix { };
+    pypkgs = pkgs.callPackage ./pypkgs.nix { };
 
     qemu = pkgs.callPackage ./qemu-2.5.nix {
       inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;

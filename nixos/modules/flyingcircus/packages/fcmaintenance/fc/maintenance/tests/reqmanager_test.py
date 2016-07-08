@@ -175,6 +175,7 @@ def test_execute_logs_exception(reqmanager, caplog):
     os.chmod(req.dir, 0o000)  # simulates I/O error
     reqmanager.execute()
     assert 'Permission denied' in caplog.text
+    os.chmod(req.dir, 0o755)  # py.test cannot clean up 0o000 dirs
 
 
 @unittest.mock.patch('fc.util.directory.connect')
@@ -248,6 +249,7 @@ def test_list_empty(reqmanager):
     assert '' == str(reqmanager)
 
 
+@freezegun.freeze_time('2016-04-20 11:00:00')
 def test_list(reqmanager):
     r1 = Request(Activity(), '14m', 'pending request')
     reqmanager.add(r1)

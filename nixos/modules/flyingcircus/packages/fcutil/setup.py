@@ -26,4 +26,5 @@ setup(
     ],
     packages=['fc.util'],
     install_requires=[],
+    zip_safe=False,
 )

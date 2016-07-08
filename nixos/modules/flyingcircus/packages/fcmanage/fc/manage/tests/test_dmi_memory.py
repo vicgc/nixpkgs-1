@@ -1,6 +1,6 @@
 """ Unit-test for dmidecode parser"""
 
-from fcmanage.dmi_memory import calc_mem, get_paragraph, get_device
+from fc.manage.dmi_memory import calc_mem, get_paragraph, get_device
 import pkg_resources
 
 

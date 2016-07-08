@@ -1,0 +1,2 @@
+recursive-include fc/manage *.py *.out
+include *.rst
