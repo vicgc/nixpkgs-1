@@ -1,6 +1,7 @@
 """Update NixOS system configuration from infrastructure or local sources."""
 
 from fc.util.directory import connect
+from fc.util.lock import locked
 import argparse
 import filecmp
 import json
@@ -224,16 +225,7 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
-    signal.signal(signal.SIGALRM, exit_timeout)
-    signal.alarm(args.timeout)
-
-    logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=logging.DEBUG if args.verbose else logging.INFO)
-    # this is really annoying
-    logging.getLogger('iso8601').setLevel(logging.INFO)
-
+def transaction(args):
     seed_enc(args.enc_path)
 
     build_options = []
@@ -259,6 +251,20 @@ def main():
     # Garbage collection is run after a potential reboot.
     if args.garbage:
         collect_garbage(args.garbage)
+
+
+def main():
+    args = parse_args()
+    signal.signal(signal.SIGALRM, exit_timeout)
+    signal.alarm(args.timeout)
+
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=logging.DEBUG if args.verbose else logging.INFO)
+    # this is really annoying
+    logging.getLogger('iso8601').setLevel(logging.INFO)
+
+    with locked('/run/lock/fc-manage.lock'):
+        transaction(args)
 
 
 if __name__ == '__main__':
