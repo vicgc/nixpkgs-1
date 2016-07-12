@@ -14,7 +14,8 @@ dist/
 htmlcov/
 include/
 lib64
-lib/python?.?/
+lib*/python?.?/
+lib*/python-wheels
 pip-selfcheck.json
 /pkgs/applications/kde-apps-*/tmp/
 /pkgs/desktops/plasma-*/tmp/

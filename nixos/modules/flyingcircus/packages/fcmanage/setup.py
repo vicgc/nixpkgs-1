@@ -49,6 +49,7 @@ setup(
         'fc.util',
     ],
     tests_require=['pytest'],
+    extras_require={'test': 'pytest'},
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [

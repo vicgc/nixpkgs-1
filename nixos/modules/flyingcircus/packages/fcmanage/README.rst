@@ -61,7 +61,7 @@ Create a virtualenv::
     pyvenv-3.4 .
     bin/pip install -e ../fcutil
     bin/pip install -e ../fcmaintenance
-    bin/pip install -e .
+    bin/pip install -e .\[test]
 
 Run tests::
 
