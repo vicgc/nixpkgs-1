@@ -33,7 +33,7 @@ def request_population(n, dir):
     with ReqManager(str(dir)) as reqmanager:
         requests = []
         for i in range(n):
-            req = Request(Activity(), 60)
+            req = Request(Activity(), 60, comment=str(i))
             req._reqid = shortuuid.encode(uuid.UUID(int=i))
             reqmanager.add(req)
             requests.append(req)
@@ -99,6 +99,21 @@ def test_find_by_comment_returns_none_on_mismatch(reqmanager):
         assert rm.find_by_comment('no such comment') is None
 
 
+def test_dont_add_two_reqs_with_identical_comments(reqmanager):
+    with reqmanager as rm:
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is not None
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is None
+        assert len(rm.requests) == 1
+
+
+def test_do_add_two_reqs_with_identical_comments(reqmanager):
+    with reqmanager as rm:
+        assert rm.add(Request(Activity(), 1, 'comment 1')) is not None
+        assert rm.add(Request(Activity(), 1, 'comment 1'),
+                      skip_same_comment=False) is not None
+        assert len(rm.requests) == 2
+
+
 @unittest.mock.patch('fc.util.directory.connect')
 def test_schedule_empty(connect, reqmanager):
     rpccall = connect().schedule_maintenance
@@ -160,6 +175,7 @@ def test_execute_logs_exception(reqmanager, caplog):
     os.chmod(req.dir, 0o000)  # simulates I/O error
     reqmanager.execute()
     assert 'Permission denied' in caplog.text
+    os.chmod(req.dir, 0o755)  # py.test cannot clean up 0o000 dirs
 
 
 @unittest.mock.patch('fc.util.directory.connect')
@@ -233,6 +249,7 @@ def test_list_empty(reqmanager):
     assert '' == str(reqmanager)
 
 
+@freezegun.freeze_time('2016-04-20 11:00:00')
 def test_list(reqmanager):
     r1 = Request(Activity(), '14m', 'pending request')
     reqmanager.add(r1)

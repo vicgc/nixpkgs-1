@@ -5,11 +5,31 @@ a systemd timer: update system configuration from an infrastructure
 hydra server or from a local nixpkgs checkout.
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
+import sys
+
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
 
 
 setup(
-    name='fcmanage',
+    name='fc.manage',
     version='1.0',
     description=__doc__,
     url='https://flyingcircus.io',
@@ -23,20 +43,20 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: System :: Systems Administration',
     ],
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
+    packages=['fc.manage'],
     install_requires=[
         'fc.maintenance',
         'fc.util',
     ],
-    extras_require={
-        'test': ['pytest'],
-    },
+    tests_require=['pytest'],
+    extras_require={'test': 'pytest'},
+    cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
-            'fc-manage=fcmanage.manage:main',
-            'fc-monitor=fcmanage.monitor:main',
-            'fc-resize=fcmanage.resize:main',
+            'fc-manage=fc.manage.manage:main',
+            'fc-monitor=fc.manage.monitor:main',
+            'fc-resize=fc.manage.resize:main',
         ],
     },
+    zip_safe=False,
 )
