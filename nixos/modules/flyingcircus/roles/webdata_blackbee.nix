@@ -48,7 +48,7 @@ in
     ];
 
     environment.shellAliases = {
-        gopricing = "cd /home/pricing && sudo -u s-blackbee bash";
+        gopricing = "cd /home/pricing && sudo -u s-blackbee bash --login";
     };
 
   };
