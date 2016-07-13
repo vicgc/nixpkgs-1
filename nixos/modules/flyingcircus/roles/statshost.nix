@@ -18,6 +18,18 @@ in
     flyingcircus.roles.statshost = {
       enable = mkEnableOption "stats host";
 
+      useSSL = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Enable SSL in the virtual host.
+
+            Expects the SSL certificates and keys to be placed in
+            /etc/local/nginx/stats.crt and
+            /etc/local/nginx/stats.key
+            '';
+      };
+
       hostName = mkOption {
         type = types.str;
         default = "";
@@ -90,23 +102,54 @@ in
     };
 
     services.nginx.enable = true;
-    services.nginx.httpConfig = ''
-      server {
-          listen *:80;
-          server_name ${cfg.roles.statshost.hostName};
+    services.nginx.httpConfig = let
+      httpHost = cfg.roles.statshost.hostName;
+      in if cfg.roles.statshost.useSSL then ''
+        server {
+            listen *:80;
+            server_name ${httpHost};
+            rewrite . https://$server_name$request_uri redirect;
+        }
 
-          location / {
-              rewrite . /grafana/ redirect;
-          }
+        server {
+            listen *:443 ssl;
+            server_name ${httpHost};
 
-          location /grafana/ {
-              proxy_pass http://localhost:3001/;
-          }
+            ssl_certificate ${/etc/local/nginx/stats.crt};
+            ssl_certificate_key ${/etc/local/nginx/stats.key};
 
-          location /grafana/public {
-              alias ${config.services.grafana.staticRootPath};
-          }
-      }
+            # add_header Strict-Transport-Security "max-age=31536000";
+
+            location / {
+                rewrite . /grafana/ redirect;
+            }
+
+            location /grafana/ {
+                proxy_pass http://localhost:3001/;
+            }
+
+            location /grafana/public {
+                alias ${config.services.grafana.staticRootPath};
+            }
+        }
+      '' else
+      ''
+        server {
+            listen *:80;
+            server_name ${httpHost};
+
+            location / {
+                rewrite . /grafana/ redirect;
+            }
+
+            location /grafana/ {
+                proxy_pass http://localhost:3001/;
+            }
+
+            location /grafana/public {
+                alias ${config.services.grafana.staticRootPath};
+            }
+        }
     '';
 
     networking.firewall.allowedTCPPorts = [ 80 443 2003 8083 8086 ];
