@@ -45,6 +45,7 @@ in
       pkgs.mc
       pkgs.percona   # client is required on almost all nodes
       pkgs.sysbench
+      pkgs.wget
     ];
 
     environment.shellAliases = {
