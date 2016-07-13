@@ -50,6 +50,7 @@ in
 
     environment.shellAliases = {
         gopricing = "cd /home/pricing && sudo -u s-blackbee bash --login";
+        more = "less -e";
     };
 
     systemd.extraConfig = ''
