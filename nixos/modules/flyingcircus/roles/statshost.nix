@@ -101,10 +101,12 @@ in
       rootUrl = "http://${cfg.roles.statshost.hostName}/grafana";
     };
 
-    services.nginx.enable = true;
-    services.nginx.httpConfig = let
+    flyingcircus.roles.nginx.enable = true;
+
+    flyingcircus.roles.nginx.httpConfig = let
       httpHost = cfg.roles.statshost.hostName;
-      in if cfg.roles.statshost.useSSL then ''
+      in
+      if cfg.roles.statshost.useSSL then ''
         server {
             listen *:80;
             server_name ${httpHost};
