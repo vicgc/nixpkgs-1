@@ -44,6 +44,7 @@ in
       pkgs.mailx
       pkgs.mc
       pkgs.percona   # client is required on almost all nodes
+      pkgs.sshpass
       pkgs.sysbench
       pkgs.wget
     ];
