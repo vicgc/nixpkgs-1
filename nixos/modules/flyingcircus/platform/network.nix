@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 with builtins;
 
@@ -8,80 +8,12 @@ let
   fclib = import ../lib;
 
   # generally use DHCP in the current location?
-  allowDHCP =
-    if lib.hasAttrByPath [ "parameters" "location" ] cfg.enc
+  allowDHCP = location:
+    if builtins.hasAttr location cfg.static.allowDHCP
     then cfg.static.allowDHCP.${cfg.enc.parameters.location}
     else false;
 
   # Policy routing
-
-  routing_priorities = {
-    fe = 20;
-    srv = 30;
-  };
-
-  get_policy_routing_for_interface = interfaces: interface_name:
-    map (network:
-    let
-      addresses = getAttr network (getAttr interface_name interfaces).networks;
-    in
-    {
-       priority =
-        if length addresses == 0
-        then 1000
-        else lib.attrByPath [ interface_name ] 100 routing_priorities;
-       network = network;
-       interface = interface_name;
-       gateway = getAttr network (getAttr interface_name interfaces).gateways;
-       addresses = addresses;
-       family = if (fclib.isIp4 network) then "4" else "6";
-     }) (attrNames interfaces.${interface_name}.gateways);
-
-
-  # Those policy routing rules ensure that we can run multiple IP networks
-  # on the same ethernet segment. We will still use the router but we avoid,
-  # for example, that we send out to an SRV network over the FE interface
-  # which may confuse the sender trying to reply to us on the FE interface
-  # or even filtering the traffic when the other interface has a shared
-  # network.
-  #
-  # The address rules ensure that we send out over the interface that belongs
-  # to the connection that a packet belongs to, i.e. established flows.
-  # (Address rules only apply to networks we have an address for.)
-  #
-  # The network rules ensure that we packets over the best interface where
-  # the target network is reachable if we haven't decided the originating
-  # address, yet.
-  # (Network rules apply for all networks on the segment, even if we do not
-  # have an address for it.)
-  policy_routing_rules = ruleset:
-    let
-      address_rules = if (length ruleset.addresses != 0) then
-        (lib.concatMapStrings
-          (address:
-            ''
-              ip -${ruleset.family} rule add priority ${toString (ruleset.priority)} from ${address} lookup ${ruleset.interface}
-            '')
-          ruleset.addresses) else "";
-      gateway_rule = if (length ruleset.addresses != 0) then
-        ''
-          ip -${ruleset.family} route add ${ruleset.network} dev eth${ruleset.interface} metric 256 src ${elemAt ruleset.addresses 0} table ${ruleset.interface} || true
-          ip -${ruleset.family} route add default via ${ruleset.gateway} metric 256 src ${elemAt ruleset.addresses 0} table ${ruleset.interface} || true
-        '' else "";
-    in
-    ''
-      # policy routing rules for ${ruleset.interface} ${ruleset.network}
-      ${address_rules}
-      ip -${ruleset.family} rule add priority ${toString ruleset.priority} from all to ${ruleset.network} lookup ${ruleset.interface}
-      ${gateway_rule}
-    '';
-
-  get_policy_routing = interfaces:
-    map
-      policy_routing_rules
-        (lib.concatMap
-          (get_policy_routing_for_interface interfaces)
-          (attrNames interfaces));
 
   rt_tables = ''
     # reserved values
@@ -98,19 +30,6 @@ let
       cfg.static.vlans
     )}
     '';
-
-  # default route
-  get_default_gateway = version_filter: interfaces:
-    (head
-    (sort
-      (ruleset_a: ruleset_b: lessThan ruleset_a.priority ruleset_b.priority)
-      (filter
-        (ruleset:
-         (ruleset.priority != null) &&
-         (version_filter ruleset.network))
-        (lib.concatMap
-          (get_policy_routing_for_interface interfaces)
-          (attrNames interfaces))))).gateway;
 
   # add srv addresses from my own resource group to /etc/hosts
   hostsFromEncAddresses = enc_addresses:
@@ -149,15 +68,6 @@ in
 
     networking.domain = "gocept.net";
 
-    networking.defaultGateway =
-      if cfg.network.policy_routing.enable
-      then get_default_gateway fclib.isIp4 cfg.enc.parameters.interfaces
-      else null;
-    networking.defaultGateway6 =
-      if cfg.network.policy_routing.enable
-      then get_default_gateway fclib.isIp6 cfg.enc.parameters.interfaces
-      else null;
-
     # Only set nameserver if there is an enc set.
     networking.nameservers =
       if lib.hasAttrByPath ["parameters" "location"] cfg.enc
@@ -184,28 +94,38 @@ in
       then lib.mapAttrs'
         (vlan: iface:
           let
-            useDHCP = vlan: vlan == "srv" && allowDHCP;
+            useDHCP = (vlan == "srv") &&
+              (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
+              (allowDHCP cfg.enc.parameters.location);
+            networks = iface.networks;
           in
           lib.nameValuePair
             "eth${vlan}"
-            (interfaceConfig useDHCP iface.networks))
+            (fclib.interfaceConfig { inherit useDHCP networks; }))
         (cfg.enc.parameters.interfaces)
       else {};
 
-    networking.localCommands =
-      lib.optionalString
-        (cfg.network.policy_routing.enable)
-        ''
-          ip -4 rule flush
-          ip -4 rule add priority 32766 lookup main
-          ip -4 rule add priority 32767 lookup default
-
-          ip -6 rule flush
-          ip -6 rule add priority 32766 lookup main
-          ip -6 rule add priority 32767 lookup default
-
-          ${lib.concatStrings (get_policy_routing cfg.enc.parameters.interfaces)}
-        '';
+    # networking.localCommands =
+    #   lib.optionalString
+    #     (cfg.network.policy_routing.enable)
+    #     (''
+    #       set -v
+    #     '' + lib.concatMapStrings
+    #       (vlan: fclib.policyRouting vlan cfg.enc.parameters.interfaces.${vlan})
+    #       (attrNames cfg.enc.parameters.interfaces));
+    systemd.services.network-policyrouting-ethsrv = {
+      requires = [ "network-addresses-ethsrv.service" ];
+      after = [ "network-addresses-ethsrv.service" ];
+      wantedBy = [ "network-interfaces.target" ];
+      bindsTo = [ "sys-subsystem-net-devices-ethsrv.device" ];
+      description = "Policy routing for ethsrv";
+      path = [ pkgs.iproute ];
+      script = fclib.policyRouting {
+        vlan = "srv";
+        encInterface = cfg.enc.parameters.interfaces.srv;
+      };
+      unitConfig = { Type = "oneshot"; };
+    };
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
@@ -217,14 +137,16 @@ in
         addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
         rules = lib.optionalString
           (lib.hasAttr "ethsrv" networking.interfaces)
-          (lib.concatMapStrings (a: ''
-            ${iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a
-              } -j nixos-fw-accept
-            '')
+          (lib.concatMapStringsSep "\n"
+            (a: "${fclib.iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a} -j nixos-fw-accept")
             addrs);
-      in "# Accept traffic within the same resource group.\n${rules}";
+      in
+      "# Accept traffic within the same resource group.\n${rules}";
 
     # DHCP settings: never do IPv4ll
+    networking.useDHCP =
+      (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
+      (allowDHCP cfg.enc.parameters.location);
     networking.dhcpcd.extraConfig = ''
       # IPv4ll gets in the way if we really do not want
       # an IPv4 address on some interfaces.
@@ -242,7 +164,16 @@ in
       "net.ipv4.conf.default.accept_redirects" = 0;
       "net.ipv6.conf.all.accept_redirects" = 0;
       "net.ipv6.conf.default.accept_redirects" = 0;
+      "net.ipv6.conf.all.autoconf" = 0;
+      "net.ipv6.conf.default.autoconf" = 0;
     };
-
+    # //
+    # lib.listToAttrs
+    #   (lib.foldl'
+    #     (settings: vlan: settings ++ [
+    #       (lib.nameValuePair "net.ipv6.conf.eth${vlan}.autoconf" 0)
+    #     ])
+    #     []
+    #     (lib.attrNames cfg.enc.parameters.interfaces));
   };
 }
