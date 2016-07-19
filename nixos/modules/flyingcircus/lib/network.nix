@@ -123,7 +123,7 @@ rec {
       gateways = nets:
         foldl'
           (gws: cidr:
-            if hasAttr cidr encInterface.networks
+            if hasAttr cidr encInterface.gateways
             then gws ++ [encInterface.gateways.${cidr}]
             else gws)
           []

@@ -63,7 +63,9 @@ in
     flyingcircus.network.policy_routing = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc;
+        default =
+          (lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc) &&
+          (lib.hasAttrByPath ["parameters" "location"] cfg.enc);
         description = "Enable policy routing?";
       };
     };
@@ -82,17 +84,13 @@ in
 
     networking.domain = "gocept.net";
 
-    # Only set nameserver if there is an enc set.
     networking.nameservers =
-      if lib.hasAttrByPath ["parameters" "location"] cfg.enc
-      then
-        if hasAttr cfg.enc.parameters.location cfg.static.nameservers
-        then cfg.static.nameservers.${cfg.enc.parameters.location}
-        else []
+      if (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
+         (hasAttr cfg.enc.parameters.location cfg.static.nameservers)
+      then cfg.static.nameservers.${cfg.enc.parameters.location}
       else [];
     networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
 
-    # If there is no enc data, we are probably not on FC platform.
     networking.search =
       if lib.hasAttrByPath ["parameters" "location"] cfg.enc
       then
@@ -108,9 +106,9 @@ in
       then lib.mapAttrs'
         (vlan: iface:
           let
-            useDHCP = (vlan == "srv") &&
-              (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
-              (allowDHCP cfg.enc.parameters.location);
+            useDHCP = false;
+              # (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
+              # (allowDHCP cfg.enc.parameters.location);
             networks = iface.networks;
           in
           lib.nameValuePair
@@ -181,9 +179,9 @@ in
       in
       "# Accept traffic within the same resource group.\n${rules}";
 
-    # DHCP settings: never do IPv4ll
+    # DHCP settings: never do IPv4ll and don't use it at all if PR is enabled
     networking.useDHCP =
-      (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
+      !cfg.network.policy_routing.enable ||
       (allowDHCP cfg.enc.parameters.location);
     networking.dhcpcd.extraConfig = ''
       # IPv4ll gets in the way if we really do not want
@@ -205,6 +203,5 @@ in
       "net.ipv6.conf.all.autoconf" = 0;
       "net.ipv6.conf.default.autoconf" = 0;
     };
-
   };
 }
