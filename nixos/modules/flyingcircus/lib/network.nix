@@ -91,6 +91,57 @@ rec {
         map (a: a + "/" + (prefix net)) addrs;
     in lib.concatLists (lib.mapAttrsToList addrsWithNetmask networks);
 
+  # IP policy rules for a single VLAN.
+  # Expects a VLAN name and an ENC "interfaces" data structure. Expected keys:
+  # mac, networks, bridged, gateways.
+  ipRules = vlan: encInterface: nets: verb:
+    let
+      prio = routingPriority vlan;
+      common = "table ${vlan} priority ${toString prio}";
+      fromRules = lib.concatMapStringsSep "\n"
+        (a: "${ip' a} rule ${verb} from ${a} ${common}")
+        (allInterfaceAddresses encInterface.networks);
+      toRules = lib.concatMapStringsSep "\n"
+        (n: "${ip' n} rule ${verb} to ${n} ${common}")
+        nets;
+    in
+    "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
+
+  ipRoutes = vlan: encInterface: nets: verb:
+    let
+      prio = routingPriority vlan;
+      dev' = dev vlan encInterface.bridged;
+
+      networkRoutesStr = lib.concatMapStrings
+        (net: ''
+          ${ip' net} route ${verb} ${net} dev ${dev'} metric ${toString prio} table ${vlan}
+        '')
+        nets;
+
+      # Builds a list of default gateways from a (filtered) list of networks in
+      # CIDR form.
+      gateways = nets:
+        foldl'
+          (gws: cidr:
+            if hasAttr cidr encInterface.networks
+            then gws ++ [encInterface.gateways.${cidr}]
+            else gws)
+          []
+          nets;
+
+      common = "dev ${dev'} metric ${toString prio}";
+      gatewayRoutesStr = lib.optionalString
+        (100 > routingPriority vlan)
+        (lib.concatMapStrings
+          (gw:
+          ''
+            ${ip' gw} route ${verb} default via ${gw} ${common}
+            ${ip' gw} route ${verb} default via ${gw} ${common} table ${vlan}
+          '')
+          (gateways nets));
+    in
+    "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
+
   # List of nets (CIDR) that have at least one address present which satisfies
   # `predicate`.
   networksWithAtLeastOneAddress = encNetworks: predicate:
@@ -104,78 +155,21 @@ rec {
   filteredNetworks = encNetworks: predicates:
     lib.concatMap (networksWithAtLeastOneAddress encNetworks) predicates;
 
-  # IP policy rules for a single VLAN.
-  # Expects a VLAN name and an ENC "interfaces" data structure. Expected keys:
-  # mac, networks, bridged, gateways.
-  ipRules = vlan: encInterface: verb:
+  policyRouting =
+    { vlan
+    , encInterface
+    , action ? "start"  # or "stop"
+    }:
     let
-      prio = routingPriority vlan;
-      common = "table ${vlan} priority ${toString prio}";
-      fromRules = lib.concatMapStringsSep "\n"
-        (a: "${ip' a} rule ${verb} from ${a} ${common}")
-        (allInterfaceAddresses encInterface.networks);
-      toRules = lib.concatMapStringsSep "\n"
-        (n: "${ip' n} rule ${verb} to ${n} ${common}")
-        (filteredNetworks encInterface.networks [ isIp4 isIp6 ]);
+      nets = filteredNetworks encInterface.networks [ isIp4 isIp6];
     in
-    "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
-
-  ipRoutes = vlan: encInterface: verb:
-    let
-      prio = routingPriority vlan;
-      dev' = dev vlan encInterface.bridged;
-
-      networkRoutes = afPredicates:
-        map
-          (net: {
-            inherit net;
-            src = elemAt encInterface.networks.${net} 0;
-          })
-          (filteredNetworks encInterface.networks afPredicates);
-      networkRoutesStr = lib.concatMapStrings
-        ({net, src}: ''
-          ${ip' net} route ${verb} ${net} dev ${dev'} metric ${toString prio} src ${src} table ${vlan}
-        '')
-        (networkRoutes [ isIp4 isIp6 ]);
-
-      # Builds a list of default gateways from a (filtered) list of networks in
-      # CIDR form.
-      gateways = nets:
-        foldl'
-          (gws: cidr:
-            if hasAttr cidr encInterface.networks
-            then gws ++ [encInterface.gateways.${cidr}]
-            else gws)
-          []
-          nets;
-
-      gatewayRoutesStr = lib.optionalString
-        (100 > routingPriority vlan)
-        (lib.concatMapStrings
-          (gw:
-          ''
-            ${ip' gw} route ${verb} default via ${gw} dev ${dev'} metric ${toString prio}
-            ${ip' gw} route ${verb} default via ${gw} dev ${dev'} metric ${toString prio} table ${vlan}
-          '')
-          (gateways (filteredNetworks encInterface.networks [ isIp4 isIp6])));
-    in
-    "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
-
-    policyRouting =
-      { vlan
-      , encInterface
-      , action ? "start"  # or "stop"
-      }:
-      if action == "start"
-      then ''
-        set -v
-        ${ipRules vlan encInterface "add"}
-        ${ipRoutes vlan encInterface "append"}
-      '' else ''
-        set +e
-        set -v
-        ${ipRoutes vlan encInterface "del"}
-        ${ipRules vlan encInterface "del"}
-      '';
+    if action == "start"
+    then ''
+      ${ipRules vlan encInterface nets "add"}
+      ${ipRoutes vlan encInterface nets "add"}
+    '' else ''
+      ${ipRoutes vlan encInterface nets "del"}
+      ${ipRules vlan encInterface nets "del"}
+    '';
 
 }

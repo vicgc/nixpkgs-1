@@ -9,7 +9,7 @@ let
 
   # generally use DHCP in the current location?
   allowDHCP = location:
-    if builtins.hasAttr location cfg.static.allowDHCP
+    if hasAttr location cfg.static.allowDHCP
     then cfg.static.allowDHCP.${cfg.enc.parameters.location}
     else false;
 
@@ -30,6 +30,20 @@ let
       cfg.static.vlans
     )}
     '';
+
+  # Adapted 'ip' command which says what it is doing and ignores errno 2 (file
+  # exists) to make it idempotent.
+  relaxedIp = pkgs.writeScriptBin "ip" ''
+    #! ${pkgs.stdenv.shell} -e
+    echo ip "$@"
+    rc=0
+    ${pkgs.iproute}/bin/ip "$@" || rc=$?
+    if ((rc == 2)); then
+      exit 0
+    else
+      exit $rc
+    fi
+  '';
 
   # add srv addresses from my own resource group to /etc/hosts
   hostsFromEncAddresses = enc_addresses:
@@ -105,27 +119,51 @@ in
         (cfg.enc.parameters.interfaces)
       else {};
 
-    # networking.localCommands =
-    #   lib.optionalString
-    #     (cfg.network.policy_routing.enable)
-    #     (''
-    #       set -v
-    #     '' + lib.concatMapStrings
-    #       (vlan: fclib.policyRouting vlan cfg.enc.parameters.interfaces.${vlan})
-    #       (attrNames cfg.enc.parameters.interfaces));
-    systemd.services.network-policyrouting-ethsrv = {
-      requires = [ "network-addresses-ethsrv.service" ];
-      after = [ "network-addresses-ethsrv.service" ];
-      wantedBy = [ "network-interfaces.target" ];
-      bindsTo = [ "sys-subsystem-net-devices-ethsrv.device" ];
-      description = "Policy routing for ethsrv";
-      path = [ pkgs.iproute ];
-      script = fclib.policyRouting {
-        vlan = "srv";
-        encInterface = cfg.enc.parameters.interfaces.srv;
-      };
-      unitConfig = { Type = "oneshot"; };
-    };
+    systemd.services =
+      if cfg.network.policy_routing.enable then
+        listToAttrs
+          (map
+            (vlan: lib.nameValuePair
+              "network-policyrouting-eth${vlan}"
+              {
+                requires = [ "network-addresses-eth${vlan}.service" ];
+                after = [ "network-addresses-eth${vlan}.service" ];
+                wantedBy = [ "network-interfaces.target" ];
+                bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
+                description = "Policy routing for eth${vlan}";
+                path = [ relaxedIp ];
+                script = fclib.policyRouting {
+                  vlan = "${vlan}";
+                  encInterface = cfg.enc.parameters.interfaces.${vlan};
+                };
+                preStop = fclib.policyRouting {
+                  vlan = "${vlan}";
+                  encInterface = cfg.enc.parameters.interfaces.${vlan};
+                  action = "stop";
+                };
+                serviceConfig = {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                };
+              })
+            (attrNames cfg.enc.parameters.interfaces)) //
+        listToAttrs
+          (map
+            (vlan: lib.nameValuePair
+              "network-disable-ipv6-autoconf-eth${vlan}"
+              {
+                before = [ "network-pre.target" ];
+                wantedBy = [ "network-pre.target" ];
+                description = "Turn off IPv6 SLAAC on eth${vlan}";
+                script = ''
+                  for autoconf in /proc/sys/net/ipv6/conf/eth${vlan}/autoconf; do
+                    echo 0 > $autoconf
+                  done
+                '';
+                serviceConfig = { Type = "oneshot"; };
+              })
+            (attrNames cfg.enc.parameters.interfaces))
+      else {};
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
@@ -167,13 +205,6 @@ in
       "net.ipv6.conf.all.autoconf" = 0;
       "net.ipv6.conf.default.autoconf" = 0;
     };
-    # //
-    # lib.listToAttrs
-    #   (lib.foldl'
-    #     (settings: vlan: settings ++ [
-    #       (lib.nameValuePair "net.ipv6.conf.eth${vlan}.autoconf" 0)
-    #     ])
-    #     []
-    #     (lib.attrNames cfg.enc.parameters.interfaces));
+
   };
 }
