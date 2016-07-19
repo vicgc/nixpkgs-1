@@ -62,7 +62,7 @@ in
   };
 
   config = mkMerge [
-    (mkIf cfg.nfs_rg_client.enable {
+    (mkIf (cfg.nfs_rg_client.enable && service ? address) {
       boot.supportedFilesystems = [ "nfs4" ];
       fileSystems = {
         "${mountpoint}/shared" = {
@@ -76,7 +76,7 @@ in
       ];
     })
 
-    (mkIf cfg.nfs_rg_share.enable {
+    (mkIf (cfg.nfs_rg_share.enable && service_clients != []) {
       services.nfs.server.enable = true;
       services.nfs.server.exports = ''
         ${export}  ${export_to_clients}
