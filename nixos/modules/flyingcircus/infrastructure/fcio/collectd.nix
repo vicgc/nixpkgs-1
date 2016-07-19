@@ -1,12 +1,15 @@
 { config, pkgs, lib, ... }:
+with lib;
+
 let
   enc = config.flyingcircus.enc;
+  params = if enc ? parameters then enc.parameters else {};
 
 in
-lib.mkIf (enc.parameters ? location && enc.parameters ? resource_group ) {
+mkIf (params ? location && params ? resource_group) {
   services.collectd.enable = true;
   services.collectd.extraConfig = ''
-    Interval     5
+    Interval 5
 
     LoadPlugin cpu
     LoadPlugin disk
@@ -35,23 +38,21 @@ lib.mkIf (enc.parameters ? location && enc.parameters ? resource_group ) {
     </Plugin>
 
     <Plugin "write_graphite">
-     <Node "services16">
+     <Node "stats.flyingcircus.io">
        Host "stats.flyingcircus.io"
        Port "2003"
-       Prefix "fcio.${enc.parameters.location}.${enc.parameters.resource_group}.virtual.generic."
+       Prefix "fcio.${params.location}.${params.resource_group}.virtual.generic."
        Protocol "udp"
        EscapeCharacter "_"
        SeparateInstances true
      </Node>
     </Plugin>
-
-    ${builtins.concatStringsSep "\n" (map
-        (ifname: ''
-          <Plugin "interface">
-            Interface "${ifname}"
-          </Plugin>
-         '')
-        (builtins.attrNames config.networking.interfaces))}
-    }
-  '';
+  '' +
+  concatMapStringsSep "\n"
+    (ifname: ''
+      <Plugin "interface">
+        Interface "${ifname}"
+      </Plugin>
+     '')
+     (attrNames config.networking.interfaces);
 }

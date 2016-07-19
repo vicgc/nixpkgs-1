@@ -16,7 +16,18 @@ in
 {
   options = {
     flyingcircus.roles.statshost = {
-      enable = mkEnableOption "stats host";
+      enable = mkEnableOption "Grafana/InfluxDB stats host";
+
+      useSSL = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Enables SSL in the virtual host.
+
+          Expects the SSL certificates and keys to be placed in
+          /etc/local/nginx/stats.crt and /etc/local/nginx/stats.key
+        '';
+      };
 
       hostName = mkOption {
         type = types.str;
@@ -78,9 +89,7 @@ in
         ];
     };
 
-    boot.kernel.sysctl = {
-      "net.core.rmem_max" = 8388608;
-    };
+    boot.kernel.sysctl."net.core.rmem_max" = 8388608;
 
     services.grafana = {
       enable = true;
@@ -89,11 +98,13 @@ in
       rootUrl = "http://${cfg.roles.statshost.hostName}/grafana";
     };
 
-    services.nginx.enable = true;
-    services.nginx.httpConfig = ''
-      server {
-          listen *:80;
-          server_name ${cfg.roles.statshost.hostName};
+    flyingcircus.roles.nginx.enable = true;
+
+    flyingcircus.roles.nginx.httpConfig =
+      let
+        httpHost = cfg.roles.statshost.hostName;
+        common = ''
+          server_name ${httpHost};
 
           location / {
               rewrite . /grafana/ redirect;
@@ -106,8 +117,34 @@ in
           location /grafana/public {
               alias ${config.services.grafana.staticRootPath};
           }
-      }
-    '';
+        '';
+      in
+      if cfg.roles.statshost.useSSL then ''
+        server {
+            listen *:80;
+            listen [::]:80;
+            server_name ${httpHost};
+            rewrite . https://$server_name$request_uri redirect;
+        }
+
+        server {
+            listen *:443 ssl;
+            listen [::]:443 ssl;
+            ${common}
+
+            ssl_certificate ${/etc/local/nginx/stats.crt};
+            ssl_certificate_key ${/etc/local/nginx/stats.key};
+            # add_header Strict-Transport-Security "max-age=31536000";
+        }
+      ''
+      else
+      ''
+        server {
+            listen *:80;
+            listen [::]:80;
+            ${common}
+        }
+      '';
 
     networking.firewall.allowedTCPPorts = [ 80 443 2003 8083 8086 ];
     networking.firewall.allowedUDPPorts = [ 2003 ];

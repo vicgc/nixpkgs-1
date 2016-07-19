@@ -148,11 +148,17 @@ in
         Docs:      https://flyingcircus.io/doc/
         Release:   ${config.system.nixosVersion}
 
-    '' + lib.optionalString (enc ? name) ''
+    '' +
+    (lib.optionalString
+      (enc ? name &&
+        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "environment" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "service_description" ] enc))
+      ''
         Hostname:  ${enc.name}    Environment: ${enc.parameters.environment}    Location:  ${enc.parameters.location}
         Services:  ${enc.parameters.service_description}
 
-    '';
+      '');
 
     services.cron.enable = true;
     sound.enable = false;
