@@ -16,5 +16,12 @@ in
     propagatedBuildInputs = [
       nagiosplugin
       py.psutil
+      py.pyyaml
+      pkgs.libyaml
     ];
+
+    postInstall = ''
+      mkdir -p "$out/share"
+      cp ./fc/sensuplugins/check_logfiles.yaml "$out/share/"
+    '';
   }

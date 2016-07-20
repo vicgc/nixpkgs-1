@@ -246,7 +246,7 @@ in {
       };
       journal = {
         notification = "Errors in journal in the last 10 minutes";
-        command = "check-journal.rb -q '([Ee]rror|[Ee]xception)' -s -10minutes";
+        command = "${pkgs.fcsensuplugins}/bin/check_journal -v --journalctl 'journalctl -a --no-pager --since \"10 minutes ago\" ' ${pkgs.fcsensuplugins}/share/check_logfiles.yaml";
         interval = 600;
       };
       manage = {
