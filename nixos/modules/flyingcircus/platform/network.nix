@@ -75,12 +75,22 @@ in
   config = rec {
     environment.etc."iproute2/rt_tables".text = rt_tables;
 
-    services.udev.extraRules = (lib.concatStrings
-      (lib.mapAttrsToList (n: vlan: ''
-        KERNEL=="eth*", ATTR{address}=="02:00:00:${
-          fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
-      '') cfg.static.vlans)
-    );
+    services.udev.extraRules =
+    if cfg.network.policy_routing.enable then
+      lib.concatMapStrings
+        (vlan:
+          let mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
+          in ''
+            KERNEL=="eth*", ATTR{address}=="${mac}", NAME="eth${vlan}"
+          '')
+        (attrNames cfg.enc.parameters.interfaces)
+    else
+      (lib.concatStrings
+        (lib.mapAttrsToList (n: vlan: ''
+          KERNEL=="eth*", ATTR{address}=="02:00:00:${
+            fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
+        '') cfg.static.vlans)
+      );
 
     networking.domain = "gocept.net";
 
@@ -92,8 +102,7 @@ in
     networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
 
     networking.search =
-      if lib.hasAttrByPath [ "parameters" "location" ] cfg.enc
-      then
+      if lib.hasAttrByPath [ "parameters" "location" ] cfg.enc then
         [ "${cfg.enc.parameters.location}.${networking.domain}"
           networking.domain
         ]
@@ -141,16 +150,19 @@ in
             (attrNames cfg.enc.parameters.interfaces)) //
         listToAttrs
           (map
-            (vlan: lib.nameValuePair
+            (vlan:
+            let
+              mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
+            in
+            lib.nameValuePair
               "network-disable-ipv6-autoconf-eth${vlan}"
               {
                 before = [ "network-pre.target" ];
                 wantedBy = [ "network-pre.target" ];
                 description = "Turn off IPv6 SLAAC on eth${vlan}";
                 script = ''
-                  for autoconf in /proc/sys/net/ipv6/conf/eth${vlan}/autoconf; do
-                    echo 0 > $autoconf
-                  done
+                  ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
+                  echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
                 '';
                 serviceConfig = { Type = "oneshot"; };
               })
