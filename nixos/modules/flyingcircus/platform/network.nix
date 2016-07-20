@@ -76,7 +76,7 @@ in
     environment.etc."iproute2/rt_tables".text = rt_tables;
 
     services.udev.extraRules = (lib.concatStrings
-      (lib.mapAttrsToList (n : vlan : ''
+      (lib.mapAttrsToList (n: vlan: ''
         KERNEL=="eth*", ATTR{address}=="02:00:00:${
           fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
       '') cfg.static.vlans)
@@ -92,7 +92,7 @@ in
     networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
 
     networking.search =
-      if lib.hasAttrByPath ["parameters" "location"] cfg.enc
+      if lib.hasAttrByPath [ "parameters" "location" ] cfg.enc
       then
         [ "${cfg.enc.parameters.location}.${networking.domain}"
           networking.domain
@@ -102,19 +102,13 @@ in
     # data structure for all configured interfaces with their IP addresses:
     # { ethfe = { ... }; ethsrv = { }; ... }
     networking.interfaces =
-      if lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc
+      if lib.hasAttrByPath [ "parameters" "interfaces" ] cfg.enc
       then lib.mapAttrs'
         (vlan: iface:
-          let
-            useDHCP = false;
-              # (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
-              # (allowDHCP cfg.enc.parameters.location);
-            networks = iface.networks;
-          in
           lib.nameValuePair
             "eth${vlan}"
-            (fclib.interfaceConfig { inherit useDHCP networks; }))
-        (cfg.enc.parameters.interfaces)
+            (fclib.interfaceConfig iface.networks // { useDHCP = false; }))
+        cfg.enc.parameters.interfaces
       else {};
 
     systemd.services =

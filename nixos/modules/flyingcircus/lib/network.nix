@@ -10,6 +10,9 @@ rec {
 
   prefixLength = cidr: lib.toInt (elemAt (lib.splitString "/" cidr) 1);
 
+  # The same as prefixLength, but returns a string not an int
+  prefix = cidr: elemAt (lib.splitString "/" cidr) 1;
+
   isIp4 = cidr: length (lib.splitString "." cidr) == 4;
 
   isIp6 = cidr: length (lib.splitString ":" cidr) > 1;
@@ -74,11 +77,8 @@ rec {
       (attrNames relevantNetworks);
 
   # ENC networks to NixOS option for both address families
-  interfaceConfig =
-    { networks
-    , useDHCP ? false }:
-    { inherit useDHCP;
-      ip4 = ipAddressesOption isIp4 networks;
+  interfaceConfig = networks:
+    { ip4 = ipAddressesOption isIp4 networks;
       ip6 = ipAddressesOption isIp6 networks;
     };
 
@@ -86,15 +86,15 @@ rec {
   # Each address is suffixed with the netmask from its network.
   allInterfaceAddresses = networks:
     let
-      prefix = cidr: elemAt (lib.splitString "/" cidr) 1;
       addrsWithNetmask = net: addrs:
-        map (a: a + "/" + (prefix net)) addrs;
+        let p = prefix net;
+        in map (addr: addr + "/" + p) addrs;
     in lib.concatLists (lib.mapAttrsToList addrsWithNetmask networks);
 
   # IP policy rules for a single VLAN.
   # Expects a VLAN name and an ENC "interfaces" data structure. Expected keys:
   # mac, networks, bridged, gateways.
-  ipRules = vlan: encInterface: nets: verb:
+  ipRules = vlan: encInterface: filteredNets: verb:
     let
       prio = routingPriority vlan;
       common = "table ${vlan} priority ${toString prio}";
@@ -103,11 +103,15 @@ rec {
         (allInterfaceAddresses encInterface.networks);
       toRules = lib.concatMapStringsSep "\n"
         (n: "${ip' n} rule ${verb} to ${n} ${common}")
-        nets;
+        filteredNets;
     in
     "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
 
-  ipRoutes = vlan: encInterface: nets: verb:
+  # Routes for an individual VLAN on an interface. This falls apart into two
+  # blocks: (1) subnet routes for all subnets on which the interface has at
+  # least one address configured; (2) gateway (default) routes for each subnet
+  # where any subnet of the same AF has at least one address.
+  ipRoutes = vlan: encInterface: filteredNets: verb:
     let
       prio = routingPriority vlan;
       dev' = dev vlan encInterface.bridged;
@@ -116,18 +120,17 @@ rec {
         (net: ''
           ${ip' net} route ${verb} ${net} dev ${dev'} metric ${toString prio} table ${vlan}
         '')
-        nets;
+        filteredNets;
 
-      # Builds a list of default gateways from a (filtered) list of networks in
-      # CIDR form.
-      gateways = nets:
+      # A list of default gateways from a list of networks in CIDR form.
+      gateways = filteredNets:
         foldl'
-          (gws: cidr:
+          (acc: cidr:
             if hasAttr cidr encInterface.gateways
-            then gws ++ [encInterface.gateways.${cidr}]
-            else gws)
+            then acc ++ [encInterface.gateways.${cidr}]
+            else acc)
           []
-          nets;
+          filteredNets;
 
       common = "dev ${dev'} metric ${toString prio}";
       gatewayRoutesStr = lib.optionalString
@@ -138,7 +141,7 @@ rec {
             ${ip' gw} route ${verb} default via ${gw} ${common}
             ${ip' gw} route ${verb} default via ${gw} ${common} table ${vlan}
           '')
-          (gateways nets));
+          (gateways filteredNets));
     in
     "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
 
@@ -152,7 +155,15 @@ rec {
     then filter predicate (lib.attrNames encNetworks)
     else [];
 
-  filteredNetworks = encNetworks: predicates:
+  # For each predicate (AF selector): collect nets (CIDR) in the ENC networks
+  # whose AF is represented by at least one address (but not necessarily in the
+  # same subnet).
+  # Example: Assume two IPv4 networks A, B on an interface where A has an
+  # address => then both networks are collected. But when none of the networks
+  # has an address configured, no net is collected.
+  # Returns the union of all nets which match this criterion for at least one AF
+  # predicate present in the second argument.
+  filterNetworks = encNetworks: predicates:
     lib.concatMap (networksWithAtLeastOneAddress encNetworks) predicates;
 
   policyRouting =
@@ -161,15 +172,15 @@ rec {
     , action ? "start"  # or "stop"
     }:
     let
-      nets = filteredNetworks encInterface.networks [ isIp4 isIp6];
+      filteredNets = filterNetworks encInterface.networks [ isIp4 isIp6 ];
     in
     if action == "start"
     then ''
-      ${ipRules vlan encInterface nets "add"}
-      ${ipRoutes vlan encInterface nets "add"}
+      ${ipRules vlan encInterface filteredNets "add"}
+      ${ipRoutes vlan encInterface filteredNets "add"}
     '' else ''
-      ${ipRoutes vlan encInterface nets "del"}
-      ${ipRules vlan encInterface nets "del"}
+      ${ipRoutes vlan encInterface filteredNets "del"}
+      ${ipRules vlan encInterface filteredNets "del"}
     '';
 
 }
