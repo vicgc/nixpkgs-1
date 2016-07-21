@@ -127,11 +127,11 @@ in
             (vlan: lib.nameValuePair
               "network-policyrouting-eth${vlan}"
               rec {
+                description = "IP policy routing for eth${vlan}";
                 requires = [ "network-addresses-eth${vlan}.service" ];
                 after = requires;
                 wantedBy = [ "network-interfaces.target" ];
                 bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
-                description = "Policy routing for eth${vlan}";
                 path = [ relaxedIp ];
                 script = fclib.policyRouting {
                   vlan = "${vlan}";
@@ -155,15 +155,15 @@ in
               mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
             in
             lib.nameValuePair
-              "network-disable-ipv6-autoconf-eth${vlan}"
+              "network-no-autoconf-eth${vlan}"
               rec {
+                description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
                 wantedBy =
                   [ "network-pre.target"
                     "network-addresses-eth${vlan}.service"
                     "network-policyrouting-eth${vlan}.service"
                   ];
                 before = wantedBy;
-                description = "Turn off IPv6 SLAAC on eth${vlan}";
                 script = ''
                   ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
                   echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
