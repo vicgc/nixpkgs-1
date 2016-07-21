@@ -126,9 +126,9 @@ in
           (map
             (vlan: lib.nameValuePair
               "network-policyrouting-eth${vlan}"
-              {
+              rec {
                 requires = [ "network-addresses-eth${vlan}.service" ];
-                after = [ "network-addresses-eth${vlan}.service" ];
+                after = requires;
                 wantedBy = [ "network-interfaces.target" ];
                 bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
                 description = "Policy routing for eth${vlan}";
@@ -156,15 +156,25 @@ in
             in
             lib.nameValuePair
               "network-disable-ipv6-autoconf-eth${vlan}"
-              {
-                before = [ "network-pre.target" ];
-                wantedBy = [ "network-pre.target" ];
+              rec {
+                wantedBy =
+                  [ "network-pre.target"
+                    "network-addresses-eth${vlan}.service"
+                    "network-policyrouting-eth${vlan}.service"
+                  ];
+                before = wantedBy;
                 description = "Turn off IPv6 SLAAC on eth${vlan}";
                 script = ''
                   ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
                   echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
                 '';
-                serviceConfig = { Type = "oneshot"; };
+                preStop = ''
+                  echo 1 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
+                '';
+                serviceConfig = {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                };
               })
             (attrNames cfg.enc.parameters.interfaces))
       else {};
