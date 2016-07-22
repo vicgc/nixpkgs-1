@@ -418,4 +418,3 @@ warningexceptions:
       - 'WARNING: Your ClamAV installation is OUTDATED'
       - 'xinetd.*: FAIL: (nrpe|lmtp) address from'
       - 'xinetd.*: FAIL: nrpe connections per second'
-...

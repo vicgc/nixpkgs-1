@@ -25,12 +25,14 @@ class Journal(nagiosplugin.Resource):
         self.criticals = []
 
     def find_hits(self):
-
         critical_hits = []
         warning_hits = []
-        log = subprocess.check_output(self.journalctl, shell=True).decode().splitlines()
+        log = subprocess.check_output(self.journalctl, shell=True).decode().\
+            splitlines()
+        _log.debug('complete log:\n%s', '\n'.join(log))
         with open(self.src) as fobj:
-                    patterns = yaml.load(fobj)
+            patterns = yaml.safe_load(fobj)
+        _log.debug('patterns:\n%r', patterns)
 
         # create a list of match candidates by applying the rules
         warning_hits = [
@@ -39,13 +41,17 @@ class Journal(nagiosplugin.Resource):
             for entry in log
             if re.search(rule, entry)
         ]
+        _log.info('warning hits (w/o exceptions):\n%s',
+                  '\n'.join(warning_hits))
+
         # reducing them by exceptions of the rule
-        if warning_hits: warning_hits = [
-            entry
-            for rule in patterns['warningexceptions']
-            for entry in warning_hits
-            if not re.search(rule, entry)
-        ]
+        if warning_hits and 'warningexceptions' in patterns:
+            warning_hits = [
+                entry
+                for rule in patterns['warningexceptions']
+                for entry in warning_hits
+                if not re.search(rule, entry)
+            ]
 
         # do that for critical as well
         critical_hits = [
@@ -54,62 +60,66 @@ class Journal(nagiosplugin.Resource):
             for entry in log
             if re.search(rule, entry)
         ]
+        _log.info('critical hits (w/o exceptions):\n%s',
+                  '\n'.join(critical_hits))
+
         # reducing them by exceptions of the rule
-        if critical_hits: critical_hits = [
-            entry
-            for rule in patterns['criticalexceptions']
-            for entry in critical_hits
-            if not re.search(rule, entry)
-        ]
+        if critical_hits and 'criticalexceptions' in patterns:
+            critical_hits = [
+                entry
+                for rule in patterns['criticalexceptions']
+                for entry in critical_hits
+                if not re.search(rule, entry)
+            ]
 
         return (warning_hits, critical_hits)
 
-
     def probe(self):
-
         self.warnings, self.criticals = self.find_hits()
 
-        metric_warning = 0
-        if self.warnings:
-            metric_warning = 1
+        return [nagiosplugin.Metric('warning', len(self.warnings), min=0),
+                nagiosplugin.Metric('critical', len(self.criticals), min=0)]
 
-        metric_critical = 0
-        if self.criticals:
-            metric_critical = 2
-
-        return [nagiosplugin.Metric('warning', metric_warning, min=0),
-                nagiosplugin.Metric('critical', metric_critical, min=0)]
 
 class JournalSummary(nagiosplugin.Summary):
 
+    def ok(self, results):
+        return 'no errors found'
+
+    def problem(self, results):
+        return '{} {} line(s) found\n'.format(
+            results.most_significant[0].metric.value,
+            results.most_significant_state)
+
     def verbose(self, results):
-        if 'warning' in results:
-            return 'journal: ' + '\n'.join(results['warning'].resource.warnings)
-        if 'critical' in results:
-            return 'journal: ' + '\n'.join(results['critical'].resource.criticals)
+        res = ''
+        if results['critical'].metric.value:
+            res += ('critical hits:\n' +
+                    '\n'.join(results['critical'].resource.criticals) + '\n')
+        if results['warning'].metric.value:
+            res += ('warning hits:\n' +
+                    '\n'.join(results['warning'].resource.warnings) + '\n')
+        return res
 
 
 @nagiosplugin.guarded
 def main():
     a = argparse.ArgumentParser()
     a.add_argument('-j', '--journalctl', dest='journalctl',
-                   default='journalctl --no-pager -a --since=-10minutes',
-                   help='passes arguments to journalctl')
+                   default='journalctl -a --since=-10minutes',
+                   help='journalctl invocation (default: %(default)s)')
     a.add_argument('config')
-    a.add_argument('-t', '--timeout', default=10, help="about execution after TIMEOUT seconds")
+    a.add_argument('-t', '--timeout', default=10,
+                   help='about execution after TIMEOUT seconds')
     a.add_argument('-v', '--verbose', action='count', default=0)
-
 
     args = a.parse_args()
     check = nagiosplugin.Check(
         Journal(params=args, src=args.config),
-        nagiosplugin.ScalarContext('warning', warning="0:0", critical="0:1"),
-        nagiosplugin.ScalarContext('critical', warning="0:0", critical="0:1"),
+        nagiosplugin.ScalarContext('warning', warning="0:0"),
+        nagiosplugin.ScalarContext('critical', critical="0:0"),
         JournalSummary())
     check.main(args.verbose, args.timeout)
 
 if __name__ == '__main__':
     main()
-
-
-

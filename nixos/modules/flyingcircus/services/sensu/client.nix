@@ -245,8 +245,10 @@ in {
         command = "check-dns.rb -d ${config.networking.hostName}.gocept.net";
       };
       journal = {
-        notification = "Errors in journal in the last 10 minutes";
-        command = "${pkgs.fcsensuplugins}/bin/check_journal -v --journalctl 'journalctl -a --no-pager --since \"10 minutes ago\" ' ${pkgs.fcsensuplugins}/share/check_logfiles.yaml";
+        notification = "Journal errors in the last 10 minutes";
+        command = ''
+          ${pkgs.fcsensuplugins}/bin/check_journal -v ${./check_journal.yaml}
+        '';
         interval = 600;
       };
       manage = {
