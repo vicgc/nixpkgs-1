@@ -174,6 +174,7 @@ in
         db
         dstat
         fcmaintenance
+        file
         fio
         gcc
         gdbm
