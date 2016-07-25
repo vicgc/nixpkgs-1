@@ -11,6 +11,8 @@ import re
 import subprocess
 import yaml
 
+from functools import reduce
+
 _log = logging.getLogger('nagiosplugin')
 
 
@@ -45,13 +47,16 @@ class Journal(nagiosplugin.Resource):
                   '\n'.join(warning_hits))
 
         # reducing them by exceptions of the rule
+
+        # Info: We need to carry the list of warning hits by applying the
+        # exception rules individually on the shrinking list!
+
         if warning_hits and 'warningexceptions' in patterns:
-            warning_hits = [
-                entry
-                for rule in patterns['warningexceptions']
-                for entry in warning_hits
-                if not re.search(rule, entry)
-            ]
+            warning_hits = \
+                reduce(lambda H, e:
+                       [h for h in H if not re.search(e, h)],
+                       patterns['warningexceptions'],
+                       warning_hits)
 
         # do that for critical as well
         critical_hits = [
@@ -64,13 +69,13 @@ class Journal(nagiosplugin.Resource):
                   '\n'.join(critical_hits))
 
         # reducing them by exceptions of the rule
+
         if critical_hits and 'criticalexceptions' in patterns:
-            critical_hits = [
-                entry
-                for rule in patterns['criticalexceptions']
-                for entry in critical_hits
-                if not re.search(rule, entry)
-            ]
+            warning_hits = \
+                reduce(lambda H, e:
+                       [h for h in H if not re.search(e, h)],
+                       patterns['criticalexceptions'],
+                       warning_hits)
 
         return (warning_hits, critical_hits)
 
