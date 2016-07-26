@@ -32,5 +32,9 @@
     mc = pkgs.callPackage ./mc.nix { };
     mailx = pkgs.callPackage ./mailx.nix { };
 
+    mongodb32 = pkgs.callPackage ./mongodb {
+      sasl = pkgs.cyrus_sasl;
+    };
+
   };
 }
