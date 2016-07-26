@@ -171,6 +171,7 @@ in rec {
       vim;
 
       powerdns = pkgs.callPackage ./modules/flyingcircus/packages/powerdns.nix { };
+      mongodb32 = pkgs.callPackage ./modules/flyingcircus/packages/mongodb { };
 
   };
 
