@@ -13,7 +13,7 @@ criticalexceptions:
 warningpatterns:
       - '[Ff]ail|FAIL'
       - '[Uu]nexpected.*[Ee]xception'
-      - '[Ww]arn]|WARN'
+      - '[Ww]arn|WARN'
 
 warningexceptions:
       - '0 failures 0 errors'
