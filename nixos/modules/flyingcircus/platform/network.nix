@@ -130,6 +130,7 @@ in
                 description = "IP policy routing for eth${vlan}";
                 requires = [ "network-addresses-eth${vlan}.service" ];
                 after = requires;
+                before = [ "network-local-commands.service" ];
                 wantedBy = [ "network-interfaces.target" ];
                 bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
                 path = [ relaxedIp ];
@@ -182,18 +183,6 @@ in
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
     networking.firewall.rejectPackets = true;
-
-    # allow srv access for machines in the same RG
-    networking.firewall.extraCommands =
-      let
-        addrs = map (elem: elem.ip) cfg.enc_addresses.srv;
-        rules = lib.optionalString
-          (lib.hasAttr "ethsrv" networking.interfaces)
-          (lib.concatMapStringsSep "\n"
-            (a: "${fclib.iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a} -j nixos-fw-accept")
-            addrs);
-      in
-      "# Accept traffic within the same resource group.\n${rules}";
 
     # DHCP settings: never do IPv4ll and don't use it at all if PR is enabled
     networking.useDHCP =
