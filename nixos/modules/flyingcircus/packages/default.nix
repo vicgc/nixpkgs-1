@@ -36,5 +36,11 @@
 
     osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
+    mongodb32 = pkgs.callPackage ./mongodb {
+      # I overwrite this here and not in mongodb/default.nix as it is copied
+      # without any change.
+      sasl = pkgs.cyrus_sasl;
+    };
+
   };
 }
