@@ -1,0 +1,20 @@
+---
+criticalpatterns:
+      - '[Aa]bort|ABORT'
+      - '[Ee]rror|ERROR'
+      - '[Ff]atal|FATAL'
+      - 'Oops:'
+      - 'kernel: .* BUG:'
+      - 'kvm: .* cpu.* unhandled (rd|wr)msr'
+
+criticalexceptions:
+      - 'ACPI Error: Method parse/execution failed'
+
+warningpatterns:
+      - '[Ff]ail|FAIL'
+      - '[Uu]nexpected.*[Ee]xception'
+      - '[Ww]arn|WARN'
+
+warningexceptions:
+      - '0 failures 0 errors'
+      - 'Cannot add dependency job for unit.*quota'
