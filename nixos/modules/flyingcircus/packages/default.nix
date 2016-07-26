@@ -21,6 +21,7 @@
 
     nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
 
+    postfix = pkgs.callPackage ./postfix/3.0.nix { };
     powerdns = pkgs.callPackage ./powerdns.nix { };
     pypkgs = pkgs.callPackage ./pypkgs.nix { };
 
