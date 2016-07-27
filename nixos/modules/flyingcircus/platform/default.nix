@@ -34,9 +34,9 @@ in
 {
 
   imports = [
-    ./firewall
     ./logrotate
     ./network.nix
+    ./firewall.nix
     ./sensu-client.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
