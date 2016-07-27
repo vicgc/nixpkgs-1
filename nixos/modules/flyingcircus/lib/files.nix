@@ -5,11 +5,11 @@ rec {
   # Get all regular files with their name relative to path
   filesRel = path:
     optionals
-      (pathExists path)
+      (builtins.pathExists path)
       (attrNames
         (filterAttrs
           (filename: type: (type == "regular"))
-          (readDir path)));
+          (builtins.readDir path)));
 
   # Get all regular files with their absolute name
   files = path:
