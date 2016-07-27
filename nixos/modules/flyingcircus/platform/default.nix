@@ -34,9 +34,9 @@ in
 {
 
   imports = [
-    ./firewall
     ./logrotate
     ./network.nix
+    ./firewall.nix
     ./sensu-client.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
@@ -148,11 +148,17 @@ in
         Docs:      https://flyingcircus.io/doc/
         Release:   ${config.system.nixosVersion}
 
-    '' + lib.optionalString (enc ? name) ''
+    '' +
+    (lib.optionalString
+      (enc ? name &&
+        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "environment" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "service_description" ] enc))
+      ''
         Hostname:  ${enc.name}    Environment: ${enc.parameters.environment}    Location:  ${enc.parameters.location}
         Services:  ${enc.parameters.service_description}
 
-    '';
+      '');
 
     services.cron.enable = true;
     sound.enable = false;
@@ -168,6 +174,7 @@ in
         db
         dstat
         fcmaintenance
+        file
         fio
         gcc
         gdbm
@@ -259,19 +266,6 @@ in
         });
       };
 
-    system.activationScripts.journal = ''
-      # Ensure journal access for privileged users.
-      # This fails if the users are not there (hence || true). This does not
-      # matter though: a non existing user/group does not need access.
-      # Command line taken from systemd-journald.service(8)
-      ${pkgs.acl}/bin/setfacl -Rn \
-        -m g:sudo-srv:rx,d:g:sudo-srv:rx \
-        -m g:admins:rx,d:g:admins:rx \
-        -m g:wheel:rx,d:g:wheel:rx \
-        -m g:sensuclient:rx,d:g:sensuclient:rx \
-        /var/log/journal/ || true
-    '';
-
     environment.etc = (
       lib.optionalAttrs (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
       { "directory.secret".text = cfg.enc.parameters.directory_secret;
@@ -285,12 +279,10 @@ in
     };
     services.nscd.enable = true;
 
-    services.journald.extraConfig = "SystemMaxUse=1G";
     systemd.tmpfiles.rules = [
       # d instead of r to a) respect the age rule and b) allow exclusion
       # of fc-data to avoid killing the seeded ENC upon boot.
       "d /tmp 1777 root root 3d"
-      "x /tmp/fc-data/*"
       "d /var/tmp 1777 root root 7d"
       "d /srv"
       "z /srv 0755 root root"
@@ -301,6 +293,5 @@ in
       then cfg.enc.parameters.timezone
       else "UTC";
   };
-
 
 }

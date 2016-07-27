@@ -8,18 +8,22 @@ setup(
     version='1.0',
     description=__doc__,
     url='https://github.com/flyingcircus/nixpkgs',
-    author='Christian Kauhaus',
-    author_email='kc@flyingcircus.io',
+    author='Flying Circus Internet Operations GmbH',
+    author_email='mail@flyingcircus.io',
     license='ZPL',
     classifiers=[
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
     packages=['fc.sensuplugins'],
-    install_requires=['nagiosplugin'],
+    install_requires=[
+        'nagiosplugin',
+        'PyYAML',
+    ],
     entry_points={
         'console_scripts': [
             'check_disk=fc.sensuplugins.disk:main',
+            'check_journal=fc.sensuplugins.journal:main'
         ],
     },
 )

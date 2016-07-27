@@ -16,5 +16,7 @@ in
     propagatedBuildInputs = [
       nagiosplugin
       py.psutil
+      py.pyyaml
+      pkgs.libyaml
     ];
   }

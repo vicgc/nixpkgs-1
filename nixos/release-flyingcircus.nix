@@ -190,6 +190,10 @@ in rec {
       vim;
 
       powerdns = pkgs.callPackage ./modules/flyingcircus/packages/powerdns.nix { };
+      influxdb011 = pkgs.callPackage ./modules/flyingcircus/packages/influxdb.nix { };
+      mongodb32 = pkgs.callPackage ./modules/flyingcircus/packages/mongodb {
+        sasl = pkgs.cyrus_sasl;
+      };
 
   };
 
