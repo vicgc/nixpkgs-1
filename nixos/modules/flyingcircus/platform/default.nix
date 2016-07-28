@@ -264,6 +264,11 @@ in
             )
           ";
         });
+        varnish = pkgs.varnish.overrideDerivation (oldattrs: {
+          configureFlagsArray = [
+            "--localstatedir=/var/spool"
+          ];
+        });
       };
 
     environment.etc = (
