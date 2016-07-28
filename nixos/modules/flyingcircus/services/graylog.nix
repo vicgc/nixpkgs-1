@@ -141,6 +141,8 @@ in
     systemd.services.graylog = with pkgs; {
       description = "Graylog Server";
       wantedBy = [ "multi-user.target" ];
+      after = [ "mongodb.service" ];
+      wants = [ "mongodb.service"];
       environment = {
         JAVA_HOME = jre;
         GRAYLOG_CONF = "${confFile}";
