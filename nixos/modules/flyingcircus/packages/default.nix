@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 
 {
 
@@ -39,6 +39,12 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
+
     vulnix = pkgs.callPackage ./vulnix.nix { };
+
+    elasticsearch2 = pkgs.callPackage ./elasticsearch2 { };
+    elasticsearchPlugins = lib.recurseIntoAttrs (
+      pkgs.callPackage ./elasticsearch/plugins.nix { }
+    );
   };
 }
