@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 
 {
 
@@ -62,10 +62,14 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
-    vulnix = pkgs.callPackage ./vulnix { };
-
     rabbitmq_delayed_message_exchange =
       pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
+    vulnix = pkgs.callPackage ./vulnix.nix { };
+
+    elasticsearch2 = pkgs.callPackage ./elasticsearch2 { };
+    elasticsearchPlugins = lib.recurseIntoAttrs (
+      pkgs.callPackage ./elasticsearch/plugins.nix { }
+    );
   };
 }
