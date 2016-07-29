@@ -19,7 +19,12 @@
     fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
     fcutil = pkgs.callPackage ./fcutil { };
 
+    mc = pkgs.callPackage ./mc.nix { };
+    mongodb32 = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+
     nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
+
+    osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
     postfix = pkgs.callPackage ./postfix/3.0.nix { };
     powerdns = pkgs.callPackage ./powerdns.nix { };
@@ -32,16 +37,6 @@
 
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
-
-    mc = pkgs.callPackage ./mc.nix { };
-
-    osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
-
-    mongodb32 = pkgs.callPackage ./mongodb {
-      # I overwrite this here and not in mongodb/default.nix as it is copied
-      # without any change.
-      sasl = pkgs.cyrus_sasl;
-    };
 
   };
 }
