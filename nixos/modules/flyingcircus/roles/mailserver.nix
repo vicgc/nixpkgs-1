@@ -1,17 +1,25 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 let
 
   cfg = config.flyingcircus;
   fclib = import ../lib;
 
-  mail_out_service = lib.findFirst
+  mailoutService = lib.findFirst
     (s: s.service == "mailserver-mailout")
     null
     config.flyingcircus.enc_services;
 
+
+  mainCf = [
+    (if lib.pathExists "/etc/local/postfix/local.cf" then
+      lib.readFile /etc/local/postfix/local.cf
+     else "")
+
+    (if lib.pathExists "/etc/local/postfix/canonical.pcre" then
+      "canonical_maps = pcre:${/etc/local/postfix/canonical.pcre}\n"
+     else "")
+  ];
 
 in
 {
@@ -19,8 +27,8 @@ in
 
     flyingcircus.roles.mailserver = {
 
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = ''
           Enable the Flying Circus mailserver out role and configure
@@ -31,8 +39,9 @@ in
     };
   };
 
-  config = mkMerge [
-    (mkIf cfg.roles.mailserver.enable {
+  config = lib.mkMerge [
+
+   (lib.mkIf cfg.roles.mailserver.enable {
       services.postfix.enable = true;
 
       # Allow all networks on the SRV interface. We expect only trusted machines
@@ -41,16 +50,43 @@ in
         if cfg.enc.parameters.interfaces ? srv
         then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
         else [];
+
+      # XXX change to fcio.net once #14970 is solved
+      services.postfix.domain = "gocept.net";
+
+      services.postfix.extraConfig = lib.concatStringsSep "\n" mainCf;
+
+      system.activationScripts.fcio-postfix = ''
+          install -d -o root -g service  -m 02775 /etc/local/postfix/
+        '';
+
+      environment.etc."local/postfix/README.txt".text = ''
+        Put your local postfix configuration here.
+
+        Use `main.cf` for pure configuration settings like
+        setting message_size_limit. Please do use normal main.cf syntax,
+        as this will extend the basic configuration file.
+
+        If you need to reference to some map, these are currently available:
+        * canonical_maps - /etc/local/postfix/canonical.pcre
+
+        In case you need to extend this list, get in contact with our
+        support.
+      '';
+
+      environment.systemPackages = [ pkgs.mailutils ];
+
     })
 
-    (mkIf (!cfg.roles.mailserver.enable &&
-           mail_out_service != null) {
+    (lib.mkIf (!cfg.roles.mailserver.enable &&
+           mailoutService != null) {
 
       networking.defaultMailServer.directDelivery = true;
-      networking.defaultMailServer.hostName = mail_out_service.address;
+      networking.defaultMailServer.hostName = mailoutService.address;
 
       networking.defaultMailServer.root = "admin@flyingcircus.io";
-      networking.defaultMailServer.domain = "fcio.net";
+      # XXX change to fcio.net once #14970 is solved
+      networking.defaultMailServer.domain = "gocept.net";
 
       # Other parts of nixos (cron, mail) expect a suidwrapper for sendmail.
       services.mail.sendmailSetuidWrapper = {
