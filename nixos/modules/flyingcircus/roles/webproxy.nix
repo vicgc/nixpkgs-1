@@ -36,7 +36,6 @@ in
     services.varnish.enable = true;
     services.varnish.http_address = "localhost:8008";
     services.varnish.config = varnishCfg;
-    services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
 
     system.activationScripts.varnish = ''
       install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
