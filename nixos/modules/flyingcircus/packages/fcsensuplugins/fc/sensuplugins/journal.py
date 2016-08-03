@@ -29,8 +29,17 @@ class Journal(nagiosplugin.Resource):
     def find_hits(self):
         critical_hits = []
         warning_hits = []
-        log = subprocess.check_output(self.journalctl, shell=True).decode().\
-            splitlines()
+        try:
+            log = subprocess.check_output(self.journalctl, shell=True).\
+                decode().splitlines()
+        except subprocess.CalledProcessError as e:
+            ret = e.returncode
+            # journalctl returns 256, if the the filtered output is empty
+            # we may exit the whole process
+            if ret == 256:
+                return([], [])
+            else:
+                raise
         _log.debug('complete log:\n%s', '\n'.join(log))
         with open(self.src) as fobj:
             patterns = yaml.safe_load(fobj)
