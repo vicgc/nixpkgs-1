@@ -90,8 +90,6 @@ in rec {
   nixos = {
     inherit (nixos')
       channel
-      manual
-      iso_minimal
       dummy;
     tests = {
       inherit (nixos'.tests)
