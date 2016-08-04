@@ -187,6 +187,7 @@ in rec {
       stdenv
       subversion
       tarball
+      varnish
       vim;
 
       influxdb011 = pkgs.callPackage ./modules/flyingcircus/packages/influxdb.nix { };
