@@ -90,8 +90,6 @@ in rec {
   nixos = {
     inherit (nixos')
       channel
-      manual
-      iso_minimal
       dummy;
     tests = {
       inherit (nixos'.tests)
@@ -187,6 +185,7 @@ in rec {
       stdenv
       subversion
       tarball
+      varnish
       vim;
 
       influxdb011 = pkgs.callPackage ./modules/flyingcircus/packages/influxdb.nix { };
