@@ -5,6 +5,7 @@ journalctl and if positive prints them.
 """
 
 import argparse
+import json
 import logging
 import nagiosplugin
 import re
@@ -30,27 +31,40 @@ class Journal(nagiosplugin.Resource):
         critical_hits = []
         warning_hits = []
         try:
-            log = subprocess.check_output(self.journalctl, shell=True).\
-                decode().splitlines()
+            log = subprocess.check_output(self.journalctl,
+                                          stderr=subprocess.STDOUT,
+                                          shell=True).\
+                decode().strip().split('\n')
         except subprocess.CalledProcessError as e:
             ret = e.returncode
             # journalctl returns 256, if the the filtered output is empty
             # we may exit the whole process
             if ret == 256:
                 return([], [])
+            # systemd < 223 returns stupid output in case of zero entries
+            # zero entries == ok
+            elif ret == 1 and 'timestamp' in e.output.decode():
+                return([], [])
             else:
                 raise
-        _log.debug('complete log:\n%s', '\n'.join(log))
+        # convert the list of json objects to a list of python objects
+        log = [json.loads(entry) for entry in log]
+
+        _log.debug('complete log:\n')
+        for entry in log:
+            _log.debug(entry['MESSAGE'])
         with open(self.src) as fobj:
             patterns = yaml.safe_load(fobj)
         _log.debug('patterns:\n%r', patterns)
 
         # create a list of match candidates by applying the rules
+        # xxx: unfortunately entry['MESSAGE'] contains not only strings
+        # all the time, needs further testing
         warning_hits = [
-            entry
+            entry['MESSAGE']
             for rule in patterns['warningpatterns']
             for entry in log
-            if re.search(rule, entry)
+            if re.search(rule, str(entry['MESSAGE']))
         ]
         _log.info('warning hits (w/o exceptions):\n%s',
                   '\n'.join(warning_hits))
@@ -69,10 +83,10 @@ class Journal(nagiosplugin.Resource):
 
         # do that for critical as well
         critical_hits = [
-            entry
+            entry['MESSAGE']
             for rule in patterns['criticalpatterns']
             for entry in log
-            if re.search(rule, entry)
+            if re.search(rule, str(entry['MESSAGE']))
         ]
         _log.info('critical hits (w/o exceptions):\n%s',
                   '\n'.join(critical_hits))
@@ -120,7 +134,8 @@ class JournalSummary(nagiosplugin.Summary):
 def main():
     a = argparse.ArgumentParser()
     a.add_argument('-j', '--journalctl', dest='journalctl',
-                   default='journalctl -a --since=-10minutes',
+                   default='journalctl --no-pager -o json ' +
+                   '--since=-10minutes',
                    help='journalctl invocation (default: %(default)s)')
     a.add_argument('config')
     a.add_argument('-t', '--timeout', default=10,
