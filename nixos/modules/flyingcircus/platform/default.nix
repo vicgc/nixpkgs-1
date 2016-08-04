@@ -201,6 +201,7 @@ in
         imagemagick
         iotop
         kerberos
+        libjpeg
         libmemcached
         libxml2
         libxslt

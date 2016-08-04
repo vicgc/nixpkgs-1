@@ -54,6 +54,12 @@ in
         more = "less -e";
     };
 
+    systemd.extraConfig = ''
+      DefaultLimitNOFILE=64000
+      DefaultLimitNPROC=64173
+      DefaultLimitSIGPENDING=64173
+    '';
+
   };
 
 }
