@@ -97,9 +97,7 @@ in {
 
     security.sudo.extraConfig = ''
       Cmnd_Alias  SENSU_DIRECTORY_HANDLER = ${directory_handler}
-
       sensuserver ALL=(root) SENSU_DIRECTORY_HANDLER
-
     '';
 
     systemd.services.prepare-rabbitmq-for-sensu = {
@@ -125,10 +123,11 @@ in {
                 "^((default|results|keepalives)$)|${client_name}-.*" \
                 "^((keepalives|results)$)|${client_name}-.*" \
                 "^(default$)|${client_name}-.*"
+
               '')
           sensu_clients);
       in
-       ''
+      ''
         set -ex
 
         rabbitmqctl start_app || sleep 5
@@ -140,7 +139,6 @@ in {
         rabbitmqctl set_permissions -p /sensu sensu-server ".*" ".*" ".*"
 
         ${clients}
-
       '';
     };
 
@@ -153,7 +151,8 @@ in {
         "prepare-rabbitmq-for-sensu.service" ];
       serviceConfig = {
         User = "sensuserver";
-        ExecStart = "${pkgs.sensu}/bin/sensu-server -c ${sensu_server_json}";
+        ExecStart = "${pkgs.sensu}/bin/sensu-server -c ${sensu_server_json} " +
+          "--log_level warn";
         Restart = "always";
         RestartSec = "5s";
       };
