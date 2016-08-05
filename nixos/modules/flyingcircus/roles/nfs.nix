@@ -74,6 +74,10 @@ in
       systemd.tmpfiles.rules = [
         "d ${mountpoint}"
       ];
+      services.logrotate.config = ''
+        /var/log/autofs {
+        }
+      '';
     })
 
     (mkIf (cfg.nfs_rg_share.enable && service_clients != []) {

@@ -15,7 +15,7 @@ let
         user haproxy
         group haproxy
         maxconn 4096
-        log ::1 local2
+        log localhost local2
 
     defaults
         mode http
@@ -31,6 +31,10 @@ let
     listen http-in
         bind 127.0.0.1:8002
         bind ::1:8002
+        default_backend be
+
+    backend be
+        server localhost localhost:8080
     '';
 
 in
@@ -75,6 +79,10 @@ in
         source = /etc/local/haproxy;
         enable = cfg.compat.gentoo.enable;
       };
+    };
+
+    flyingcircus.syslog.separateFacilities = {
+      local2 = "/var/log/haproxy.log";
     };
   };
 
