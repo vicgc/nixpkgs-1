@@ -80,7 +80,7 @@ in
         { "${user.name}-logrotate" = {
           description   = "Logrotate Service for ${user.name}";
           wantedBy      = [ "multi-user.target" ];
-          startAt       = "*-*-* 00:05:00";
+          startAt       = "*-*-* 00:03:00";
 
           path = [ pkgs.bash pkgs.logrotate ];
 
