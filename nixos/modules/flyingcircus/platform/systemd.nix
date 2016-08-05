@@ -11,6 +11,7 @@ in {
     services.journald.extraConfig = ''
       SystemMaxUse=1G
       MaxLevelConsole=notice
+      ForwardToSyslog=true
     '';
 
     system.activationScripts.systemd-journal-acl = ''
