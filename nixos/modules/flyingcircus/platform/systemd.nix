@@ -8,7 +8,11 @@ let
 in {
   config = {
 
-    services.journald.extraConfig = "SystemMaxUse=1G";
+    services.journald.extraConfig = ''
+      SystemMaxUse=1G
+      MaxLevelConsole=notice
+      ForwardToSyslog=true
+    '';
 
     system.activationScripts.systemd-journal-acl = ''
       # Ensure journal access for all users.
