@@ -10,6 +10,7 @@ let
     null
     config.flyingcircus.enc_services;
 
+  myHostname = (fclib.configFromFile /etc/local/postfix/myhostname "");
 
   mainCf = [
     (if lib.pathExists "/etc/local/postfix/local.cf" then
@@ -53,6 +54,8 @@ in
 
       # XXX change to fcio.net once #14970 is solved
       services.postfix.domain = "gocept.net";
+
+      services.postfix.hostname = myHostname;
 
       services.postfix.extraConfig = lib.concatStringsSep "\n" mainCf;
 
