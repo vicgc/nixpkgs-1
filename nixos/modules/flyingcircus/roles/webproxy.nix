@@ -2,10 +2,9 @@
 
 let
   cfg = config.flyingcircus.roles.webproxy;
+  fclib = import ../lib;
 
-  configFromFile = file: default:
-    if builtins.pathExists file then builtins.readFile file else default;
-  varnishCfg = configFromFile /etc/local/varnish/default.vcl vcl_example;
+  varnishCfg = fclib.configFromFile /etc/local/varnish/default.vcl vcl_example;
 
   vcl_example = ''
     vcl 4.0;

@@ -17,4 +17,7 @@ rec {
       (filename: path + "/" + filename)
       (filesRel path));
 
+  # Reads the config file if it exists, else returns predefined default
+  configFromFile = file: default:
+    if builtins.pathExists file then builtins.readFile file else default;
 }
