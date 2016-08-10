@@ -4,7 +4,8 @@
 
 let
   version = "3.0.0";
-in stdenv.mkDerivation rec {
+in
+stdenv.mkDerivation rec {
   name = "easyrsa-${version}";
 
   src = fetchFromGitHub {
@@ -15,6 +16,8 @@ in stdenv.mkDerivation rec {
   };
 
   patches = [ ./fix-paths.patch ];
+
+  propagatedBuildInputs = [ openssl ];
 
   installPhase = ''
     mkdir -p $out/share/easyrsa
@@ -35,7 +38,6 @@ in stdenv.mkDerivation rec {
     description = "Simple shell based CA utility";
     homepage = http://openvpn.net/;
     license = licenses.gpl2;
-    maintainers = [ maintainers.offline ];
     platforms = platforms.linux;
   };
 }
