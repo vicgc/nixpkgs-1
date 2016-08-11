@@ -57,8 +57,8 @@
 
     services.rsyslogd.extraConfig = ''
       *.info${exclude} -/var/log/messages
-      ${separateFacilities}
       ${extraRules}
+      ${separateFacilities}
     '';
 
     services.logrotate.config = ''
