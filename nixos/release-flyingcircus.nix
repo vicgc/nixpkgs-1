@@ -111,12 +111,31 @@ in rec {
         simple;
 
       flyingcircus = {
-            percona = hydraJob
+            percona-57 = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
-                  inherit system; });
+                  percona = pkgs.callPackage
+                    ./modules/flyingcircus/packages/percona/5.7.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
+                  inherit system; }
+            );
+            percona-56 = hydraJob
+              (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.callPackage
+                    ./modules/flyingcircus/packages/percona/5.6.nix {
+                      boost = (pkgs.callPackage ./modules/flyingcircus/packages/boost-1.59.nix {});
+                    };
+                  inherit system; }
+            );
+            mysql-55 = hydraJob
+              (import modules/flyingcircus/tests/percona.nix {
+                  percona = pkgs.mysql55;
+                  inherit system; }
+            );
             sensuserver = hydraJob
               (import modules/flyingcircus/tests/sensu.nix {
-                  inherit system; });
+                  inherit system; }
+            );
       };
 
       networking.scripted = {
@@ -171,6 +190,7 @@ in rec {
       vim;
 
       powerdns = pkgs.callPackage ./modules/flyingcircus/packages/powerdns.nix { };
+      influxdb011 = pkgs.callPackage ./modules/flyingcircus/packages/influxdb.nix { };
       mongodb32 = pkgs.callPackage ./modules/flyingcircus/packages/mongodb {
         sasl = pkgs.cyrus_sasl;
       };

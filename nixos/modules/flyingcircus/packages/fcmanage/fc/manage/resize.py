@@ -5,6 +5,7 @@ looking up the device by checking the root partition by label first.
 """
 
 import argparse
+import fc.manage.dmi_memory
 import fc.maintenance
 import fc.maintenance.lib.reboot
 import json
@@ -96,25 +97,23 @@ def resize_filesystems():
 
 def set_quota(enc):
     """Ensures only as much space as allotted can be used."""
-    print('resize: Ensuring XFS quota')
     disksize = int(enc['parameters'].get('disk', 0))  # GiB
     if not disksize:
         return
+    print('resize: Setting XFS quota to {} GiB'.format(disksize))
     subprocess.check_call([
         'xfs_quota', '-xc',
         'limit -p bsoft={d}g bhard={d}g root'.format(d=disksize), '/'])
 
 
-def real_memory_mb():
-    """Returns real memory rounded to multiples of 128 MiB."""
-    with open('/proc/meminfo') as f:
-        for line in f:
-            if line.startswith('MemTotal:'):
-                mem_kb = int(line.split()[1])
-                break
-    if not mem_kb:
-        raise RuntimeError('failed to determine memory size')
-    return 128 * round(mem_kb / 1024 / 128)
+def count_cores(cpuinfo='/proc/cpuinfo'):
+    count = 0
+    with open(cpuinfo) as f:
+        for line in f.readlines():
+            if line.startswith('processor'):
+                count += 1
+    assert count > 0
+    return count
 
 
 def memory_change(enc):
@@ -122,18 +121,31 @@ def memory_change(enc):
     enc_memory = int(enc['parameters'].get('memory', 0))
     if not enc_memory:
         return
-    real_memory = real_memory_mb()
-    # XXX Needs inverstigation why it differs in the first place
-    if float(real_memory) / enc_memory > 0.9:
+    real_memory = fc.manage.dmi_memory.main()
+    if real_memory == enc_memory:
         return
     msg = 'Reboot to change memory from {} MiB to {} MiB'.format(
         real_memory, enc_memory)
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
-        if rm.find_by_comment(msg):
-            return
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 600, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+
+
+def cpu_change(enc):
+    """Schedules reboot if the number of cores has changed."""
+    cores = int(enc['parameters'].get('cores', 0))
+    if not cores:
+        return
+    current_cores = count_cores()
+    if current_cores == cores:
+        return
+    msg = 'Reboot to change CPU count from {} to {}'.format(
+        current_cores, cores)
+    print('resize:', msg)
+    with fc.maintenance.ReqManager() as rm:
+        rm.add(fc.maintenance.Request(
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
 
 
 def main():
@@ -149,6 +161,7 @@ def main():
             enc = json.load(f)
         set_quota(enc)
         memory_change(enc)
+        cpu_change(enc)
 
 
 if __name__ == '__main__':

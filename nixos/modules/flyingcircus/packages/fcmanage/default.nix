@@ -1,13 +1,23 @@
-{ pkgs, python34Packages, nix }:
+{ pkgs ? import <nixpkgs> { }
+, python34Packages ? pkgs.python34Packages
+, fcutil ? import ../fcutil { inherit pkgs python34Packages; }
+, fcmaintenance ? import ../fcmaintenance { inherit pkgs python34Packages; }
+}:
 
-python34Packages.buildPythonPackage rec {
+with python34Packages;
+
+buildPythonPackage rec {
   name = "fc-manage-${version}";
   version = "1.0";
   namePrefix = "";
   dontStrip = true;
   src = ./.;
+
+  buildInputs = [ pytest ];
+
   propagatedBuildInputs = with pkgs;
-    [ fcmaintenance
+    [ dmidecode
+      fcmaintenance
       fcutil
       gptfdisk
       lvm2

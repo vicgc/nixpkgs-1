@@ -88,12 +88,8 @@ with lib;
 
     # Generally allow DHCP?
     flyingcircus.static.allowDHCP = {
-      dev = false;
-      rzob = false;
-      rzrl1 = false;
       standalone = true;
       vagrant = true;
-      whq = false;
     };
 
   };

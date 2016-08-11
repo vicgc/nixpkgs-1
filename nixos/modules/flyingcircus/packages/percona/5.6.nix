@@ -4,11 +4,11 @@
 
 stdenv.mkDerivation rec {
   name = "percona-${version}";
-  version = "5.7.12-5";
+  version = "5.6.30-76.3";
 
   src = fetchurl {
-    url = "https://www.percona.com/downloads/Percona-Server-5.7/Percona-Server-${version}/source/tarball/percona-server-${version}.tar.gz";
-    sha256 = "1840b60878c2a11538c1a8793d8679c538c796ec840fedf191716149f381fada";
+    url = "https://www.percona.com/downloads/Percona-Server-5.6/Percona-Server-${version}/source/tarball/percona-server-${version}.tar.gz";
+    sha256 = "c762b6795b353ae9edecd2ccbb1b4a2677b04dd78ad760740a6a972b738f16cd";
   };
 
   preConfigure = stdenv.lib.optional stdenv.isDarwin ''
@@ -53,10 +53,13 @@ stdenv.mkDerivation rec {
     rm $out/share/man/man1/mysql-test-run.pl.1
   '';
 
-  passthru.mysqlVersion = "5.7";
+  passthru.mysqlVersion = "5.6";
 
   meta = {
     homepage = http://www.percona.com/;
-    description = "Is a free, fully compatible, enhanced, open source drop-in replacement for MySQL® that provides superior performance, scalability and instrumentation. ";
+    description = ''
+      Is a free, fully compatible, enhanced, open source drop-in replacement for
+      MySQL® that provides superior performance, scalability and instrumentation.
+    '';
   };
 }

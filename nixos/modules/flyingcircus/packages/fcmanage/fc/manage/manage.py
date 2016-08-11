@@ -1,6 +1,7 @@
 """Update NixOS system configuration from infrastructure or local sources."""
 
 from fc.util.directory import connect
+from fc.util.lock import locked
 import argparse
 import filecmp
 import json
@@ -26,8 +27,6 @@ import tempfile
 #   - validate the next version and decide whether to switch automatically
 #     or whether to create a maintenance window and let the current one stay
 #     for now, but keep updating ENC data.
-#
-# - better robustness to not leave non-parsable json files around
 
 enc = None
 
@@ -38,7 +37,7 @@ def load_enc(enc_path):
     try:
         with open(enc_path) as f:
             enc = json.load(f)
-    except OSError:
+    except (OSError, ValueError):
         # This environment doesn't seem to support an ENC,
         # i.e. Vagrant. Silently ignore for now.
         return
@@ -50,10 +49,11 @@ def conditional_update(filename, data):
             mode='w', suffix='.tmp', prefix=p.basename(filename),
             dir=p.dirname(filename), delete=False) as tf:
         json.dump(data, tf, ensure_ascii=False, indent=1, sort_keys=True)
+        tf.write('\n')
         os.chmod(tf.fileno(), 0o640)
-    if not(p.exists(filename)):
-        os.rename(tf.name, filename)
-    elif not(filecmp.cmp(filename, tf.name)):
+    if not(p.exists(filename)) or not(filecmp.cmp(filename, tf.name)):
+        with open(tf.name, 'a') as f:
+            os.fsync(f.fileno())
         os.rename(tf.name, filename)
     else:
         os.unlink(tf.name)
@@ -68,8 +68,10 @@ def inplace_update(filename, data):
     """
     with open(filename, 'r+') as f:
         f.seek(0)
-        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
+        json.dump(data, f, ensure_ascii=False)
+        f.flush()
         f.truncate()
+        os.fsync(f.fileno())
 
 
 def write_json(calls):
@@ -83,7 +85,7 @@ def write_json(calls):
             continue
         try:
             conditional_update('/etc/nixos/{}'.format(target), data)
-        except IOError:
+        except (IOError, OSError):
             inplace_update('/etc/nixos/{}'.format(target), data)
 
 
@@ -190,8 +192,7 @@ def exit_timeout(signum, frame):
     sys.exit()
 
 
-def main():
-    build_options = []
+def parse_args():
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
                    help='path to enc.json (default: %(default)s)')
@@ -219,18 +220,17 @@ def main():
                        help='switch machine to local checkout in '
                        '/root/nixpkgs')
     a.add_argument('-v', '--verbose', action='store_true', default=False)
+
     args = a.parse_args()
+    if not args.build and not args.directory and not args.system_state:
+        a.error('no action specified')
+    return args
 
-    signal.signal(signal.SIGALRM, exit_timeout)
-    signal.alarm(args.timeout)
 
-    logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=logging.DEBUG if args.verbose else logging.INFO)
-    # this is really annoying
-    logging.getLogger('iso8601').setLevel(logging.INFO)
-
+def transaction(args):
     seed_enc(args.enc_path)
 
+    build_options = []
     if args.show_trace:
         build_options.append('--show-trace')
 
@@ -247,15 +247,26 @@ def main():
     if args.build:
         globals()[args.build](build_options)
 
-    if not args.build and not args.directory and not args.system_state:
-        a.error('no action specified')
-
     if args.maintenance:
         maintenance()
 
     # Garbage collection is run after a potential reboot.
     if args.garbage:
         collect_garbage(args.garbage)
+
+
+def main():
+    args = parse_args()
+    signal.signal(signal.SIGALRM, exit_timeout)
+    signal.alarm(args.timeout)
+
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=logging.DEBUG if args.verbose else logging.INFO)
+    # this is really annoying
+    logging.getLogger('iso8601').setLevel(logging.INFO)
+
+    with locked('/run/lock/fc-manage.lock'):
+        transaction(args)
 
 
 if __name__ == '__main__':

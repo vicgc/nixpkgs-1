@@ -25,6 +25,7 @@ in
      ./mailserver.nix
      ./mongodb
      ./mysql.nix
+     ./nfs.nix
      ./nginx.nix
      ./postgresql.nix
      ./powerdns.nix
@@ -32,9 +33,9 @@ in
      ./sensuserver.nix
      ./servicecheck.nix
      ./statshost.nix
-     ./varnish.nix
      ./webdata_blackbee.nix
      ./webgateway.nix
+     ./webproxy.nix
     ];
 
   options = {
