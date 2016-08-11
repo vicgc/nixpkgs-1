@@ -11,8 +11,12 @@ let
     config.flyingcircus.enc_services;
 
   graylog =
-    if loghost_server != null then
-      "*.* @${loghost_server.address}:10514;RSYSLOG_SyslogProtocol23Format"
+    if loghost_server != null then ''
+      action(type="omfwd"
+          Target="${loghost_server.address}"
+          Port="10514"
+          Protocol="udp")
+    ''
     else
       "";
 
