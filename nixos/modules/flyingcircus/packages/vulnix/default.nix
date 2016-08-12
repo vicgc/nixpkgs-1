@@ -1,14 +1,13 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ fetchurl, pkgs ? import <nixpkgs> {} }:
 
 let
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.1";
-in python.mkDerivation {
+  version = "1.1.1dev0.dev0";
+in python.mkDerivation rec {
   name = "vulnix-${version}";
-  src = pkgs.fetchgit {
-      url = "git://github.com/flyingcircusio/vulnix.git";
-      rev = "dd75dd13c4f903a39daee49693fcce49ea3e0112";
-      sha256 = "168pkav0x159mlr12nsfh4x097pp9qp6pbxmj5ivsn6vvac8xlrr";
+  src = fetchurl {
+      url = "https://hydra.flyingcircus.io/build/5541/download/1/${name}.tar.gz";
+      sha256 = "1ngwpwqv2j5kj8cxrdbxgsm3d0nxrjn74ql7rc4fj5lszdwlc642";
     };
   # TODO: improve on internal and external dependencies
   buildInputs = [
