@@ -176,12 +176,16 @@ in {
       extraGroups = ["service"];
     };
 
+    # needs to be adjusted, when we fix issue https://github.com/flyingcircusio/vulnix/issues/13
     security.sudo.extraConfig = ''
        # Sensu sudo rules
        Cmnd_Alias VULNIX_DIR = ${pkgs.coreutils}/bin/mkdir -p /var/cache/vulnix, \
               ${pkgs.coreutils}/bin/chown sensuclient\:sensuclient /var/cache/vulnix
+       Cmnd_Alias VULNIX_CMD = ${pkgs.vulnix}/bin/vulnix
 
        %sensuclient ALL=(root) VULNIX_DIR
+       %sensuclient ALL=(root) VULNIX_CMD
+
    '';
     systemd.services.sensu-client = {
       wantedBy = [ "multi-user.target" ];
@@ -264,7 +268,7 @@ in {
       };
       vulnix = {
         notification = "Security vulnerabilities in the last 6h";
-        command = "NIX_REMOTE=daemon ${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix";
+        command = "NIX_REMOTE=daemon /var/setuid-wrappers/sudo ${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix";
         interval = 21600;
       };
       manage = {

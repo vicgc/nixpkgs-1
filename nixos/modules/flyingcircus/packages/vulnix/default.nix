@@ -2,12 +2,12 @@
 
 let
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.1.1dev0.dev0";
+  version = "1.1.1";
 in python.mkDerivation rec {
   name = "vulnix-${version}";
   src = fetchurl {
-      url = "https://hydra.flyingcircus.io/build/5541/download/1/${name}.tar.gz";
-      sha256 = "1ngwpwqv2j5kj8cxrdbxgsm3d0nxrjn74ql7rc4fj5lszdwlc642";
+      url = "https://pypi.python.org/packages/5d/54/927b99e918224c767fdf8f5ac053fe20c20c44d25e22d30c3b5044077f29/${name}.tar.gz";
+      sha256 = "0f6nxqh4mc4jqyw10dqcdzsxdfhlq4arsbsx8f0q4gly19b6ix7a";
     };
   # TODO: improve on internal and external dependencies
   buildInputs = [
