@@ -13,14 +13,9 @@ let
       ${pkgs.apg}/bin/apg -a 1 -M lnc -n1 -m 32 > $out
     '';
 
-  read_or_generate_password =
-    if pathExists /etc/local/redis/password
-    then readFile /etc/local/redis/password
-    else readFile generated_password_file;
-
   password =
     if cfg.password == null
-    then read_or_generate_password
+    then (fclib.configFromFile /etc/local/redis/password (readFile generated_password_file))
     else cfg.password;
 
 in
@@ -54,14 +49,13 @@ in
 
     system.activationScripts.fcio-redis = ''
       install -d -o ${toString config.ids.uids.redis} -g service  -m 02775 /etc/local/redis/
+      test -e  /etc/local/redis/password || (umask 027; echo '${password}' > /etc/local/redis/password)
     '';
-
-    environment.etc."local/redis/password".text = password;
 
     flyingcircus.services.sensu-client.checks = {
       redis = {
         notification = "Redis alive";
-        command = "check-redis-ping.rb -h localhost -P $(cat /etc/local/redis/password)";
+        command = "check-redis-ping.rb -h localhost -P ${password}";
       };
     };
 
