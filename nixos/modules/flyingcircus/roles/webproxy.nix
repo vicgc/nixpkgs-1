@@ -2,10 +2,9 @@
 
 let
   cfg = config.flyingcircus.roles.webproxy;
+  fclib = import ../lib;
 
-  configFromFile = file: default:
-    if builtins.pathExists file then builtins.readFile file else default;
-  varnishCfg = configFromFile /etc/local/varnish/default.vcl vcl_example;
+  varnishCfg = fclib.configFromFile /etc/local/varnish/default.vcl vcl_example;
 
   vcl_example = ''
     vcl 4.0;
@@ -36,6 +35,7 @@ in
     services.varnish.enable = true;
     services.varnish.http_address = "localhost:8008";
     services.varnish.config = varnishCfg;
+    services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
 
     system.activationScripts.varnish = ''
       install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish

@@ -90,8 +90,6 @@ in rec {
   nixos = {
     inherit (nixos')
       channel
-      manual
-      iso_minimal
       dummy;
     tests = {
       inherit (nixos'.tests)
@@ -187,13 +185,15 @@ in rec {
       stdenv
       subversion
       tarball
+      varnish
       vim;
 
-      powerdns = pkgs.callPackage ./modules/flyingcircus/packages/powerdns.nix { };
       influxdb011 = pkgs.callPackage ./modules/flyingcircus/packages/influxdb.nix { };
       mongodb32 = pkgs.callPackage ./modules/flyingcircus/packages/mongodb {
         sasl = pkgs.cyrus_sasl;
       };
+      postfix = pkgs.callPackage ./modules/flyingcircus/packages/postfix/3.0.nix { };
+      powerdns = pkgs.callPackage ./modules/flyingcircus/packages/powerdns.nix { };
 
   };
 
