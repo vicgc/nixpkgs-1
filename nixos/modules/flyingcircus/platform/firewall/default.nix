@@ -44,6 +44,38 @@ let
       }
     '';
 
+  rg =
+    let
+      cfg = config.flyingcircus;
+      fclib = import ../../lib;
+      addrs_srv = map (elem: elem.ip) cfg.enc_addresses.srv;
+      addrs_fe = map (elem: elem.ip) cfg.enc_addresses.fe;
+      rule = eth: a: ''
+        ${fclib.iptables a} -A nixos-fw -i ${eth} -s ${fclib.stripNetmask a
+          } -j nixos-fw-accept
+      '';
+      rules_for = eth: addrs:
+        (lib.concatMapStrings
+          (rule eth)
+          addrs);
+      rules_srv = lib.optionalString
+        (lib.hasAttr "ethsrv" config.networking.interfaces)
+        (rules_for "ethsrv" addrs_srv);
+      rules_fe = lib.optionalString
+        (lib.hasAttr "ethfe" config.networking.interfaces)
+        (rules_for "ethfe" addrs_fe);
+      rules_srv_to_fe = lib.optionalString
+        (lib.hasAttr "ethfe" config.networking.interfaces)
+        (rules_for "ethfe" addrs_srv);
+    in ''
+      # Accept traffic within the same resource group.
+      ${rules_srv}
+      ${rules_fe}
+      # Accept traffic from other SRV to our FE
+      ${rules_srv_to_fe}
+    '';
+
+
   writeShScript = name: text: let dir = pkgs.writeScriptBin name ''
     #! ${pkgs.stdenv.shell} -e
     ${text}
