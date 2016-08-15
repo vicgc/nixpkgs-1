@@ -8,21 +8,20 @@ let
     fclib.listenAddresses config "lo" ++
     fclib.listenAddresses config "ethsrv";
 
-  generated_password_file = pkgs.runCommand "redis.password"
-    { buildInputs = [pkgs.apg]; } ''
-      ${pkgs.apg}/bin/apg -a 1 -M lnc -n1 -m 32 > $out
-    '';
+  generatedPassword =
+    lib.removeSuffix "\n" (readFile
+      (pkgs.runCommand "redis.password" {}
+      "${pkgs.apg}/bin/apg -a 1 -M lnc -n 1 -m 32 > $out"));
 
   password =
     if cfg.password == null
-    then (fclib.configFromFile /etc/local/redis/password (readFile generated_password_file))
+    then (fclib.configFromFile /etc/local/redis/password generatedPassword)
     else cfg.password;
 
 in
 {
 
   options = {
-
     flyingcircus.roles.redis = {
 
       enable = mkOption {
@@ -35,9 +34,10 @@ in
         type = types.nullOr types.string;
         default = null;
         description = ''
-        The password for redis. If null, a random password will be set.
+          The password for redis. If null, a random password will be generated.
         '';
       };
+
     };
   };
 
@@ -48,15 +48,23 @@ in
     services.redis.bind = concatStringsSep " " listen_addresses;
 
     system.activationScripts.fcio-redis = ''
-      install -d -o ${toString config.ids.uids.redis} -g service  -m 02775 /etc/local/redis/
-      test -e  /etc/local/redis/password || (umask 027; echo '${password}' > /etc/local/redis/password)
+      install -d -o ${toString config.ids.uids.redis} -g service -m 02775 \
+        /etc/local/redis/
+      if [[ ! -e /etc/local/redis/password ]]; then
+        (umask 027; echo ${lib.escapeShellArg password} > /etc/local/redis/password)
+      fi
     '';
 
     flyingcircus.services.sensu-client.checks = {
       redis = {
         notification = "Redis alive";
-        command = "check-redis-ping.rb -h localhost -P ${password}";
+        command = "check-redis-ping.rb -h localhost -P ${lib.escapeShellArg password}";
       };
+    };
+
+    boot.kernel.sysctl = {
+      "vm.overcommit_memory" = 1;
+      "net.core.somaxconn" = 512;
     };
 
   };
