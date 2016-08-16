@@ -70,6 +70,10 @@ in
         setting message_size_limit. Please do use normal main.cf syntax,
         as this will extend the basic configuration file.
 
+        Make usage of `myhostname` to provide a hostname Postfix shall
+        use to configure its own myhostname variable. If not set, the
+        default hostname will be used instead.
+
         If you need to reference to some map, these are currently available:
         * canonical_maps - /etc/local/postfix/canonical.pcre
 
