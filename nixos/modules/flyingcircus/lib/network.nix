@@ -6,7 +6,7 @@
 
 with builtins;
 rec {
-  stripNetmask = cidr: elemAt (lib.splitString "/" cidr) 0;
+  stripNetmask = cidr: head (lib.splitString "/" cidr);
 
   prefixLength = cidr: lib.toInt (elemAt (lib.splitString "/" cidr) 1);
 
@@ -17,11 +17,14 @@ rec {
 
   isIp6 = cidr: length (lib.splitString ":" cidr) > 1;
 
-  # choose the correct iptables version for addr
-  iptables = addr: if isIp4 addr then "iptables" else "ip6tables";
+  # choose correct "iptables" invocation depending on the address
+  iptables = a:
+    if isIp4 a then "iptables" else
+    if isIp6 a then "ip6tables" else
+    "ip46tables";
 
-  # choose correct "ip" invocation depending on addr
-  ip' = addr: "ip " + (if isIp4 addr then "-4" else "-6");
+  # choose correct "ip" invocation depending on the address
+  ip' = a: "ip " + (if isIp4 a then "-4" else if isIp6 a then "-6" else "");
 
   # list IP addresses for service configuration (e.g. nginx)
   listenAddresses = config: interface:
@@ -145,6 +148,16 @@ rec {
     in
     "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
 
+  # Format additional routes passed by the 'extraRoutes' parameter.
+  ipExtraRoutes = vlan: routes: verb:
+    lib.concatMapStringsSep "\n"
+      (route:
+        let
+          a = head (lib.splitString " " route);
+        in
+        "${ip' a} route ${verb} ${route} table ${vlan}")
+      routes;
+
   # List of nets (CIDR) that have at least one address present which satisfies
   # `predicate`.
   networksWithAtLeastOneAddress = encNetworks: predicate:
@@ -170,17 +183,21 @@ rec {
     { vlan
     , encInterface
     , action ? "start"  # or "stop"
+    , extraRoutes ? [ ]
     }:
     let
+      verb = if action == "start" then "add" else "del";
       filteredNets = filterNetworks encInterface.networks [ isIp4 isIp6 ];
     in
     if action == "start"
     then ''
-      ${ipRules vlan encInterface filteredNets "add"}
-      ${ipRoutes vlan encInterface filteredNets "add"}
+      ${ipRules vlan encInterface filteredNets verb}
+      ${ipRoutes vlan encInterface filteredNets verb}
+      ${ipExtraRoutes vlan extraRoutes verb}
     '' else ''
-      ${ipRoutes vlan encInterface filteredNets "del"}
-      ${ipRules vlan encInterface filteredNets "del"}
+      ${ipExtraRoutes vlan extraRoutes verb}
+      ${ipRoutes vlan encInterface filteredNets verb}
+      ${ipRules vlan encInterface filteredNets verb}
     '';
 
   simpleRouting =
