@@ -55,6 +55,16 @@ in
       fi
     '';
 
+    systemd.services.redis = {
+      serviceConfig = {
+        LimitNOFILE = 64000;
+        PermissionsStartOnly = true;
+      };
+
+      preStart = "echo never > /sys/kernel/mm/transparent_hugepage/enabled";
+      postStop = "echo madvise > /sys/kernel/mm/transparent_hugepage/enabled";
+    };
+
     flyingcircus.services.sensu-client.checks = {
       redis = {
         notification = "Redis alive";
