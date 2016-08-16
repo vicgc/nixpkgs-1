@@ -57,6 +57,9 @@ in
 
     systemd.services.redis = {
       serviceConfig.LimitNOFILE = 64000;
+      preStart = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";
+      postStop = "echo always > /sys/kernel/mm/transparent_hugepage/defrag";
+      serviceConfig.PermissionsStartOnly = true;
     };
 
     flyingcircus.services.sensu-client.checks = {
