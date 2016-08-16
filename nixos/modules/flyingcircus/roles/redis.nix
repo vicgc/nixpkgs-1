@@ -55,6 +55,10 @@ in
       fi
     '';
 
+    systemd.services.redis = {
+      serviceConfig.LimitNOFILE = 64000;
+    };
+
     flyingcircus.services.sensu-client.checks = {
       redis = {
         notification = "Redis alive";
