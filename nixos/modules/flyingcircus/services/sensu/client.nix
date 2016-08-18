@@ -185,8 +185,8 @@ in {
 
        %sensuclient ALL=(root) VULNIX_DIR
        %sensuclient ALL=(root) VULNIX_CMD
-
    '';
+
     systemd.services.sensu-client = {
       wantedBy = [ "multi-user.target" ];
       path = [ pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash pkgs.lm_sensors ];
@@ -268,7 +268,8 @@ in {
       };
       vulnix = {
         notification = "Security vulnerabilities in the last 6h";
-        command = "NIX_REMOTE=daemon /var/setuid-wrappers/sudo ${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix";
+        command = "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
+          "${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix";
         interval = 21600;
       };
       manage = {
