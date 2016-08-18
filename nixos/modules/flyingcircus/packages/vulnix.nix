@@ -1,6 +1,11 @@
 { pkgs, ...  }:
 
 let
-  url = https://github.com/flyingcircusio/vulnix/archive/047185d9.tar.gz;
+  vulnix = pkgs.fetchFromGitHub {
+    rev = "047185d9";
+    owner = "flyingcircusio";
+    repo = "vulnix";
+    sha256 = "0bn104a3azjjjc7vkkh8dnd3hw394x28xgpa07c836mklrzwhyz4";
+  };
 in
-import (builtins.fetchTarball url) { inherit pkgs; }
+import vulnix { inherit pkgs; }
