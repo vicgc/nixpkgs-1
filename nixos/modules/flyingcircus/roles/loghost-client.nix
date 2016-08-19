@@ -12,11 +12,8 @@ let
 
   graylog =
     if loghost_server != null then ''
-      action(type="omfwd"
-          Target="${loghost_server.address}"
-          Port="10514"
-          Protocol="udp")
-    ''
+*.* @@${loghost_server.address}:10514
+''
     else
       "";
 
