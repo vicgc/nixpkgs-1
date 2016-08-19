@@ -51,10 +51,12 @@ in
       install -d -o ${toString config.ids.uids.redis} -g service -m 02775 \
         /etc/local/redis/
       if [[ ! -e /etc/local/redis/password ]]; then
-        (umask 007;
-         echo ${lib.escapeShellArg password} > /etc/local/redis/password;
-         chown redis:service  /etc/local/redis/password;)
+        ( umask 007;
+          echo ${lib.escapeShellArg password} > /etc/local/redis/password
+          chown redis:service /etc/local/redis/password
+        )
       fi
+      chmod 0660 /etc/local/redis/password
     '';
 
     systemd.services.redis = {
