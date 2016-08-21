@@ -11,8 +11,15 @@ let
   location = lib.attrByPath [ "location" ] null parameters;
   resource_group = lib.attrByPath [ "resource_group" ] null parameters;
   domain = config.networking.domain;
+  id16bit = fclib.mod (lib.attrByPath [ "id" ] 0 parameters) 65536;
 
-  defaultAccessNets = "10.70.67.0/24\n";
+  defaultAccessNets = ''
+    {
+      "ipv4": "10.70.67.0/24",
+      "ipv6": "fd3e:65c4:fc10:${fclib.toHex id16bit}::/64"
+    }
+  '';
+
   vpnName = if (resource_group != null && location != null)
     then "${location}.${resource_group}.fcio.net"
     else "standalone";
@@ -54,40 +61,26 @@ let
     in
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
-      (filter (cidr: fclib.isIp4 cidr) (attrNames allNetworks));
+      (filter fclib.isIp4 (attrNames allNetworks));
 
   # Caution: we also deliver FE addresses here, so these should be included in
   # the pushed routes.
   pushNameservers = lib.concatMapStringsSep "\n"
     (a: "push \"dhcp-option DNS ${a}\"")
-    (filter (a: fclib.isIp4 a)
-      (lib.attrByPath [ (toString location) ] "" cfg.static.nameservers));
-
-  # Converts network address into single extra routing rule.
-  # We assume that OpenVPN picks the second address as local gateway (net30).
-  extraRoute = net:
-    readFile (pkgs.runCommand "extraroute-${replaceStrings ["/"] ["_"] net}" {}
-    ''
-      ${pkgs.python3.interpreter} > $out <<'_EOF_'
-      import ipaddress
-      n = ipaddress.ip_network('${net}')
-      print('{} via {} dev tun0'.format(n.compressed, n[2]), end="")
-      _EOF_
-    '');
+    (lib.attrByPath [ (toString location) ] "" cfg.static.nameservers);
 
   #
   # server
   #
-  accessNets = map
-    (lib.removeSuffix "\n")
-    (filter
-      (s: s != "")
-      (lib.splitString "\n"
-        (fclib.configFromFile /etc/local/openvpn/networks defaultAccessNets)));
+  accessNets = (fromJSON
+    (fclib.configFromFile /etc/local/openvpn/networks defaultAccessNets));
 
-  serverAddrs =
-    lib.concatMapStringsSep "\n" (a: "server ${decomposeCIDR a}") accessNets;
+  serverAddrs = ''
+    server ${decomposeCIDR accessNets.ipv4}
+    server-ipv6 ${accessNets.ipv6}
+  '';
 
+  # XXX also push IPv6 routes
   serverConfig = ''
     # OpenVPN server config for ${vpnName}
     ${serverAddrs}
@@ -167,7 +160,6 @@ in
   };
 
   config = lib.mkIf cfg.roles.openvpn.enable {
-      # XXX IPv6 support
 
     environment.systemPackages = [ pkgs.easyrsa3 ];
 
@@ -177,20 +169,14 @@ in
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
 
-    flyingcircus.network.policyRouting = {
-      extraRoutes = map extraRoute accessNets;
-      requires = [ "openvpn-access.service" ];
-    };
-
-    networking.firewall =
-    let
-    in
-    {
+    networking.firewall = {
       allowedUDPPorts = [ 1194 ];
       extraCommands = ''
         ip46tables -t nat -N openvpn || true
         ip46tables -t nat -F openvpn
         iptables -t nat -A openvpn -s 10/8 \! -d 10/8 -j MASQUERADE
+        ip6tables -t nat -A openvpn -s fc00::/7 \! -d fc00::/7 -j MASQUERADE
+        ip46tables -t nat -D POSTROUTING -j openvpn || true
         ip46tables -t nat -A POSTROUTING -j openvpn
       '';
       extraStopCommands = ''
