@@ -107,6 +107,16 @@ rec {
     in
     "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
 
+    # A list of default gateways from a list of networks in CIDR form.
+    gateways = encInterface: filteredNets:
+      foldl'
+        (acc: cidr:
+          if hasAttr cidr encInterface.gateways
+          then acc ++ [encInterface.gateways.${cidr}]
+          else acc)
+        []
+        filteredNets;
+
   # Routes for an individual VLAN on an interface. This falls apart into two
   # blocks: (1) subnet routes for all subnets on which the interface has at
   # least one address configured; (2) gateway (default) routes for each subnet
@@ -122,16 +132,6 @@ rec {
         '')
         filteredNets;
 
-      # A list of default gateways from a list of networks in CIDR form.
-      gateways = filteredNets:
-        foldl'
-          (acc: cidr:
-            if hasAttr cidr encInterface.gateways
-            then acc ++ [encInterface.gateways.${cidr}]
-            else acc)
-          []
-          filteredNets;
-
       common = "dev ${dev'} metric ${toString prio}";
       gatewayRoutesStr = lib.optionalString
         (100 > routingPriority vlan)
@@ -141,7 +141,7 @@ rec {
             ${ip' gw} route ${verb} default via ${gw} ${common}
             ${ip' gw} route ${verb} default via ${gw} ${common} table ${vlan}
           '')
-          (gateways filteredNets));
+          (gateways encInterface filteredNets));
     in
     "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
 
@@ -182,6 +182,41 @@ rec {
       ${ipRoutes vlan encInterface filteredNets "del"}
       ${ipRules vlan encInterface filteredNets "del"}
     '';
+
+  simpleRouting =
+    { vlan
+    , encInterface
+    , action ? "start"}:  # or "stop"
+    let
+      verb = if action == "start" then "add" else "del";
+      filteredNets = filterNetworks encInterface.networks [ isIp4 isIp6 ];
+      prio = routingPriority vlan;
+      dev' = dev vlan encInterface.bridged;
+      common = "dev ${dev'} metric ${toString prio}";
+
+      # additional network routes for nets in which we don't have an address
+      networkRoutesStr =
+        let
+          nets = filter (net: encInterface.networks.${net} == []) filteredNets;
+        in
+        lib.concatMapStrings
+          (net: ''
+            ${ip' net} route ${verb} ${net} dev ${dev'} metric ${toString prio}
+          '')
+          nets;
+
+      # gateway routes only for nets in which we do have an address
+      gatewayRoutesStr =
+        let
+          nets = filter (net: encInterface.networks.${net} != []) filteredNets;
+        in
+        lib.optionalString
+          (100 > routingPriority vlan)
+          (lib.concatMapStrings
+            (gw: "${ip' gw} route ${verb} default via ${gw} ${common}\n")
+            (gateways encInterface nets));
+    in
+    "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
 
   # "example.org." -> absolute name; "example" -> relative to $domain
   normalizeDomain = domain: n:
