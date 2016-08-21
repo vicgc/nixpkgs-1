@@ -183,4 +183,25 @@ rec {
       ${ipRules vlan encInterface filteredNets "del"}
     '';
 
+  # "example.org." -> absolute name; "example" -> relative to $domain
+  normalizeDomain = domain: n:
+    if lib.hasSuffix "." n
+    then lib.removeSuffix "." n
+    else "${n}.${domain}";
+
+  # Convert for example "172.22.48.0/22" into "172.22.48.0 255.255.252.0".
+  # Note 1: this is IPv4 only.
+  # Note 2: don't want to import pkgs into fclib.
+  decomposeCIDR = pkgs: cidr:
+    let
+      drvname = "cidr-${replaceStrings [ "/" ":" ] [ "_" "-" ] cidr}";
+    in
+    readFile (pkgs.runCommand drvname {} ''
+      ${pkgs.python3.interpreter} > $out <<'_EOF_'
+      import ipaddress
+      i = ipaddress.ip_interface('${cidr}')
+      print('{} {}'.format(i.ip, i.netmask), end="")
+      _EOF_
+    '');
+
 }
