@@ -66,11 +66,11 @@ in
     flyingcircus.network.policy_routing = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = false;
-          # XXX feature switch?
-          # (lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc) &&
-          # (lib.hasAttrByPath ["parameters" "location"] cfg.enc);
-        description = "Enable policy routing?";
+        default = !(pathExists "/etc/local/simplerouting");
+        description = ''
+          Enable policy routing? Touch /etc/local/simplerouting to turn policy
+          routing off.
+        '';
       };
     };
 
