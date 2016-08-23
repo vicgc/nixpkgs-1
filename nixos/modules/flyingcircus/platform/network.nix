@@ -89,7 +89,7 @@ in
           in ''
             KERNEL=="eth*", ATTR{address}=="${mac}", NAME="eth${vlan}"
           '')
-        (attrNames cfg.enc.parameters.interfaces);
+        (attrNames interfaces);
 
     networking.domain = "gocept.net";
 
@@ -110,14 +110,12 @@ in
     # data structure for all configured interfaces with their IP addresses:
     # { ethfe = { ... }; ethsrv = { }; ... }
     networking.interfaces =
-      if lib.hasAttrByPath [ "parameters" "interfaces" ] cfg.enc
-      then lib.mapAttrs'
+      lib.mapAttrs'
         (vlan: iface:
           lib.nameValuePair
             "eth${vlan}"
             (fclib.interfaceConfig iface.networks // { useDHCP = false; }))
-        cfg.enc.parameters.interfaces
-      else {};
+        interfaces;
 
     systemd.services =
       let startStopScript = if cfg.network.policy_routing.enable
@@ -126,8 +124,7 @@ in
       in
       (listToAttrs
         (map (vlan:
-          let
-            mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
+          let mac = lib.toLower interfaces.${vlan}.mac;
           in
           lib.nameValuePair
             "network-no-autoconf-eth${vlan}"
@@ -150,7 +147,7 @@ in
                 RemainAfterExit = true;
               };
             })
-          (attrNames cfg.enc.parameters.interfaces)))
+          (attrNames interfaces)))
       //
       listToAttrs
         (map
@@ -166,11 +163,11 @@ in
               path = [ relaxedIp ];
               script = startStopScript {
                 vlan = "${vlan}";
-                encInterface = cfg.enc.parameters.interfaces.${vlan};
+                encInterface = interfaces.${vlan};
               };
               preStop = startStopScript {
                 vlan = "${vlan}";
-                encInterface = cfg.enc.parameters.interfaces.${vlan};
+                encInterface = interfaces.${vlan};
                 action = "stop";
               };
               serviceConfig = {
@@ -178,16 +175,16 @@ in
                 RemainAfterExit = true;
               };
             })
-          (attrNames cfg.enc.parameters.interfaces));
+          (attrNames interfaces));
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
     networking.firewall.rejectPackets = true;
 
-    # DHCP settings: never do IPv4ll and don't use it at all if PR is enabled
+    # DHCP settings: never do IPv4ll and don't use DHCP if there is explicit
+    # network configuration present
     networking.useDHCP =
-      lib.hasAttrByPath [ "parameters" "interfaces" ] cfg.enc ||
-      (allowDHCP cfg.enc.parameters.location);
+      (interfaces == {}) || (allowDHCP cfg.enc.parameters.location);
     networking.dhcpcd.extraConfig = ''
       # IPv4ll gets in the way if we really do not want
       # an IPv4 address on some interfaces.
