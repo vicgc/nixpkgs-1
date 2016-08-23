@@ -13,8 +13,9 @@ How to use:
 Tunables:
 
 - The file /etc/local/openvpn/network contains networks from which the OpenVPN
-  server allocates client addresses, once CIDR expression per line. Adjust in
-  case of address conflicts.
+  server allocates client addresses, one for IPv4 and one for IPv6. Adjust in
+  case of address conflicts. To get masquerading, the IPv4 network must be
+  a subnet in the 10.0.0.0/8 range and the IPv6 network in fc00::7 (ULA).
 
 - The OpenVPN gateway should get a nice DNS name for its FE address(es).
   Configure the same name as reverse for FE in the directory to get it mentioned

@@ -150,7 +150,7 @@ in
         interfaces;
 
     systemd.services =
-      let startStopScript = if cfg.network.policy_routing.enable
+      let startStopScript = if cfg.network.policyRouting.enable
         then fclib.policyRouting
         else fclib.simpleRouting;
       in
