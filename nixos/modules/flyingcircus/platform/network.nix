@@ -130,10 +130,7 @@ in
             "network-no-autoconf-eth${vlan}"
             rec {
               description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
-              wantedBy =
-                [ "network-pre.target"
-                  "network-addresses-eth${vlan}.service"
-                ];
+              wantedBy = [ "network-addresses-eth${vlan}.service" ];
               before = wantedBy;
               script = ''
                 ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
