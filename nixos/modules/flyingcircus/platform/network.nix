@@ -13,6 +13,9 @@ let
     then cfg.static.allowDHCP.${cfg.enc.parameters.location}
     else false;
 
+  interfaces = lib.attrByPath [ "parameters" "interfaces" ] {} cfg.enc;
+  location = lib.attrByPath [ "parameters" "location" ] "standalone" cfg.enc;
+
   # Policy routing
 
   rt_tables = ''
@@ -63,10 +66,11 @@ in
     flyingcircus.network.policy_routing = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default =
-          (lib.hasAttrByPath ["parameters" "interfaces"] cfg.enc) &&
-          (lib.hasAttrByPath ["parameters" "location"] cfg.enc);
-        description = "Enable policy routing?";
+        default = !(pathExists "/etc/local/simplerouting");
+        description = ''
+          Enable policy routing? Touch /etc/local/simplerouting to turn policy
+          routing off.
+        '';
       };
     };
 
@@ -76,21 +80,16 @@ in
     environment.etc."iproute2/rt_tables".text = rt_tables;
 
     services.udev.extraRules =
-    if cfg.network.policy_routing.enable then
       lib.concatMapStrings
         (vlan:
-          let mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
+          let
+            fallback = "02:00:00:${fclib.byteToHex (lib.toInt n)}:??:??";
+            mac = lib.toLower
+              (lib.attrByPath [ vlan "mac" ] fallback interfaces);
           in ''
             KERNEL=="eth*", ATTR{address}=="${mac}", NAME="eth${vlan}"
           '')
-        (attrNames cfg.enc.parameters.interfaces)
-    else
-      (lib.concatStrings
-        (lib.mapAttrsToList (n: vlan: ''
-          KERNEL=="eth*", ATTR{address}=="02:00:00:${
-            fclib.byteToHex (lib.toInt n)}:??:??", NAME="eth${vlan}"
-        '') cfg.static.vlans)
-      );
+        (attrNames interfaces);
 
     networking.domain = "gocept.net";
 
@@ -111,83 +110,78 @@ in
     # data structure for all configured interfaces with their IP addresses:
     # { ethfe = { ... }; ethsrv = { }; ... }
     networking.interfaces =
-      if lib.hasAttrByPath [ "parameters" "interfaces" ] cfg.enc
-      then lib.mapAttrs'
+      lib.mapAttrs'
         (vlan: iface:
           lib.nameValuePair
             "eth${vlan}"
             (fclib.interfaceConfig iface.networks // { useDHCP = false; }))
-        cfg.enc.parameters.interfaces
-      else {};
+        interfaces;
 
     systemd.services =
-      if cfg.network.policy_routing.enable then
-        listToAttrs
-          (map
-            (vlan: lib.nameValuePair
-              "network-policyrouting-eth${vlan}"
-              rec {
-                description = "IP policy routing for eth${vlan}";
-                requires = [ "network-addresses-eth${vlan}.service" ];
-                after = requires;
-                before = [ "network-local-commands.service" ];
-                wantedBy = [ "network-interfaces.target" ];
-                bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
-                path = [ relaxedIp ];
-                script = fclib.policyRouting {
-                  vlan = "${vlan}";
-                  encInterface = cfg.enc.parameters.interfaces.${vlan};
-                };
-                preStop = fclib.policyRouting {
-                  vlan = "${vlan}";
-                  encInterface = cfg.enc.parameters.interfaces.${vlan};
-                  action = "stop";
-                };
-                serviceConfig = {
-                  Type = "oneshot";
-                  RemainAfterExit = true;
-                };
-              })
-            (attrNames cfg.enc.parameters.interfaces)) //
-        listToAttrs
-          (map
-            (vlan:
-            let
-              mac = lib.toLower cfg.enc.parameters.interfaces.${vlan}.mac;
-            in
-            lib.nameValuePair
-              "network-no-autoconf-eth${vlan}"
-              rec {
-                description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
-                wantedBy =
-                  [ "network-pre.target"
-                    "network-addresses-eth${vlan}.service"
-                    "network-policyrouting-eth${vlan}.service"
-                  ];
-                before = wantedBy;
-                script = ''
-                  ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
-                  echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
-                '';
-                preStop = ''
-                  echo 1 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
-                '';
-                serviceConfig = {
-                  Type = "oneshot";
-                  RemainAfterExit = true;
-                };
-              })
-            (attrNames cfg.enc.parameters.interfaces))
-      else {};
+      let startStopScript = if cfg.network.policy_routing.enable
+        then fclib.policyRouting
+        else fclib.simpleRouting;
+      in
+      (listToAttrs
+        (map (vlan:
+          let mac = lib.toLower interfaces.${vlan}.mac;
+          in
+          lib.nameValuePair
+            "network-no-autoconf-eth${vlan}"
+            rec {
+              description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
+              wantedBy = [ "network-addresses-eth${vlan}.service" ];
+              before = wantedBy;
+              script = ''
+                ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
+                echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
+              '';
+              preStop = ''
+                echo 1 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
+              '';
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+            })
+          (attrNames interfaces)))
+      //
+      listToAttrs
+        (map
+          (vlan: lib.nameValuePair
+            "network-routing-eth${vlan}"
+            rec {
+              description = "Custom IP routing for eth${vlan}";
+              requires = [ "network-addresses-eth${vlan}.service" ];
+              after = requires;
+              before = [ "network-local-commands.service" ];
+              wantedBy = [ "network-interfaces.target" ];
+              bindsTo = [ "sys-subsystem-net-devices-eth${vlan}.device" ];
+              path = [ relaxedIp ];
+              script = startStopScript {
+                vlan = "${vlan}";
+                encInterface = interfaces.${vlan};
+              };
+              preStop = startStopScript {
+                vlan = "${vlan}";
+                encInterface = interfaces.${vlan};
+                action = "stop";
+              };
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+            })
+          (attrNames interfaces));
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
     networking.firewall.rejectPackets = true;
 
-    # DHCP settings: never do IPv4ll and don't use it at all if PR is enabled
+    # DHCP settings: never do IPv4ll and don't use DHCP if there is explicit
+    # network configuration present
     networking.useDHCP =
-      !cfg.network.policy_routing.enable ||
-      (allowDHCP cfg.enc.parameters.location);
+      (interfaces == {}) || (allowDHCP cfg.enc.parameters.location);
     networking.dhcpcd.extraConfig = ''
       # IPv4ll gets in the way if we really do not want
       # an IPv4 address on some interfaces.
@@ -201,10 +195,6 @@ in
     boot.kernel.sysctl = {
       "net.ipv4.ip_local_port_range" = "32768 60999";
       "net.ipv4.ip_local_reserved_ports" = "61000-61999";
-      "net.ipv4.conf.all.accept_redirects" = 0;
-      "net.ipv4.conf.default.accept_redirects" = 0;
-      "net.ipv6.conf.all.accept_redirects" = 0;
-      "net.ipv6.conf.default.accept_redirects" = 0;
       "net.ipv6.conf.all.autoconf" = 0;
       "net.ipv6.conf.default.autoconf" = 0;
     };

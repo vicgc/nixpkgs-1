@@ -27,12 +27,6 @@ mkIf (params ? location && params ? resource_group) {
         LogLevel info
     </Plugin>
 
-    <Plugin "cpu">
-      ReportByCpu true
-      ReportByState true
-      ValuesPercentage true
-    </Plugin>
-
     <Plugin "disk">
       Disk "/^[sv]d[a-z]$|^vg.*-./"
     </Plugin>

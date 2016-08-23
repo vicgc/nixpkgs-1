@@ -103,43 +103,75 @@ in {
     systemd.services.prepare-rabbitmq-for-sensu = {
       description = "Prepare rabbitmq for sensu-server.";
       requires = [ "rabbitmq.service" ];
+      after = ["rabbitmq.service" ];
       path = [ pkgs.rabbitmq_server ];
       serviceConfig = {
         Type = "oneshot";
         User = "rabbitmq";
       };
       script = let
+        curl = ''
+          ${pkgs.curl}/bin/curl -s\
+             -u "sensu-server:${server_password}" \
+             -H "content-type:application/json" \
+        '';
+        api = "http://localhost:15672/api";
         clients = (lib.concatMapStrings (
           client:
             let client_name = builtins.head (lib.splitString "." client.node);
+            password_body = {
+              password = client.password;
+              tags = "";
+            };
+            permissions_body = {
+              scope = "client";
+              configure = "^((default|results|keepalives)$)|${client_name}-.*";
+              write = "^((keepalives|results)$)|${client_name}-.*";
+              read = "^(default$)|${client_name}-.*";
+            };
             in ''
-              rabbitmqctl add_user ${client.node} ${client.password} || true
-              rabbitmqctl change_password ${client.node} ${client.password}
+              ${curl} -XPUT \
+                -d'${builtins.toJSON password_body}' \
+                ${api}/users/${client.node}
+
               # Permission for clients in order: conf, write, read
               # exchange.declare -> configure "keepalives"
               # queue.declare -> configure "node-*"
               # queue.bind -> write "node-*"
-              rabbitmqctl set_permissions -p /sensu ${client.node} \
-                "^((default|results|keepalives)$)|${client_name}-.*" \
-                "^((keepalives|results)$)|${client_name}-.*" \
-                "^(default$)|${client_name}-.*"
+              ${curl} -XPUT \
+                -d'${builtins.toJSON permissions_body}' \
+                ${api}/permissions/sensu/${client.node}
 
               '')
           sensu_clients);
       in
       ''
-        set -ex
+        set -e
 
         rabbitmqctl start_app || sleep 5
-        rabbitmqctl delete_user guest || true
-        rabbitmqctl add_vhost /sensu || true
 
-        rabbitmqctl add_user sensu-server ${server_password} || true
-        rabbitmqctl change_password sensu-server ${server_password}
-        rabbitmqctl set_permissions -p /sensu sensu-server ".*" ".*" ".*"
+        ${curl} -f ${api}/overview >/dev/null|| (
+          rabbitmqctl add_user sensu-server ${server_password}
+          rabbitmqctl set_user_tags sensu-server administrator
+          rabbitmqctl change_password sensu-server ${server_password}
+          rabbitmqctl set_permissions -p /sensu sensu-server ".*" ".*" ".*"
+        )
+
+        ${curl} -XDELETE ${api}/users/guest >/dev/null
+        ${curl} -XPUT ${api}/vhosts/sensu
 
         ${clients}
       '';
+    };
+
+    systemd.timers.sensu-users = {
+      description = "Timer for setting up sensu users in rabbitmq";
+      after = [ "network.target" ];
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        Unit = "prepare-rabbitmq-for-sensu.service";
+        OnUnitActiveSec = "10m";
+      };
     };
 
     systemd.services.sensu-server = {

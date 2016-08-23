@@ -16,7 +16,6 @@ in {
 
     system.activationScripts.systemd-journal-acl = ''
       # Ensure journal access for all users.
-      ${pkgs.acl}/bin/setfacl -R --remove-all /var/log/journal
       chmod -R a+rX /var/log/journal
     '';
 
