@@ -54,14 +54,17 @@ let
       then "${config.networking.hostName}.fe.${location}.${domain}"
       else "localhost";
 
-  pushRoutes =
-    let
-      allNetworks =
-        lib.zipAttrs (lib.catAttrs "networks" (attrValues interfaces));
-    in
+  allNetworks = lib.zipAttrs (lib.catAttrs "networks" (attrValues interfaces));
+
+  pushRoutes4 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
       (filter fclib.isIp4 (attrNames allNetworks));
+
+  pushRoutes6 =
+    lib.concatMapStringsSep "\n"
+      (cidr: "push \"route-ipv6 ${cidr}\"")
+      (filter fclib.isIp6 (attrNames allNetworks));
 
   # Caution: we also deliver FE addresses here, so these should be included in
   # the pushed routes.
@@ -107,7 +110,8 @@ let
     group nogroup
 
     push "redirect-private"
-    ${pushRoutes}
+    ${pushRoutes4}
+    ${pushRoutes6}
     push "dhcp-option DOMAIN ${domain}"
     ${pushNameservers}
   '';
@@ -168,6 +172,9 @@ in
       "local/openvpn/networks.example".text = defaultAccessNets;
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
+
+    # does not interact well with old-style policy routing
+    flyingcircus.network.policyRouting.enable = lib.mkForce false;
 
     networking.firewall = {
       allowedUDPPorts = [ 1194 ];
