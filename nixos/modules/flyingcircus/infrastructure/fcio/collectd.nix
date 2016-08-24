@@ -16,6 +16,7 @@ mkIf (params ? location && params ? resource_group) {
     LoadPlugin entropy
     LoadPlugin interface
     LoadPlugin load
+    LoadPlugin memory
     LoadPlugin processes
     LoadPlugin swap
     LoadPlugin syslog
