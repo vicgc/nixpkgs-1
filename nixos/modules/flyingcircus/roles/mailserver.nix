@@ -12,6 +12,11 @@ let
 
   myHostname = (fclib.configFromFile /etc/local/postfix/myhostname "");
 
+  quoteIp6Address = address:
+    if fclib.isIp6 address then
+      "[${fclib.stripNetmask address}]/${toString (fclib.prefixLength address)}"
+    else address;
+
   mainCf = [
     (if lib.pathExists "/etc/local/postfix/local.cf" then
       lib.readFile /etc/local/postfix/local.cf
@@ -48,8 +53,10 @@ in
       # Allow all networks on the SRV interface. We expect only trusted machines
       # can reach us there (firewall).
       services.postfix.networks =
-        if cfg.enc.parameters.interfaces ? srv
-        then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
+        if cfg.enc.parameters.interfaces ? srv then
+          map
+            quoteIp6Address
+            (builtins.attrNames cfg.enc.parameters.interfaces.srv.networks)
         else [];
 
       # XXX change to fcio.net once #14970 is solved
