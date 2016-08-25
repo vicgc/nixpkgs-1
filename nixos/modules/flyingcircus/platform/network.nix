@@ -80,16 +80,22 @@ in
     environment.etc."iproute2/rt_tables".text = rt_tables;
 
     services.udev.extraRules =
-      lib.concatMapStrings
-        (vlan:
-          let
-            fallback = "02:00:00:${fclib.byteToHex (lib.toInt n)}:??:??";
-            mac = lib.toLower
-              (lib.attrByPath [ vlan "mac" ] fallback interfaces);
-          in ''
-            KERNEL=="eth*", ATTR{address}=="${mac}", NAME="eth${vlan}"
-          '')
-        (attrNames interfaces);
+      if (interfaces != {}) then
+        lib.concatMapStrings
+          (vlan:
+            let
+              fallback = "02:00:00:${fclib.byteToHex (lib.toInt n)}:??:??";
+              mac = lib.toLower
+                (lib.attrByPath [ vlan "mac" ] fallback interfaces);
+            in ''
+              KERNEL=="eth*", ATTR{address}=="${mac}", NAME="eth${vlan}"
+            '')
+          (attrNames interfaces)
+      else ''
+        # static fallback rules for VMs
+        KERNEL=="eth*", ATTR{address}=="02:00:00:02:??:??", NAME="ethfe"
+        KERNEL=="eth*", ATTR{address}=="02:00:00:03:??:??", NAME="ethsrv"
+      '';
 
     networking.domain = "gocept.net";
 
@@ -122,30 +128,6 @@ in
         then fclib.policyRouting
         else fclib.simpleRouting;
       in
-      (listToAttrs
-        (map (vlan:
-          let mac = lib.toLower interfaces.${vlan}.mac;
-          in
-          lib.nameValuePair
-            "network-no-autoconf-eth${vlan}"
-            rec {
-              description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
-              wantedBy = [ "network-addresses-eth${vlan}.service" ];
-              before = wantedBy;
-              script = ''
-                ${pkgs.nettools}/bin/nameif eth${vlan} ${mac}
-                echo 0 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
-              '';
-              preStop = ''
-                echo 1 >/proc/sys/net/ipv6/conf/eth${vlan}/autoconf
-              '';
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-              };
-            })
-          (attrNames interfaces)))
-      //
       listToAttrs
         (map
           (vlan: lib.nameValuePair
@@ -172,7 +154,32 @@ in
                 RemainAfterExit = true;
               };
             })
-          (attrNames interfaces));
+          (attrNames interfaces)) //
+      (lib.optionalAttrs (interfaces != {}) (listToAttrs
+        (map (vlan:
+          let
+            mac = lib.toLower interfaces.${vlan}.mac;
+          in
+          lib.nameValuePair
+            "network-no-autoconf-eth${vlan}"
+            rec {
+              description = "Disable IPv6 SLAAC (autconf) on eth${vlan}";
+              wantedBy = [ "network-addresses-eth${vlan}.service" ];
+              before = wantedBy;
+              path = [ pkgs.nettools pkgs.procps ];
+              script = ''
+                nameif eth${vlan} ${mac}
+                sysctl net.ipv6.conf.eth${vlan}.autoconf=0
+              '';
+              preStop = ''
+                sysctl net.ipv6.conf.eth${vlan}.autoconf=1
+              '';
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+            })
+          (attrNames interfaces))));
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
@@ -195,8 +202,6 @@ in
     boot.kernel.sysctl = {
       "net.ipv4.ip_local_port_range" = "32768 60999";
       "net.ipv4.ip_local_reserved_ports" = "61000-61999";
-      "net.ipv6.conf.all.autoconf" = 0;
-      "net.ipv6.conf.default.autoconf" = 0;
     };
   };
 }
