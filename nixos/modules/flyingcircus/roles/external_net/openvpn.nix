@@ -61,7 +61,6 @@ let
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
       (filter fclib.isIp4 (attrNames allNetworks ++ extraroutes));
 
-
   pushRoutes6 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route-ipv6 ${cidr}\"")
@@ -173,13 +172,17 @@ in
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
 
-    networking.firewall = {
+    networking.firewall =
+    assert accessNets.ipv4 != cfg.roles.external_net.vxlan4;
+    assert accessNets.ipv6 != cfg.roles.external_net.vxlan6;
+    {
       allowedUDPPorts = [ 1194 ];
       extraCommands = ''
         ip46tables -t nat -N openvpn || true
         ip46tables -t nat -F openvpn
-        iptables -t nat -A openvpn -s 10/8 \! -d 10/8 -j MASQUERADE
-        ip6tables -t nat -A openvpn -s fc00::/7 \! -d fc00::/7 -j MASQUERADE
+        iptables -t nat -A openvpn -s ${accessNets.ipv4} \! -d ${accessNets.ipv4} -j MASQUERADE
+        ip6tables -t nat -A openvpn -s ${accessNets.ipv6} \! -d ${accessNets.ipv6} -j MASQUERADE
+
         ip46tables -t nat -D POSTROUTING -j openvpn || true
         ip46tables -t nat -A POSTROUTING -j openvpn
       '';
