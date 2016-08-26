@@ -33,7 +33,11 @@ in
   config = mkIf cfg.enable {
 
     services.varnish.enable = true;
-    services.varnish.http_address = "localhost:8008";
+    services.varnish.http_address =
+      lib.concatMapStringsSep ","
+        (addr: "${addr}:8008")
+        ((fclib.listenAddressesQuotedV6 config "ethsrv") ++
+         (fclib.listenAddressesQuotedV6 config "lo"));
     services.varnish.config = varnishCfg;
     services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
 

@@ -38,6 +38,14 @@ rec {
           (map (addr: addr.address) interface_config.ip6)
       else [];
 
+    listenAddressesQuotedV6 = config: interface:
+      map
+        (addr:
+          if isIp6 addr then
+            "[${addr}]"
+          else addr)
+        (listenAddresses config interface);
+
   /*
    * policy routing
    */
