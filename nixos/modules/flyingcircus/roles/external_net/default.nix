@@ -28,7 +28,7 @@ in
 
       vxlan6 = lib.mkOption {
         type = lib.types.str;
-        default = "fd3e:65c4:fc10:46::/64";
+        default = "fd3e:65c4:fc10:fc::/64";
         description = ''
           IPv6 network range for VxLAN external network. Must be changed on all
           nodes within a RG for end-to-end routing. So it is best to leave it

@@ -97,6 +97,7 @@ in
           allow ${net6}
         '';
 
+        # See openvpn.nix for additional firewall rules
         networking.firewall.allowedUDPPorts = [ 53 67 68 123 port ];
       };
 
@@ -111,9 +112,7 @@ in
     ) //
     {
       environment.etc."local/vxlan/config.json.example".text = exampleConfig;
-      # XXX README
+      environment.etc."local/vxlan/README".text = readFile ./README.vxlan;
     }
   );
 }
-
-# XXX default config in /etc/local/vxlan
