@@ -15,7 +15,7 @@ stdenv.mkDerivation {
   phases = [ "installPhase" "fixupPhase" ];
 
   # substituteAll picks up these keys
-  inherit easyrsa openvpn resource_group location caDir;
+  inherit easyrsa openvpn gawk resource_group location caDir;
   installPhase = ''
     mkdir -p $out
     substituteAll $src $out/generate-pki

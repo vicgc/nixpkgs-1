@@ -21,10 +21,7 @@ let
     }
   '';
 
-  vpnName = if (resource_group != null && location != null)
-    then "${location}.${resource_group}.fcio.net"
-    else "standalone";
-  ovpn = "${pki.caDir}/${vpnName}.ovpn";
+  ovpn = "${pki.caDir}/${frontendName}.ovpn";
 
   #
   # packages
@@ -88,11 +85,11 @@ let
   '';
 
   serverConfig = ''
-    # OpenVPN server config for ${vpnName}
+    # OpenVPN server config for ${frontendName}
     ${serverAddrs}
 
     port 1194
-    proto udp
+    proto udp6
     dev tun
     multihome
 
@@ -123,7 +120,7 @@ let
   # client config
   #
   ovpnTemplate = pkgs.writeText "client.ovpn-template" ''
-    #viscosity name vpn-${vpnName}
+    #viscosity name ${frontendName}
 
     client
     dev tun
@@ -171,7 +168,7 @@ in
     environment.systemPackages = [ pkgs.easyrsa3 ];
 
     environment.etc = {
-      "local/openvpn/${vpnName}.ovpn".source = ovpn;
+      "local/openvpn/${frontendName}.ovpn".source = ovpn;
       "local/openvpn/networks.example".text = defaultAccessNets;
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
