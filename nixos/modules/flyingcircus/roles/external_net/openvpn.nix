@@ -16,7 +16,8 @@ let
   defaultAccessNets = ''
     {
       "ipv4": "10.70.67.0/24",
-      "ipv6": "fd3e:65c4:fc10:${fclib.toHex id16bit}::/64"
+      "ipv6": "fd3e:65c4:fc10:${fclib.toHex id16bit}::/64",
+      "extraroutes": []
     }
   '';
 
@@ -56,15 +57,18 @@ let
 
   allNetworks = lib.zipAttrs (lib.catAttrs "networks" (attrValues interfaces));
 
+  extraroutes = lib.attrByPath [ "extraroutes" ] [] accessNets;
+
   pushRoutes4 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
-      (filter fclib.isIp4 (attrNames allNetworks));
+      (filter fclib.isIp4 (attrNames allNetworks ++ extraroutes));
+
 
   pushRoutes6 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route-ipv6 ${cidr}\"")
-      (filter fclib.isIp6 (attrNames allNetworks));
+      (filter fclib.isIp6 (attrNames allNetworks ++ extraroutes));
 
   # Caution: we also deliver FE addresses here, so these should be included in
   # the pushed routes.
@@ -83,7 +87,6 @@ let
     server-ipv6 ${accessNets.ipv6}
   '';
 
-  # XXX also push IPv6 routes
   serverConfig = ''
     # OpenVPN server config for ${vpnName}
     ${serverAddrs}
@@ -172,9 +175,6 @@ in
       "local/openvpn/networks.example".text = defaultAccessNets;
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
-
-    # does not interact well with old-style policy routing
-    flyingcircus.network.policyRouting.enable = lib.mkForce false;
 
     networking.firewall = {
       allowedUDPPorts = [ 1194 ];
