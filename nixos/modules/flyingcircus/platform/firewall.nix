@@ -34,7 +34,9 @@ let
     rgRules = lib.optionalString
       (lib.hasAttr "ethsrv" config.networking.interfaces)
       (lib.concatMapStringsSep "\n"
-        (a: "${fclib.iptables a} -A nixos-fw -i ethsrv -s ${fclib.stripNetmask a} -j nixos-fw-accept")
+        (a:
+          "${fclib.iptables a} -A nixos-fw -i ethsrv " +
+          "-s ${fclib.stripNetmask a} -j nixos-fw-accept")
         rgAddrs);
 in
 {

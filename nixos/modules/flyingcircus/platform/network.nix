@@ -62,8 +62,7 @@ let
 in
 {
   options = {
-
-    flyingcircus.network.policy_routing = {
+    flyingcircus.network.policyRouting = {
       enable = lib.mkOption {
         type = lib.types.bool;
         default = !(pathExists "/etc/local/simplerouting");
@@ -72,8 +71,35 @@ in
           routing off.
         '';
       };
-    };
 
+      extraRoutes = lib.mkOption {
+        description = ''
+          Add the given routes to every routing table. List items should be
+          "ip route" command fragments without a "ip -[46] route {add,del}"
+          prefix and a "table" suffix.
+        '';
+        default = [ ];
+        type = with lib.types; listOf str;
+        example = [
+          "10.107.36.0/24 via 10.107.36.2 dev tun0"
+        ];
+      };
+
+      requires = lib.mkOption {
+        description = ''
+          List of systemd services which are required to run before policy
+          routing is started (e.g., because they define additional network
+          interfaces).
+
+          Note that the policy routing services will go down if one of the
+          required services goes down.
+        '';
+        default = [ ];
+        type = with lib.types; listOf str;
+        example = [ "openvpn.service" ];
+      };
+
+    };
   };
 
   config = rec {
@@ -124,7 +150,7 @@ in
         interfaces;
 
     systemd.services =
-      let startStopScript = if cfg.network.policy_routing.enable
+      let startStopScript = if cfg.network.policyRouting.enable
         then fclib.policyRouting
         else fclib.simpleRouting;
       in

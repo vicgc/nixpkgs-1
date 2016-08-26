@@ -1,0 +1,32 @@
+Flying Circus OpenVPN gateway
+=============================
+
+How to use
+----------
+
+- Transfer the client configuration via SSH from /etc/local/openvpn to the
+  client computer.
+
+- Import client configuration into the OpenVPN client of your choice.
+  Certificates are already included. The user only needs to provide a FC login
+  to connect.
+
+Tunables
+--------
+
+- The OpenVPN gateway should get a nice DNS name for its FE address(es).
+  Configure the same name as reverse for FE in the directory to get it mentioned
+  in the generated client config.
+
+- The file /etc/local/openvpn/network contains networks from which the OpenVPN
+  server allocates client addresses, one for IPv4 and one for IPv6. Adjust in
+  case of address conflicts. To get masquerading, the IPv4 network must be
+  a subnet in the 10.0.0.0/8 range and the IPv6 network in fc00::7 (ULA).
+
+- Extra routes (CIDR notation) in the network configuration file will be pushed
+  to the client. This allows the OpenVPN server to create connectivity to
+  auxiliary networks).
+
+  Example::
+
+    extraroutes: ["172.22.1.0/16" "2a02:248:101:61::/64"]
