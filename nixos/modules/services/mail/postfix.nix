@@ -17,6 +17,7 @@ let
 
       mail_owner = ${user}
       default_privs = nobody
+      data_directory = /var/postfix/data
 
     ''
     + optionalString config.networking.enableIPv6 ''
