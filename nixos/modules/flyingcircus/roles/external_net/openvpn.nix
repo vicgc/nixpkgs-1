@@ -77,7 +77,7 @@ let
   # server
   #
   accessNets = (fromJSON
-    (fclib.configFromFile /etc/local/openvpn/networks defaultAccessNets));
+    (fclib.configFromFile /etc/local/openvpn/networks.json defaultAccessNets));
 
   serverAddrs = ''
     server ${decomposeCIDR accessNets.ipv4}
@@ -169,7 +169,7 @@ in
 
     environment.etc = {
       "local/openvpn/${frontendName}.ovpn".source = ovpn;
-      "local/openvpn/networks.example".text = defaultAccessNets;
+      "local/openvpn/networks.json.example".text = defaultAccessNets;
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
 
