@@ -1,7 +1,8 @@
 """ Unit-test for dmidecode parser"""
 
-from fc.manage.dmi_memory import calc_mem, get_paragraph, get_device
+from fc.manage.dmi_memory import calc_mem, get_device, main
 import pkg_resources
+import mock
 
 
 def test_calc_mem():
@@ -13,15 +14,6 @@ def test_calc_mem():
     assert res == 11656
 
 
-def test_get_paragraph():
-    with pkg_resources.resource_stream(__name__, 'dmidecode.out') as f:
-        dmidecode_output = f.readlines()
-    for rows in list(get_paragraph(dmidecode_output)):
-        for elem in rows:
-            assert elem != ""
-            assert elem in dmidecode_output
-
-
 def test_get_device():
     entry = ['Memory Device',
              'Total Width: Unknown',
@@ -29,3 +21,17 @@ def test_get_device():
              'Locator: DIMM: 0']
     res = get_device(entry)
     assert res == {'Total Width': ' Unknown', 'Type': ' Ram'}
+
+
+@mock.patch('subprocess.check_output')
+def test_multibank_should_be_calculated_correctly(check_output):
+    check_output().decode.return_value = pkg_resources.resource_string(
+        __name__, 'dmidecode_multibank.out').decode('us-ascii')
+    assert 24576 == main()
+
+
+@mock.patch('subprocess.check_output')
+def test_singlebank_should_be_calculated_correctly(check_output):
+    check_output().decode.return_value = pkg_resources.resource_string(
+        __name__, 'dmidecode.out').decode('us-ascii')
+    assert 2048 == main()
