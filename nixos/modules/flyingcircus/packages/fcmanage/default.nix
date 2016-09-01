@@ -13,7 +13,10 @@ buildPythonPackage rec {
   dontStrip = true;
   src = ./.;
 
-  buildInputs = [ pytest ];
+  buildInputs = [
+    mock
+    pytest
+  ];
 
   propagatedBuildInputs = with pkgs;
     [ dmidecode

@@ -104,6 +104,10 @@ in
 
   config = rec {
     environment.etc."iproute2/rt_tables".text = rt_tables;
+    environment.etc."host.conf".text = ''
+      order hosts, bind
+      multi on
+    '';
 
     services.udev.extraRules =
       if (interfaces != {}) then
@@ -154,6 +158,10 @@ in
         then fclib.policyRouting
         else fclib.simpleRouting;
       in
+      { nscd.restartTriggers = [
+          config.environment.etc."host.conf".source
+        ];
+      } //
       listToAttrs
         (map
           (vlan: lib.nameValuePair

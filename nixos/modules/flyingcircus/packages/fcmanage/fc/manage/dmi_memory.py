@@ -1,14 +1,15 @@
 """Calculates Memory from dmidecode"""
 
 import string
-from subprocess import check_output
+import subprocess
 
 
-def get_paragraph(text, separator='\n'):
+def get_paragraph(text):
     paragraph = []
 
     for line in text:
-        if line == separator:
+        line = line.strip()
+        if not line:
             if paragraph:
                 yield paragraph
                 paragraph = []
@@ -34,8 +35,8 @@ def calc_mem(modules):
 
 def main():
     modules = []
-    dmidecode = check_output(['dmidecode', '-q']).decode()
-    for entry in get_paragraph(dmidecode.split('\n')):
+    dmidecode = subprocess.check_output(['dmidecode', '-q']).decode()
+    for entry in get_paragraph(dmidecode.splitlines()):
         for line in entry:
             if 'Memory Device' in line:
                 modules.append(get_device(entry))
