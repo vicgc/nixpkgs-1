@@ -48,8 +48,8 @@ setup(
         'fc.maintenance',
         'fc.util',
     ],
-    tests_require=['pytest'],
-    extras_require={'test': 'pytest'},
+    tests_require=['pytest', 'mock'],
+    extras_require={'test': ['pytest', 'mock']},
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
