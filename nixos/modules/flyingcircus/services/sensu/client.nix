@@ -206,7 +206,7 @@ in {
     flyingcircus.services.sensu-client.checks = {
       load = {
         notification = "Load is too high";
-        command =  "check_load -r -w 2.0,1.3,0.9 -c 4,3,2";
+        command =  "check_load -r -w 5,4,4 -c 8,6,6";
         interval = 10;
       };
       swap = {

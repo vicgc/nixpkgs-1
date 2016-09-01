@@ -99,7 +99,7 @@ in
     '';
 
     services.logrotate.config = ''
-      /var/log/mongodb/*.log* {
+      /var/log/mongodb/*.log {
         nocreate
         postrotate
           systemctl reload mongodb

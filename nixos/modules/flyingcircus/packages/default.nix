@@ -12,7 +12,7 @@
 
     cron = pkgs.callPackage ./cron.nix { };
 
-    easyrsa3 = pkgs.callPackage ./easyrsa { };
+    easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
 
     fcmaintenance = pkgs.callPackage ./fcmaintenance { };
     fcmanage = pkgs.callPackage ./fcmanage { };

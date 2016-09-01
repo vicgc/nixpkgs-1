@@ -6,7 +6,7 @@
 
 with builtins;
 rec {
-  stripNetmask = cidr: elemAt (lib.splitString "/" cidr) 0;
+  stripNetmask = cidr: head (lib.splitString "/" cidr);
 
   prefixLength = cidr: lib.toInt (elemAt (lib.splitString "/" cidr) 1);
 
@@ -17,11 +17,14 @@ rec {
 
   isIp6 = cidr: length (lib.splitString ":" cidr) > 1;
 
-  # choose the correct iptables version for addr
-  iptables = addr: if isIp4 addr then "iptables" else "ip6tables";
+  # choose correct "iptables" invocation depending on the address
+  iptables = a:
+    if isIp4 a then "iptables" else
+    if isIp6 a then "ip6tables" else
+    "ip46tables";
 
-  # choose correct "ip" invocation depending on addr
-  ip' = addr: "ip " + (if isIp4 addr then "-4" else "-6");
+  # choose correct "ip" invocation depending on the address
+  ip' = a: "ip " + (if isIp4 a then "-4" else if isIp6 a then "-6" else "");
 
   # list IP addresses for service configuration (e.g. nginx)
   listenAddresses = config: interface:
@@ -37,6 +40,14 @@ rec {
           (map (addr: addr.address) interface_config.ip4) ++
           (map (addr: addr.address) interface_config.ip6)
       else [];
+
+    listenAddressesQuotedV6 = config: interface:
+      map
+        (addr:
+          if isIp6 addr then
+            "[${addr}]"
+          else addr)
+        (listenAddresses config interface);
 
   /*
    * policy routing
@@ -107,6 +118,16 @@ rec {
     in
     "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
 
+    # A list of default gateways from a list of networks in CIDR form.
+    gateways = encInterface: filteredNets:
+      foldl'
+        (acc: cidr:
+          if hasAttr cidr encInterface.gateways
+          then acc ++ [encInterface.gateways.${cidr}]
+          else acc)
+        []
+        filteredNets;
+
   # Routes for an individual VLAN on an interface. This falls apart into two
   # blocks: (1) subnet routes for all subnets on which the interface has at
   # least one address configured; (2) gateway (default) routes for each subnet
@@ -122,16 +143,6 @@ rec {
         '')
         filteredNets;
 
-      # A list of default gateways from a list of networks in CIDR form.
-      gateways = filteredNets:
-        foldl'
-          (acc: cidr:
-            if hasAttr cidr encInterface.gateways
-            then acc ++ [encInterface.gateways.${cidr}]
-            else acc)
-          []
-          filteredNets;
-
       common = "dev ${dev'} metric ${toString prio}";
       gatewayRoutesStr = lib.optionalString
         (100 > routingPriority vlan)
@@ -141,9 +152,19 @@ rec {
             ${ip' gw} route ${verb} default via ${gw} ${common}
             ${ip' gw} route ${verb} default via ${gw} ${common} table ${vlan}
           '')
-          (gateways filteredNets));
+          (gateways encInterface filteredNets));
     in
     "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
+
+  # Format additional routes passed by the 'extraRoutes' parameter.
+  ipExtraRoutes = vlan: routes: verb:
+    lib.concatMapStringsSep "\n"
+      (route:
+        let
+          a = head (lib.splitString " " route);
+        in
+        "${ip' a} route ${verb} ${route} table ${vlan}")
+      routes;
 
   # List of nets (CIDR) that have at least one address present which satisfies
   # `predicate`.
@@ -170,17 +191,77 @@ rec {
     { vlan
     , encInterface
     , action ? "start"  # or "stop"
+    , extraRoutes ? [ ]
     }:
     let
+      verb = if action == "start" then "add" else "del";
       filteredNets = filterNetworks encInterface.networks [ isIp4 isIp6 ];
     in
     if action == "start"
     then ''
-      ${ipRules vlan encInterface filteredNets "add"}
-      ${ipRoutes vlan encInterface filteredNets "add"}
+      ${ipRules vlan encInterface filteredNets verb}
+      ${ipRoutes vlan encInterface filteredNets verb}
+      ${ipExtraRoutes vlan extraRoutes verb}
     '' else ''
-      ${ipRoutes vlan encInterface filteredNets "del"}
-      ${ipRules vlan encInterface filteredNets "del"}
+      ${ipExtraRoutes vlan extraRoutes verb}
+      ${ipRoutes vlan encInterface filteredNets verb}
+      ${ipRules vlan encInterface filteredNets verb}
     '';
+
+  simpleRouting =
+    { vlan
+    , encInterface
+    , action ? "start"}:  # or "stop"
+    let
+      verb = if action == "start" then "add" else "del";
+      filteredNets = filterNetworks encInterface.networks [ isIp4 isIp6 ];
+      prio = routingPriority vlan;
+      dev' = dev vlan encInterface.bridged;
+      common = "dev ${dev'} metric ${toString prio}";
+
+      # additional network routes for nets in which we don't have an address
+      networkRoutesStr =
+        let
+          nets = filter (net: encInterface.networks.${net} == []) filteredNets;
+        in
+        lib.concatMapStrings
+          (net: ''
+            ${ip' net} route ${verb} ${net} dev ${dev'} metric ${toString prio}
+          '')
+          nets;
+
+      # gateway routes only for nets in which we do have an address
+      gatewayRoutesStr =
+        let
+          nets = filter (net: encInterface.networks.${net} != []) filteredNets;
+        in
+        lib.optionalString
+          (100 > routingPriority vlan)
+          (lib.concatMapStrings
+            (gw: "${ip' gw} route ${verb} default via ${gw} ${common}\n")
+            (gateways encInterface nets));
+    in
+    "\n# routes for ${vlan}\n${networkRoutesStr}${gatewayRoutesStr}";
+
+  # "example.org." -> absolute name; "example" -> relative to $domain
+  normalizeDomain = domain: n:
+    if lib.hasSuffix "." n
+    then lib.removeSuffix "." n
+    else "${n}.${domain}";
+
+  # Convert for example "172.22.48.0/22" into "172.22.48.0 255.255.252.0".
+  # Note 1: this is IPv4 only.
+  # Note 2: don't want to import pkgs into fclib.
+  decomposeCIDR = pkgs: cidr:
+    let
+      drvname = "cidr-${replaceStrings [ "/" ":" ] [ "_" "-" ] cidr}";
+    in
+    readFile (pkgs.runCommand drvname {} ''
+      ${pkgs.python3.interpreter} > $out <<'_EOF_'
+      import ipaddress
+      i = ipaddress.ip_interface('${cidr}')
+      print('{} {}'.format(i.ip, i.netmask), end="")
+      _EOF_
+    '');
 
 }

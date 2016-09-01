@@ -16,6 +16,7 @@ mkIf (params ? location && params ? resource_group) {
     LoadPlugin entropy
     LoadPlugin interface
     LoadPlugin load
+    LoadPlugin memory
     LoadPlugin processes
     LoadPlugin swap
     LoadPlugin syslog
@@ -25,12 +26,6 @@ mkIf (params ? location && params ? resource_group) {
 
     <Plugin "syslog">
         LogLevel info
-    </Plugin>
-
-    <Plugin "cpu">
-      ReportByCpu true
-      ReportByState true
-      ValuesPercentage true
     </Plugin>
 
     <Plugin "disk">
