@@ -18,8 +18,8 @@ let
     else address;
 
   mainCf = [
-    (if lib.pathExists "/etc/local/postfix/local.cf" then
-      lib.readFile /etc/local/postfix/local.cf
+    (if lib.pathExists "/etc/local/postfix/main.cf" then
+      lib.readFile /etc/local/postfix/main.cf
      else "")
 
     (if lib.pathExists "/etc/local/postfix/canonical.pcre" then
