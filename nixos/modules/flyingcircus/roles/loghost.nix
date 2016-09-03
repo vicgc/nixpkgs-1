@@ -27,19 +27,22 @@
 	    elasticsearchClusterName = "graylog";
 	    extraConfig = ''
 	    '';
-	};
-	services.elasticsearch2 = {
+  	};
+  	services.elasticsearch2 = {
     	enable = true;
     	cluster_name = "graylog";
     	extraConf = ''
-discovery_zen_ping_multicast_enabled : false
-# List of Elasticsearch nodes to connect to
-elasticsearch_discovery_zen_ping_unicast_hosts : localhost:9300
-'';
+        discovery_zen_ping_multicast_enabled : false
+        # List of Elasticsearch nodes to connect to
+        elasticsearch_discovery_zen_ping_unicast_hosts : localhost:9300
+      '';
   	};
+    services.rsyslogd.extraConfig = ''
+      *.* @127.0.0.1:5140;RSYSLOG_SyslogProtocol23Format
+    '';
 
   	flyingcircus.roles.webgateway.enable = true;
   	flyingcircus.roles.webproxy.enable = true;
   	flyingcircus.roles.mongodb.enable = true;
-};
+  };
 }
