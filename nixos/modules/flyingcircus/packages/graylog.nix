@@ -10,12 +10,18 @@ stdenv.mkDerivation rec {
     sha256 = "09rcgjxnv235a9rvyfcfdjvmr3rjb0jg5sph8sqvzgspvas9pgvn";
   };
 
+  src_sso = fetchurl {
+    url= "https://github.com/Graylog2/graylog-plugin-auth-sso/releases/download/1.0.1/graylog-plugin-auth-sso-1.0.1.jar";
+    sha256 ="1r3iz35k9m15m1rzm1mgsks9izx10djqjrws29pmjb4ka2c4rk9v";
+  };
+
   dontBuild = true;
   dontStrip = true;
 
   installPhase = ''
     mkdir -p $out
     cp -r {graylog.jar,lib,bin,plugin,data} $out
+    cp ${src_sso.outPath} $out/plugin/
   '';
 
   meta = with stdenv.lib; {
