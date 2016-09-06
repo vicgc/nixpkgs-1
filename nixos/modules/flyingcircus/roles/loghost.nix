@@ -40,6 +40,7 @@ in
   	    extraConfig = ''
           # IPv6 would be nice, too :/
           web_listen_uri http://${listenOn}:9000/
+          rest_listen_uri http://${listenOn}:9000/api
   	    '';
     	};
     	services.elasticsearch2 = {
