@@ -123,6 +123,10 @@ in {
               password = client.password;
               tags = "";
             };
+            # Permission settings required for sensu
+            # exchange.declare -> configure "keepalives"
+            # queue.declare -> configure "node-*"
+            # queue.bind -> write "node-*"
             permissions_body = {
               scope = "client";
               configure = "^((default|results|keepalives)$)|${client_name}-.*";
@@ -130,17 +134,17 @@ in {
               read = "^(default$)|${client_name}-.*";
             };
             in ''
+              # Configure user and permissions for ${client.node}:
               ${curl} -XPUT \
                 -d'${builtins.toJSON password_body}' \
                 ${api}/users/${client.node}
-
-              # Permission for clients in order: conf, write, read
-              # exchange.declare -> configure "keepalives"
-              # queue.declare -> configure "node-*"
-              # queue.bind -> write "node-*"
               ${curl} -XPUT \
                 -d'${builtins.toJSON permissions_body}' \
-                ${api}/permissions/sensu/${client.node}
+                ${api}/permissions/%2Fsensu/${client.node}
+              # Delete wrongly set permission. Can go away after a release.
+              ${curl} -XDELETE \
+                ${api}/permissions/sensu/${client.node} \
+                | ${pkgs.gnugrep}/bin/grep -v "Object Not Found"
 
               '')
           sensu_clients);
@@ -148,10 +152,9 @@ in {
       ''
         set -e
 
-        rabbitmqctl start_app || sleep 5
-
-        ${curl} -f ${api}/overview >/dev/null|| (
-          rabbitmqctl add_user sensu-server ${server_password}
+        ${curl} -f ${api}/overview >/dev/null || (
+          rabbitmqctl start_app || sleep 5
+          rabbitmqctl add_user sensu-server ${server_password} || true
           rabbitmqctl set_user_tags sensu-server administrator
           rabbitmqctl change_password sensu-server ${server_password}
           rabbitmqctl set_permissions -p /sensu sensu-server ".*" ".*" ".*"
