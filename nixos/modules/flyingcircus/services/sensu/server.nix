@@ -144,7 +144,7 @@ in {
               # Delete wrongly set permission. Can go away after a release.
               ${curl} -XDELETE \
                 ${api}/permissions/sensu/${client.node} \
-                | ${pkgs.gnugrep}/bin/grep -v "Object Not Found"
+                | ${pkgs.gnugrep}/bin/grep -v "Object Not Found" || true
 
               '')
           sensu_clients);
