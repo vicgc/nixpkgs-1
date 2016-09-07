@@ -138,7 +138,6 @@ in {
               ${curl} -XPUT \
                 -d'${builtins.toJSON password_body}' \
                 ${api}/users/${client.node}
-
               # Permission for clients in order: conf, write, read
               # exchange.declare -> configure "keepalives"
               # queue.declare -> configure "node-*"
@@ -150,7 +149,6 @@ in {
               ${curl} -XDELETE \
                 ${api}/permissions/sensu/${client.node} \
                 | ${pkgs.gnugrep}/bin/grep -v "Object Not Found" || true
-
               '')
           sensu_clients);
       in
