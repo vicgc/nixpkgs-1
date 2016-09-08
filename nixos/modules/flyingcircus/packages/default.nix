@@ -39,5 +39,8 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
+    rabbitmq_delayed_message_exchange =
+      pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+
   };
 }
