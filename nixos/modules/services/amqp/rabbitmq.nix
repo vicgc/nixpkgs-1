@@ -74,6 +74,12 @@ in {
         type = types.listOf types.str;
         description = "The names of plugins to enable";
       };
+
+      pluginPackages = mkOption {
+        default = [];
+        type = types.listOf types.package;
+        description = "Packages to add as plugin.";
+      };
     };
   };
 
@@ -108,6 +114,7 @@ in {
         RABBITMQ_SERVER_START_ARGS = "-rabbit error_logger tty -rabbit sasl_error_logger false";
         RABBITMQ_PID_FILE = "${cfg.dataDir}/pid";
         SYS_PREFIX = "";
+        RABBITMQ_PLUGINS_DIR = "${cfg.dataDir}/plugins";
         RABBITMQ_ENABLED_PLUGINS_FILE = pkgs.writeText "enabled_plugins" ''
           [ ${concatStringsSep "," cfg.plugins} ].
         '';
@@ -130,6 +137,16 @@ in {
             echo -n ${cfg.cookie} > ${cfg.dataDir}/.erlang.cookie
             chmod 400 ${cfg.dataDir}/.erlang.cookie
         ''}
+
+        # I assume this should actually go to the store, hm?
+        install -d ${cfg.dataDir}/plugins
+        rm -f ${cfg.dataDir}/plugins/*
+        ln -s ${pkgs.rabbitmq_server}/libexec/rabbitmq/plugins/* \
+          ${cfg.dataDir}/plugins
+        ${concatStringsSep "\n" (map
+          (package: "ln -s ${package}/* ${cfg.dataDir}/plugins")
+          cfg.pluginPackages)}
+
       '';
     };
 
