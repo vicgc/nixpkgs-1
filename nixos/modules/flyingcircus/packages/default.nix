@@ -71,5 +71,8 @@
     elasticsearchPlugins = lib.recurseIntoAttrs (
       pkgs.callPackage ./elasticsearch/plugins.nix { }
     );
+    rabbitmq_delayed_message_exchange =
+      pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+
   };
 }
