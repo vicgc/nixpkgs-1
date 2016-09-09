@@ -11,8 +11,8 @@ stdenv.mkDerivation rec {
   };
 
   src_sso = fetchurl {
-    url= "https://github.com/Graylog2/graylog-plugin-auth-sso/releases/download/1.0.1/graylog-plugin-auth-sso-1.0.1.jar";
-    sha256 ="1r3iz35k9m15m1rzm1mgsks9izx10djqjrws29pmjb4ka2c4rk9v";
+    url= "https://github.com/Graylog2/graylog-plugin-auth-sso/releases/download/1.0.1/graylog-plugin-auth-sso-1.0.3.jar";
+    sha256 ="1qraaf3pm2i7vhvrls9fspc6mxn9hf5n49298hza9rmhpc8izdzv";
   };
 
   dontBuild = true;
