@@ -58,5 +58,3 @@ in
     networking.firewall.allowedUDPPorts = [ 60001 ];
   };
 }
-
-# XXX client code should be pulled from platform and triggered via services

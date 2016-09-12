@@ -43,6 +43,7 @@ in
     ./ssl/dhparams.nix
     ./systemd.nix
     ./user.nix
+    ../services/vxlan-client.nix
   ];
 
   options = {
