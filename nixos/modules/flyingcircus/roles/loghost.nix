@@ -27,7 +27,7 @@ in
   config = mkMerge [
 
     (mkIf config.flyingcircus.roles.loghost.enable {
-      # XXX only SRV actually. And maybe not at all.
+      # XXX Access should *onl* be allowed from directory and same-rg.
     	networking.firewall.allowedTCPPorts = [ 9000 ];
 
       services.graylog = {
