@@ -5,16 +5,6 @@ let
 
   fclib = import ../lib;
 
-  rpFilter = ''
-    # checkReversePath variant which logs dropped packets
-    ip46tables -F PREROUTING -t raw
-    ip46tables -A PREROUTING -t raw -m rpfilter -j ACCEPT
-    iptables -A PREROUTING -t raw -d 224.0.0.0/4 -j ACCEPT  # multicast
-    ip46tables -A PREROUTING -t raw -m limit --limit 10/minute \
-      -j LOG --log-prefix "rpfilter drop "
-    ip46tables -A PREROUTING -t raw -m rpfilter -j DROP
-  '';
-
   localRules = lib.concatMapStringsSep "\n"
     (filename:
        "# Local rules from ${filename}\n" +
@@ -41,8 +31,7 @@ let
 in
 {
   config = {
-
-    networking.firewall.checkReversePath = false;  # replaced by own version
+    networking.firewall.checkReversePath = false;
 
     networking.firewall.extraCommands =
       let
@@ -50,8 +39,6 @@ in
           (rgRules != "")
           "# Accept traffic within the same resource group.\n${rgRules}";
       in ''
-        ${rpFilter}
-
         ${rg}
 
         ${localRules}
@@ -61,6 +48,5 @@ in
       # Enable firewall local configuration snippet place.
       install -d -o root -g service -m 02775 /etc/local/firewall
     '';
-
   };
 }
