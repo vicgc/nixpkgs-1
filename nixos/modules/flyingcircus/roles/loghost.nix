@@ -39,8 +39,9 @@ in
   	    elasticsearchClusterName = "graylog";
   	    extraConfig = ''
           # IPv6 would be nice, too :/
-          web_listen_uri http://${listenOn}:9000/
-          rest_listen_uri http://${listenOn}:9000/api
+          web_listen_uri http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog
+          rest_listen_uri http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog/api
+          trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
   	    '';
     	};
     	services.elasticsearch2 = {
