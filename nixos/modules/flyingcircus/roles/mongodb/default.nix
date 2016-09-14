@@ -1,7 +1,10 @@
-{ config, lib, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }:
+
+with lib;
 
 let
   cfg = config.flyingcircus;
+  mcfg = config.services.mongodb;
   fclib = import ../../lib;
 
   listen_addresses =
@@ -15,7 +18,24 @@ let
     then builtins.readFile  local_config_path
     else "";
 
-   mongo_check  = pkgs.callPackage ./check.nix { };
+  # Use a completely own version of mongodb.conf (not resorting to NixOS
+  # defaults). The stock version includes a hard-coded "syslog = true"
+  # statement.
+  mongoCnf = pkgs.writeText "mongodb.conf" ''
+    bind_ip = ${mcfg.bind_ip}
+    ${optionalString mcfg.quiet "quiet = true"}
+    dbpath = ${mcfg.dbpath}
+    fork = true
+    pidfilepath = ${mcfg.pidFile}
+    ${optionalString (mcfg.replSetName != "") "replSet = ${mcfg.replSetName}"}
+    ipv6 = true
+    logpath = /var/log/mongodb/mongodb.log
+    logappend = true
+    logRotate = reopen
+    ${local_config}
+  '';
+
+  mongo_check = pkgs.callPackage ./check.nix { };
 
 in
 {
@@ -33,58 +53,74 @@ in
 
   config = mkIf cfg.roles.mongodb.enable {
 
-  services.mongodb.enable = true;
-  services.mongodb.dbpath = "/srv/mongodb";
-  services.mongodb.bind_ip = concatStringsSep "," listen_addresses;
-  services.mongodb.extraConfig = ''
-    ipv6 = true
-    ${local_config}
-  '';
+    services.mongodb.enable = true;
+    services.mongodb.dbpath = "/srv/mongodb";
+    services.mongodb.bind_ip = concatStringsSep "," listen_addresses;
+    services.mongodb.pidFile = "/run/mongodb.pid";
 
-  systemd.services.mongodb.preStart = ''
-      echo never > /sys/kernel/mm/transparent_hugepage/defrag
-  '';
-  systemd.services.mongodb.postStop = ''
-      echo always > /sys/kernel/mm/transparent_hugepage/defrag
-  '';
+    systemd.services.mongodb = {
+      preStart = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";
+      postStop = "echo always > /sys/kernel/mm/transparent_hugepage/defrag";
+      serviceConfig.LimitNOFILE = 64000;
+      serviceConfig.LimitNPROC = 32000;
+      serviceConfig.ExecStart = mkForce ''
+        ${mcfg.package}/bin/mongod --config ${mongoCnf}
+      '';
+      reload = ''
+        if [[ -f ${mcfg.pidFile} ]]; then
+          kill -USR1 $(< ${mcfg.pidFile} )
+        fi
+      '';
+    };
 
-  systemd.services.mongodb.serviceConfig.LimitNOFILE = 64000;
-  systemd.services.mongodb.serviceConfig.LimitNPROC = 32000;
+    users.users.mongodb = {
+      shell = "/run/current-system/sw/bin/bash";
+      home = "/srv/mongodb";
+    };
 
-  users.users.mongodb = {
-    shell = "/run/current-system/sw/bin/bash";
-    home = "/srv/mongodb";
-  };
+    system.activationScripts.flyingcircus-mongodb =
+    let
+      uid = toString config.ids.uids.mongodb;
+    in ''
+      install -d -o ${uid} /{srv,var/log}/mongodb
+      install -d -o ${uid} -g service -m 02775 /etc/local/mongodb
+    '';
 
-  system.activationScripts.flyingcircus_mongodb = ''
-    install -d -o ${toString config.ids.uids.mongodb} /srv/mongodb
-    install -d -o ${toString config.ids.uids.mongodb} -g service -m 02775 /etc/local/mongodb
-  '';
+    security.sudo.extraConfig = ''
+      # Service users may switch to the mongodb system user
+      %sudo-srv ALL=(mongodb) ALL
+      %service ALL=(mongodb) ALL
+      %sensuclient ALL=(mongodb) ALL
+    '';
 
-  security.sudo.extraConfig = ''
-    # Service users may switch to the mongodb system user
-    %sudo-srv ALL=(mongodb) ALL
-    %service ALL=(mongodb) ALL
-    %sensuclient ALL=(mongodb) ALL
-  '';
-
-  environment.etc."local/mongodb/README.txt".text = ''
+    environment.etc."local/mongodb/README.txt".text = ''
       Put your local mongodb configuration into `mongodb.conf` here.
       It will be joined with the basic config.
-      '';
+    '';
 
+    services.logrotate.config = ''
+      /var/log/mongodb/*.log {
+        nocreate
+        postrotate
+          systemctl reload mongodb
+        endscript
+      }
+    '';
 
-  flyingcircus.services.sensu-client.checks = {
-    mongodb = {
-     notification = "MongoDB alive";
-     command =  "/var/setuid-wrappers/sudo -u mongodb ${mongo_check}/bin/check_mongo -d mongodb";
-   };
+    flyingcircus.services.sensu-client.checks = {
+      mongodb = {
+        notification = "MongoDB alive";
+        command = ''
+          /var/setuid-wrappers/sudo -u mongodb -- \
+            ${mongo_check}/bin/check_mongo -d mongodb
+        '';
+      };
+    };
+
+    flyingcircus.services.sensu-client.expectedConnections = {
+      warning = 60000;
+      critical = 63000;
+    };
+
   };
-
-  flyingcircus.services.sensu-client.expectedConnections = {
-    warning = 60000;
-    critical = 63000;
-  };
-
-};
 }

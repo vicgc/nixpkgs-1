@@ -1,6 +1,7 @@
-# This test has been broken but still signaled "green" earlier on.
-# I have disabled it for now.
-import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
+import <nixpkgs/nixos/tests/make-test.nix> ({
+    pkgs
+    ,percona
+    ,...} : {
   name = "percona";
   meta = with pkgs.stdenv.lib.maintainers; {
     maintainers = [ theuni ];
@@ -11,6 +12,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
       { pkgs, config, ... }:
 
       {
+        virtualisation.memorySize = 2048;
+
         imports = [ ../static/default.nix
                     ../roles/default.nix
                     ../services/default.nix
@@ -19,6 +22,7 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
 
         flyingcircus.ssl.generate_dhparams = false;
         flyingcircus.roles.mysql.enable = true;
+        flyingcircus.roles.mysql.package = percona;
 
         # Tune those arguments as we'd like to run this on Hydra
         # in a rather small VM.
@@ -35,12 +39,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
     startAll;
 
     $master->waitForUnit("mysql");
-
-    # $master->sleep(10);
-    # This test was screwed and for some reason passed earlier on.
-    # This is only to ensure we build the packages, for now.
-    # $master->succeed("systemctl status sensu-server.service");
-    # $master->succeed("systemctl status sensu-api.service");
-    # $master->succeed("systemctl status uchiwa.service");
+    $master->sleep(1);
+    $master->succeed("mysqladmin ping");
+    $master->succeed("mysql mysql -e 'select * from user' > /dev/null");
   '';
 })

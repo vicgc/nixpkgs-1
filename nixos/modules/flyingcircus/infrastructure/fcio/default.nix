@@ -118,9 +118,11 @@ in
     script = "echo \"$(date) -- SERIAL CONSOLE IS LIVE --\" > /dev/ttyS0";
   };
 
-  # Configure time keeping;
+  # Configure time keeping
   services.ntp.enable = false;
   services.chrony.enable = true;
-  services.chrony.servers = config.flyingcircus.static.ntpservers.${config.flyingcircus.enc.parameters.location};
-  environment.systemPackages = with pkgs; [ chrony ];
+  services.chrony.servers =
+    if (hasAttrByPath [ "parameters" "location" ] cfg.enc)
+    then cfg.static.ntpservers.${cfg.enc.parameters.location}
+    else [];
 }

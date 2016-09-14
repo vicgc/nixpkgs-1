@@ -9,14 +9,15 @@ USER="${USER:-$(whoami)}"
 cfg="${1}/${USER}"
 dir="/var/spool/logrotate"
 
-state="${dir}/${USER}.state"
-if [[ ! -f ${state} ]]; then
-    touch "${state}"
-    chown "${USER}:" "${state}"
+# Run only if there actually are config files around.
+if [[ -d "${cfg}" && -z $(find "${cfg}" -maxdepth 0 -empty) ]]; then
+    state="${dir}/${USER}.state"
+    if [[ ! -f ${state} ]]; then
+        touch "${state}"
+        chown "${USER}:" "${state}"
+    fi
+    expandedconf="${dir}/${USER}.conf"
+    cat /etc/logrotate.options "${cfg}"/* > "${expandedconf}" &&
+        logrotate -v -s "${state}" "${expandedconf}" ||
+        true
 fi
-expandedconf="${dir}/${USER}.conf"
-# Run only if there actually are config files around. cat will fail
-# if the user has not configured anything.
-cat /etc/logrotate.options "${cfg}"/* > "${expandedconf}" &&
-    logrotate -v -s "${state}" "${expandedconf}" ||
-    true

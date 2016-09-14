@@ -38,11 +38,12 @@ in
     ./firewall
     ./logrotate
     ./network.nix
+    ./packages.nix
     ./sensu-client.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
-    ./user.nix
     ./systemd.nix
+    ./user.nix
   ];
 
   options = {
@@ -170,77 +171,21 @@ in
         Docs:      https://flyingcircus.io/doc/
         Release:   ${config.system.nixosVersion}
 
-    '' + lib.optionalString (enc ? name) ''
+    '' +
+    (lib.optionalString
+      (enc ? name &&
+        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "environment" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "service_description" ] enc))
+      ''
         Hostname:  ${enc.name}    Environment: ${enc.parameters.environment}    Location:  ${enc.parameters.location}
         Services:  ${enc.parameters.service_description}
 
-    '';
+      '');
 
     services.cron.enable = true;
     sound.enable = false;
     fonts.fontconfig.enable = true;
-    environment.systemPackages = with pkgs; [
-        apacheHttpd
-        atop
-        bc
-        bind
-        bundler
-        curl
-        cyrus_sasl
-        db
-        dstat
-        fcmaintenance
-        fio
-        gcc
-        gdbm
-        git
-        gnupg
-        go
-        gptfdisk
-        graphviz
-        imagemagick
-        iotop
-        kerberos
-        libjpeg
-        libmemcached
-        libxml2
-        libxslt
-        links
-        lsof
-        lynx
-        mercurial
-        mmv
-        nano
-        nc6
-        ncdu
-        netcat
-        ngrep
-        nmap
-        nodejs
-        openldap
-        openssl
-        php
-        postgresql
-        protobuf
-        psmisc
-        pv
-        python2Full
-        pythonPackages.virtualenv
-        python34
-        screen
-        strace
-        subversion
-        sysstat
-        tcpdump
-        telnet
-        traceroute
-        tree
-        unzip
-        vim
-        xfsprogs
-        zlib
-    ];
-
     programs.zsh.enable = true;
 
     environment.pathsToLink = [ "/include" ];
@@ -257,42 +202,6 @@ in
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_3;
-
-    nixpkgs.config.packageOverrides = pkgs:
-      { linux_4_3 = pkgs.linux_4_3.override {
-          extraConfig =
-            ''
-              DEBUG_INFO y
-              IP_MULTIPLE_TABLES y
-              IPV6_MULTIPLE_TABLES y
-              LATENCYTOP y
-              SCHEDSTATS y
-            '';
-        };
-        nagiosPluginsOfficial = pkgs.nagiosPluginsOfficial.overrideDerivation (oldAttrs: {
-          buildInputs = [ pkgs.openssh pkgs.openssl ];
-          preConfigure= "
-            configureFlagsArray=(
-              --with-openssl=${pkgs.openssl}
-              --with-ping-command='/var/setuid-wrappers/ping -n -w %d -c %d %s'
-              --with-ping6-command='/var/setuid-wrappers/ping6 -n -w %d -c %d %s'
-            )
-          ";
-        });
-      };
-
-    system.activationScripts.journal = ''
-      # Ensure journal access for privileged users.
-      # This fails if the users are not there (hence || true). This does not
-      # matter though: a non existing user/group does not need access.
-      # Command line taken from systemd-journald.service(8)
-      ${pkgs.acl}/bin/setfacl -Rn \
-        -m g:sudo-srv:rx,d:g:sudo-srv:rx \
-        -m g:admins:rx,d:g:admins:rx \
-        -m g:wheel:rx,d:g:wheel:rx \
-        -m g:sensuclient:rx,d:g:sensuclient:rx \
-        /var/log/journal/ || true
-    '';
 
     environment.etc = (
       lib.optionalAttrs (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
@@ -333,12 +242,10 @@ in
 
     services.nscd.enable = true;
 
-    services.journald.extraConfig = "SystemMaxUse=1G";
     systemd.tmpfiles.rules = [
       # d instead of r to a) respect the age rule and b) allow exclusion
       # of fc-data to avoid killing the seeded ENC upon boot.
       "d /tmp 1777 root root 3d"
-      "x /tmp/fc-data/*"
       "d /var/tmp 1777 root root 7d"
       "d /srv"
       "z /srv 0755 root root"
@@ -349,6 +256,5 @@ in
       then cfg.enc.parameters.timezone
       else "UTC";
   };
-
 
 }

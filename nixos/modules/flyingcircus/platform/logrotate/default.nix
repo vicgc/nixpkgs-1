@@ -25,7 +25,9 @@ let
   '';
 
   users = attrValues cfg.users.users;
-  service_users = builtins.filter (user: user.group == "service") users;
+  service_users = builtins.filter
+    (user: user.group == "service" || user.group == "vagrant")
+    users;
 
 in
 
@@ -78,7 +80,7 @@ in
         { "${user.name}-logrotate" = {
           description   = "Logrotate Service for ${user.name}";
           wantedBy      = [ "multi-user.target" ];
-          startAt       = "*-*-* 00:05:00";
+          startAt       = "*-*-* 00:03:00";
 
           path = [ pkgs.bash pkgs.logrotate ];
 

@@ -23,6 +23,16 @@ let
 
   cfg = config.networking.firewall;
 
+  rpFilter = ''
+    # checkReversePath variant which logs dropped packets
+    ip46tables -F PREROUTING -t raw
+    ip46tables -A PREROUTING -t raw -m rpfilter -j ACCEPT
+    iptables -A PREROUTING -t raw -d 224.0.0.0/4 -j ACCEPT  # multicast
+    ip46tables -A PREROUTING -t raw -m limit --limit 10/minute \
+      -j LOG --log-prefix "rpfilter drop "
+    ip46tables -A PREROUTING -t raw -m rpfilter -j DROP
+  '';
+
   helpers =
     ''
       # Helper command to manipulate both the IPv4 and IPv6 tables.
@@ -33,6 +43,38 @@ let
         ''}
       }
     '';
+
+  rg =
+    let
+      cfg = config.flyingcircus;
+      fclib = import ../../lib;
+      addrs_srv = map (elem: elem.ip) cfg.enc_addresses.srv;
+      addrs_fe = map (elem: elem.ip) cfg.enc_addresses.fe;
+      rule = eth: a: ''
+        ${fclib.iptables a} -A nixos-fw -i ${eth} -s ${fclib.stripNetmask a
+          } -j nixos-fw-accept
+      '';
+      rules_for = eth: addrs:
+        (lib.concatMapStrings
+          (rule eth)
+          addrs);
+      rules_srv = lib.optionalString
+        (lib.hasAttr "ethsrv" config.networking.interfaces)
+        (rules_for "ethsrv" addrs_srv);
+      rules_fe = lib.optionalString
+        (lib.hasAttr "ethfe" config.networking.interfaces)
+        (rules_for "ethfe" addrs_fe);
+      rules_srv_to_fe = lib.optionalString
+        (lib.hasAttr "ethfe" config.networking.interfaces)
+        (rules_for "ethfe" addrs_srv);
+    in ''
+      # Accept traffic within the same resource group.
+      ${rules_srv}
+      ${rules_fe}
+      # Accept traffic from other SRV to our FE
+      ${rules_srv_to_fe}
+    '';
+
 
   writeShScript = name: text: let dir = pkgs.writeScriptBin name ''
     #! ${pkgs.stdenv.shell} -e
@@ -131,6 +173,10 @@ let
       ip6tables -A nixos-fw -p icmpv6 -j nixos-fw-accept
     ''}
 
+    ${rpFilter}
+
+    ${rg}
+
     ${cfg.extraCommands}
 
     # Reject/drop everything else.
@@ -201,6 +247,8 @@ in
     # Keep the default firewall module disabled.
     networking.firewall.enable = false;
     networking.firewall.trustedInterfaces = [ "lo" ];
+
+    networking.firewall.checkReversePath = false;  # replaced by own version
 
     # FC: basic policy
     networking.firewall.allowPing = true;

@@ -6,12 +6,12 @@ let
   lib = import <nixpkgs/lib>;
   network = import ./network.nix { inherit lib; };
   math = import ./math.nix { inherit lib; };
-  system = import ./system.nix { inherit lib; fclib=fclib; };
-  files = import ./files.nix { inherit lib; fclib=fclib; };
+  system = import ./system.nix { inherit lib fclib; };
+  files = import ./files.nix { inherit lib fclib; };
 
   fclib =
-    { inherit network math system; }
-    // network // math // files // system;
+    { inherit network math system files; }
+    // network // math // system // files;
 
 in
   fclib
