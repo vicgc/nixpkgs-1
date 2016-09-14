@@ -192,11 +192,6 @@ def seed_enc(path):
     shutil.move('/tmp/fc-data/enc.json', path)
 
 
-def collect_garbage(age):
-    subprocess.check_call(['nix-collect-garbage', '--delete-older-than',
-                           '{}d'.format(age)])
-
-
 def exit_timeout(signum, frame):
     print("Execution timed out. Exiting.")
     sys.exit()
@@ -217,9 +212,6 @@ def parse_args():
                    'to system_state.json')
     a.add_argument('-m', '--maintenance', default=False, action='store_true',
                    help='run scheduled maintenance')
-    a.add_argument('-g', '--garbage', default=0, type=int,
-                   help='collect garbage and remove generations older than '
-                        '<INT> days')
     a.add_argument('-t', '--timeout', default=30 * 60, type=int,
                    help='abort execution after <INT> seconds')
 
@@ -265,10 +257,6 @@ def transaction(args):
 
     if args.maintenance:
         maintenance()
-
-    # Garbage collection is run after a potential reboot.
-    if args.garbage:
-        collect_garbage(args.garbage)
 
 
 def main():
