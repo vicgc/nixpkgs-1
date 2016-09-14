@@ -7,6 +7,10 @@ let
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
+
+  passwordSecret = fclib.generatePassword { serviceName = "graylog"; length = 96; };
+  rootPasswordSha2 = builtins.elemAt (fclib.generatePasswordHash { serviceName = "graylog-webui"; length = 32; }) 1;
+
 in
 {
 
@@ -31,11 +35,8 @@ in
     	networking.firewall.allowedTCPPorts = [ 9000 ];
 
       services.graylog = {
+        inherit passwordSecret rootPasswordSha2;
       	enable = true;
-        # XXX move out of here
-  	    passwordSecret = "gangland-daresay-polarize-celsius";
-        # "admin"
-  	    rootPasswordSha2 = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
   	    elasticsearchClusterName = "graylog";
   	    extraConfig = ''
           # IPv6 would be nice, too :/
