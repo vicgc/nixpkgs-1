@@ -62,6 +62,13 @@ in {
         "d /var/spool/maintenance/archive - - - 90d"
       ];
 
+      security.sudo.extraConfig = ''
+        # Allow applying config and restarting services to service users
+        Cmnd_Alias  FCMANAGE = ${pkgs.fcmanage}/bin/fc-manage --build
+        %sudo-srv ALL=(root) FCMANAGE
+        %service  ALL=(root) FCMANAGE
+      '';
+
     }
 
     (mkIf config.flyingcircus.agent.enable {
