@@ -3,6 +3,7 @@
 from fc.util.directory import connect
 from fc.util.lock import locked
 import argparse
+import datetime
 import filecmp
 import json
 import logging
@@ -28,7 +29,15 @@ import tempfile
 #     or whether to create a maintenance window and let the current one stay
 #     for now, but keep updating ENC data.
 
-enc = None
+enc = {}
+now = datetime.datetime.now()
+
+def skip_production_update():
+    if 'parameters' not in enc:
+        return False
+    if enc['parameters'].get('production') and now.hour < 21:
+        return True
+    return False
 
 
 def load_enc(enc_path):
@@ -143,7 +152,11 @@ def update_inventory():
 
 
 def build_channel(build_options):
-    print('Switching channel ...')
+    if skip_production_update():
+        print('Skipping channel update on production machines before 21:00')
+        return
+
+    print('Rebuilding from channel')
     try:
         if enc:
             channel_url = enc['parameters']['environment_url']
