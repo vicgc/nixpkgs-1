@@ -215,30 +215,6 @@ in
       passwordAuthentication = false;
 
     };
-    # SSH access is
-    networking.firewall.extraCommands = let
-      has_external_net = lib.findFirst
-        (s: s.service == "external_net-gateway")
-        null
-        config.flyingcircus.enc_services;
-      in if has_external_net == null then
-        ''
-        # SSH access is granted from everywhere
-        ip46tables -A nixos-fw -p tcp --dport 22 -j nixos-fw-accept
-        ''
-      else
-        ''
-        # We are limiting SSH access as the RG has a VPN gateway.
-        # SSH access via WHQ is fine.
-        iptables -A nixos-fw -p tcp -s 212.122.41.128/25 --dport 22 -j nixos-fw-accept
-        iptables -A nixos-fw -p tcp -s 217.69.228.136/30 --dport 22 -j nixos-fw-accept
-        ip6tables -A nixos-fw -p tcp -s 2a02:238:f030::/48 --dport 22 -j nixos-fw-accept
-        # SSH access from the FC-owned RZOB gateway machine is fine, too.
-        iptables -A nixos-fw -p tcp -s 172.22.49.56 --dport 22 -j nixos-fw-accept
-        iptables -A nixos-fw -p tcp -s 195.62.126.69 --dport 22 -j nixos-fw-accept
-        ip6tables -A nixos-fw -p tcp -s 2a02:248:101:63::118f --dport 22 -j nixos-fw-accept
-        ip6tables -A nixos-fw -p tcp -s 2a02:248:101:62::1187 --dport 22 -j nixos-fw-accept
-        '';
 
     services.nscd.enable = true;
 
