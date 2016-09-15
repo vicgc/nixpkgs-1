@@ -39,10 +39,10 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
+    vulnix = pkgs.callPackage ./vulnix.nix { };
+
     rabbitmq_delayed_message_exchange =
       pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
-
-    vulnix = pkgs.callPackage ./vulnix.nix { };
 
   };
 }
