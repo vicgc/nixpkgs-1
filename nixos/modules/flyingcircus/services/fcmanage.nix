@@ -20,7 +20,7 @@ in {
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --garbage 30 --maintenance --channel";
+        default = "--directory --system-state --maintenance --channel";
         description = "Steps to run by the agent.";
       };
     };
@@ -61,6 +61,13 @@ in {
         "r! /reboot"
         "d /var/spool/maintenance/archive - - - 90d"
       ];
+
+      security.sudo.extraConfig = ''
+        # Allow applying config and restarting services to service users
+        Cmnd_Alias  FCMANAGE = ${pkgs.fcmanage}/bin/fc-manage --build
+        %sudo-srv ALL=(root) FCMANAGE
+        %service  ALL=(root) FCMANAGE
+      '';
 
     }
 

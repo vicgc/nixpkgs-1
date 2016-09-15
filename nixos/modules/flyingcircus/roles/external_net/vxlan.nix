@@ -74,7 +74,8 @@ let
       dhcp-range=${lib.concatStringsSep "," params.dhcp},4h
       domain=ext.${domain}
       domain-needed
-      interface=${dev}
+      interface=ethfe,${dev}
+      no-dhcp-interface=ethfe
       local-ttl=60
     '';
 

@@ -237,6 +237,9 @@ in
     boot.kernel.sysctl = {
       "net.ipv4.ip_local_port_range" = "32768 60999";
       "net.ipv4.ip_local_reserved_ports" = "61000-61999";
+      # work around CVE-2016-5696
+      # obsolete on Linux 4.7+
+      "net.ipv4.tcp_challenge_ack_limit" = "999999999";
     };
   };
 }

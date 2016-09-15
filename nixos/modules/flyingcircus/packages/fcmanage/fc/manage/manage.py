@@ -159,7 +159,7 @@ def build_channel(build_options):
 
 
 def build_dev(build_options):
-    print('Switching to development environment')
+    print('Rebuilding from development environment')
     try:
         subprocess.check_call(['nix-channel', '--remove', 'nixos'])
     except Exception:
@@ -169,7 +169,19 @@ def build_dev(build_options):
         build_options)
 
 
+def build(build_options):
+    nix_channels = p.expanduser('~/.nix-channels')
+    try:
+        if p.getsize(nix_channels):
+            build_channel(build_options)
+            return
+    except OSError:
+        pass
+    build_dev(build_options)
+
+
 def maintenance():
+    print('Performing scheduled maintenance')
     import fc.maintenance.reqmanager
     fc.maintenance.reqmanager.transaction()
 
@@ -180,11 +192,6 @@ def seed_enc(path):
     if not os.path.exists('/tmp/fc-data/enc.json'):
         return
     shutil.move('/tmp/fc-data/enc.json', path)
-
-
-def collect_garbage(age):
-    subprocess.check_call(['nix-collect-garbage', '--delete-older-than',
-                           '{}d'.format(age)])
 
 
 def exit_timeout(signum, frame):
@@ -198,6 +205,8 @@ def parse_args():
                    help='path to enc.json (default: %(default)s)')
     a.add_argument('--show-trace', default=False, action='store_true',
                    help='instruct nixos-rebuild to dump tracebacks on failure')
+    a.add_argument('--fast', default=False, action='store_true',
+                   help='instruct nixos-rebuild to perform a fast rebuild')
     a.add_argument('-e', '--directory', default=False, action='store_true',
                    help='refresh local ENC copy')
     a.add_argument('-s', '--system-state', default=False, action='store_true',
@@ -205,9 +214,6 @@ def parse_args():
                    'to system_state.json')
     a.add_argument('-m', '--maintenance', default=False, action='store_true',
                    help='run scheduled maintenance')
-    a.add_argument('-g', '--garbage', default=0, type=int,
-                   help='collect garbage and remove generations older than '
-                        '<INT> days')
     a.add_argument('-t', '--timeout', default=30 * 60, type=int,
                    help='abort execution after <INT> seconds')
 
@@ -219,11 +225,13 @@ def parse_args():
                        action='store_const', const='build_dev',
                        help='switch machine to local checkout in '
                        '/root/nixpkgs')
+    build.add_argument('-b', '--build', default=False, dest='build',
+                       action='store_const', const='build',
+                       help='rebuild channel or local checkout whatever '
+                       'is currently active')
     a.add_argument('-v', '--verbose', action='store_true', default=False)
 
     args = a.parse_args()
-    if not args.build and not args.directory and not args.system_state:
-        a.error('no action specified')
     return args
 
 
@@ -233,6 +241,8 @@ def transaction(args):
     build_options = []
     if args.show_trace:
         build_options.append('--show-trace')
+    if args.fast:
+        build_options.append('--fast')
 
     if args.directory:
         load_enc(args.enc_path)
@@ -250,10 +260,6 @@ def transaction(args):
     if args.maintenance:
         maintenance()
 
-    # Garbage collection is run after a potential reboot.
-    if args.garbage:
-        collect_garbage(args.garbage)
-
 
 def main():
     args = parse_args()
@@ -265,7 +271,8 @@ def main():
     # this is really annoying
     logging.getLogger('iso8601').setLevel(logging.INFO)
 
-    with locked('/run/lock/fc-manage.lock'):
+    lockprefix = p.expanduser('~/.') if os.geteuid() else '/run/lock'
+    with locked(lockprefix + 'fc-manage.lock'):
         transaction(args)
 
 

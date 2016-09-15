@@ -18,6 +18,7 @@ let
     {
       "ipv4": "10.70.67.0/24",
       "ipv6": "fd3e:65c4:fc10:${fclib.toHex id16bit}::/64",
+      "proto": "udp6",
       "extraroutes": []
     }
   '';
@@ -73,7 +74,7 @@ let
   # the pushed routes.
   pushNameservers = lib.concatMapStringsSep "\n"
     (a: "push \"dhcp-option DNS ${a}\"")
-    (lib.attrByPath [ (toString location) ] "" cfg.static.nameservers);
+    (fclib.listenAddresses config "ethfe");
 
   #
   # server
@@ -86,12 +87,14 @@ let
     server-ipv6 ${accessNets.ipv6}
   '';
 
+  proto = lib.attrByPath [ "proto" ] "udp6" accessNets;
+
   serverConfig = ''
     # OpenVPN server config for ${frontendName}
     ${serverAddrs}
 
     port 1194
-    proto udp6
+    proto ${proto}
     dev tun
     multihome
 
@@ -115,6 +118,7 @@ let
     ${pushRoutes4}
     ${pushRoutes6}
     push "dhcp-option DOMAIN ${domain}"
+    push "dhcp-option DOMAIN fcio.net"
     ${pushNameservers}
   '';
 
@@ -127,7 +131,8 @@ let
     client
     dev tun
 
-    proto udp
+    proto ${lib.removeSuffix "6" proto}
+    #proto ${proto}
     remote ${frontendName}
     nobind
     persist-key
@@ -195,10 +200,13 @@ in
     assert accessNets.ipv6 != extnet.vxlan6;
     {
       allowedUDPPorts = [ 1194 ];
+      allowedTCPPorts = [ 1194 ];
       extraCommands = ''
         ip46tables -t nat -N openvpn || true
         ip46tables -t nat -F openvpn
         ${dontMasqueradeSrvRG}
+        iptables -t nat -A openvpn -s ${accessNets.ipv4} -d ${extnet.vxlan4} -j RETURN
+        ip6tables -t nat -A openvpn -s ${accessNets.ipv6} -d ${extnet.vxlan6} -j RETURN
         iptables -t nat -A openvpn -s ${extnet.vxlan4} \! -d ${extnet.vxlan4} -j MASQUERADE
         ip6tables -t nat -A openvpn -s ${extnet.vxlan6} \! -d ${extnet.vxlan6} -j MASQUERADE
         iptables -t nat -A openvpn -s ${accessNets.ipv4} \! -d ${accessNets.ipv4} -j MASQUERADE
