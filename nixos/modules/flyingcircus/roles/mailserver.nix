@@ -90,6 +90,34 @@ in
 
       environment.systemPackages = [ pkgs.mailutils ];
 
+      security.sudo.extraConfig = ''
+        %sensuclient    ALL=(postfix) ${pkgs.nagiosPluginsOfficial}/bin/check_mailq
+
+      '';
+
+      flyingcircus.services.sensu-client.checks = {
+
+        postfix_mailq = {
+          # The interpreter is not correctly set in file. Thus execute directly
+          # via perl:
+          command = ''
+            /var/setuid-wrappers/sudo -u postfix \
+            ${pkgs.nagiosPluginsOfficial}/bin/check_mailq \
+              -M postfix -w 200 -c 400
+            '';
+          notification = "Postfix mailq too full.";
+        };
+
+        postfix_smtp_port = {
+          command = ''
+            ${pkgs.nagiosPluginsOfficial}/bin/check_smtp \
+              -H localhost -p 25 -e Postfix -w 5 -c 10 -t 60
+          '';
+          notification = "Postfix smtp port (25) not reachable at localhost.";
+        };
+
+      };
+
     })
 
     (lib.mkIf (!cfg.roles.mailserver.enable &&

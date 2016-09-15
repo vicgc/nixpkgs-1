@@ -7,6 +7,25 @@ let
   config_file = pkgs.writeText "rabbitmq.config" cfg.config;
   config_file_wo_suffix = builtins.substring 0 ((builtins.stringLength config_file) - 7) config_file;
 
+  plugins = pkgs.stdenv.mkDerivation {
+    name = "rabbitmq_server_plugins";
+    builder = builtins.toFile "makePlugins.sh" ''
+      source $stdenv/setup
+      mkdir -p $out
+      ln -s $server/libexec/rabbitmq/plugins/* $out
+      for package in $packages
+      do
+        ln -s $package/* $out
+      done
+    '';
+
+    server = pkgs.rabbitmq_server;
+    packages = cfg.pluginPackages;
+    preferLocalBuild = true;
+    allowSubstitutes = false;
+  };
+
+
 in {
   ###### interface
   options = {
@@ -74,6 +93,12 @@ in {
         type = types.listOf types.str;
         description = "The names of plugins to enable";
       };
+
+      pluginPackages = mkOption {
+        default = [];
+        type = types.listOf types.package;
+        description = "Packages to add as plugin.";
+      };
     };
   };
 
@@ -108,6 +133,7 @@ in {
         RABBITMQ_SERVER_START_ARGS = "-rabbit error_logger tty -rabbit sasl_error_logger false";
         RABBITMQ_PID_FILE = "${cfg.dataDir}/pid";
         SYS_PREFIX = "";
+        RABBITMQ_PLUGINS_DIR = plugins;
         RABBITMQ_ENABLED_PLUGINS_FILE = pkgs.writeText "enabled_plugins" ''
           [ ${concatStringsSep "," cfg.plugins} ].
         '';
