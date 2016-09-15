@@ -45,7 +45,7 @@ let
   # A bootable Flying Circus disk image (raw) that can be extracted onto
   # Ceph RBD volume.
   flyingcircus_vm_image =
-    with import <nixpkgs> { inherit system; };
+    with import nixpkgsSrc { inherit system; };
     with lib;
     let
       config = (import lib/eval-config.nix {

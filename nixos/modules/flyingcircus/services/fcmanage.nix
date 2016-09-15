@@ -35,12 +35,13 @@ in {
         pkgs.fcmanage
       ];
 
-      systemd.services.fc-manage = {
+      systemd.services.fc-manage = rec {
         description = "Flying Circus Management Task";
         restartIfChanged = false;
-        unitConfig.X-StopOnRemoval = false;
+        wants = [ "network.target" ];
+        after = wants;
         serviceConfig.Type = "oneshot";
-        path = [config.system.build.nixos-rebuild];
+        path = [ config.system.build.nixos-rebuild ];
 
         # This configuration is stolen from NixOS' own automatic updater.
         environment = config.nix.envVars // {
@@ -67,15 +68,10 @@ in {
 
       systemd.timers.fc-manage = {
         description = "Timer for fc-manage";
-        after = [ "network-online.target" ];
         wantedBy = [ "timers.target" ];
         timerConfig = {
           Unit = "fc-manage.service";
-          # This 15s thing is annoying. There seems to be an issue that
-          # networking isn't _really_ up when the timer triggers for the
-          # first time even though the 'network-online.target' is waited
-          # for.
-          OnStartupSec = "15s";
+          OnStartupSec = "10s";
           OnUnitActiveSec = "10m";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";

@@ -10,10 +10,16 @@ let
     null
     config.flyingcircus.enc_services;
 
+  myHostname = (fclib.configFromFile /etc/local/postfix/myhostname "");
+
+  quoteIp6Address = address:
+    if fclib.isIp6 address then
+      "[${fclib.stripNetmask address}]/${toString (fclib.prefixLength address)}"
+    else address;
 
   mainCf = [
-    (if lib.pathExists "/etc/local/postfix/local.cf" then
-      lib.readFile /etc/local/postfix/local.cf
+    (if lib.pathExists "/etc/local/postfix/main.cf" then
+      lib.readFile /etc/local/postfix/main.cf
      else "")
 
     (if lib.pathExists "/etc/local/postfix/canonical.pcre" then
@@ -50,12 +56,16 @@ in
       # Allow all networks on the SRV interface. We expect only trusted machines
       # can reach us there (firewall).
       services.postfix.networks =
-        if cfg.enc.parameters.interfaces ? srv
-        then builtins.attrNames cfg.enc.parameters.interfaces.srv.networks
+        if cfg.enc.parameters.interfaces ? srv then
+          map
+            quoteIp6Address
+            (builtins.attrNames cfg.enc.parameters.interfaces.srv.networks)
         else [];
 
       # XXX change to fcio.net once #14970 is solved
       services.postfix.domain = "gocept.net";
+
+      services.postfix.hostname = myHostname;
 
       services.postfix.extraConfig = lib.concatStringsSep "\n" mainCf;
 
@@ -69,6 +79,10 @@ in
         Use `main.cf` for pure configuration settings like
         setting message_size_limit. Please do use normal main.cf syntax,
         as this will extend the basic configuration file.
+
+        Make usage of `myhostname` to provide a hostname Postfix shall
+        use to configure its own myhostname variable. If not set, the
+        default hostname will be used instead.
 
         If you need to reference to some map, these are currently available:
         * canonical_maps - /etc/local/postfix/canonical.pcre
