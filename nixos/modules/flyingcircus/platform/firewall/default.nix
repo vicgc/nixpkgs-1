@@ -175,6 +175,8 @@ let
 
     ${rpFilter}
 
+    ip46tables -A nixos-fw -p tcp --dport 22 -j nixos-fw-accept
+
     ${rg}
 
     ${cfg.extraCommands}
