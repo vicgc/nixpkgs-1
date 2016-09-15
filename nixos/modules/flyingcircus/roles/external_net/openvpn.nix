@@ -6,6 +6,7 @@ let
   fclib = import ../../lib;
   decomposeCIDR = fclib.decomposeCIDR pkgs;
   cfg = config.flyingcircus;
+  extnet = cfg.roles.external_net;
   parameters = lib.attrByPath [ "enc" "parameters" ] {} cfg;
   interfaces = lib.attrByPath [ "interfaces" ] {} parameters;
   location = lib.attrByPath [ "location" ] null parameters;
@@ -59,13 +60,14 @@ let
   pushRoutes4 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
-      (filter fclib.isIp4 (attrNames allNetworks ++ extraroutes));
-
+      ((filter fclib.isIp4
+        (attrNames allNetworks ++ extraroutes)) ++ [extnet.vxlan4]);
 
   pushRoutes6 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route-ipv6 ${cidr}\"")
-      (filter fclib.isIp6 (attrNames allNetworks ++ extraroutes));
+      ((filter fclib.isIp6
+        (attrNames allNetworks ++ extraroutes)) ++ [extnet.vxlan6]);
 
   # Caution: we also deliver FE addresses here, so these should be included in
   # the pushed routes.
@@ -157,6 +159,21 @@ let
     </tls-auth>
   '';
 
+  # Provide additional rules for VxLAN gateways. We need to mix it up here since
+  # everything should go into the same FW ruleset.
+  srvRG = if lib.hasAttrByPath [ "enc_addresses" "srv" ] cfg
+    then map (x: fclib.stripNetmask x.ip) cfg.enc_addresses.srv
+    else [];
+
+  dontMasqueradeSrvRG = lib.concatMapStringsSep "\n"
+    (addr:
+      let
+        ipt = fclib.iptables addr;
+        src = if fclib.isIp4 addr then extnet.vxlan4 else extnet.vxlan6;
+      in
+      "${ipt} -t nat -A openvpn -s ${src} -d ${addr} -j RETURN")
+    srvRG;
+
 in
 {
   options = {
@@ -173,13 +190,20 @@ in
       "local/openvpn/README".text = readFile ./README.openvpn;
     };
 
-    networking.firewall = {
+    networking.firewall =
+    assert accessNets.ipv4 != extnet.vxlan4;
+    assert accessNets.ipv6 != extnet.vxlan6;
+    {
       allowedUDPPorts = [ 1194 ];
       extraCommands = ''
         ip46tables -t nat -N openvpn || true
         ip46tables -t nat -F openvpn
-        iptables -t nat -A openvpn -s 10/8 \! -d 10/8 -j MASQUERADE
-        ip6tables -t nat -A openvpn -s fc00::/7 \! -d fc00::/7 -j MASQUERADE
+        ${dontMasqueradeSrvRG}
+        iptables -t nat -A openvpn -s ${extnet.vxlan4} \! -d ${extnet.vxlan4} -j MASQUERADE
+        ip6tables -t nat -A openvpn -s ${extnet.vxlan6} \! -d ${extnet.vxlan6} -j MASQUERADE
+        iptables -t nat -A openvpn -s ${accessNets.ipv4} \! -d ${accessNets.ipv4} -j MASQUERADE
+        ip6tables -t nat -A openvpn -s ${accessNets.ipv6} \! -d ${accessNets.ipv6} -j MASQUERADE
+
         ip46tables -t nat -D POSTROUTING -j openvpn || true
         ip46tables -t nat -A POSTROUTING -j openvpn
       '';
