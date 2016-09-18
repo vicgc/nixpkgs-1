@@ -23,16 +23,6 @@ let
 
   cfg = config.networking.firewall;
 
-  rpFilter = ''
-    # checkReversePath variant which logs dropped packets
-    ip46tables -F PREROUTING -t raw
-    ip46tables -A PREROUTING -t raw -m rpfilter -j ACCEPT
-    iptables -A PREROUTING -t raw -d 224.0.0.0/4 -j ACCEPT  # multicast
-    ip46tables -A PREROUTING -t raw -m limit --limit 10/minute \
-      -j LOG --log-prefix "rpfilter drop "
-    ip46tables -A PREROUTING -t raw -m rpfilter -j DROP
-  '';
-
   helpers =
     ''
       # Helper command to manipulate both the IPv4 and IPv6 tables.
@@ -172,8 +162,6 @@ let
       ip6tables -A nixos-fw -p icmpv6 --icmpv6-type 139 -j DROP
       ip6tables -A nixos-fw -p icmpv6 -j nixos-fw-accept
     ''}
-
-    ${rpFilter}
 
     ip46tables -A nixos-fw -p tcp --dport 22 -j nixos-fw-accept
 
