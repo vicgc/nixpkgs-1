@@ -22,6 +22,8 @@ in
      ./generic.nix
      ./haproxy.nix
      ./java.nix
+     ./loghost-client.nix
+     ./loghost.nix
      ./mailserver.nix
      ./mongodb
      ./mysql.nix

@@ -98,6 +98,7 @@
         pkgs.varnish.overrideDerivation (old: {
           buildFlags = "localstatedir=/var/spool";
         });
+
     };
 
   };
