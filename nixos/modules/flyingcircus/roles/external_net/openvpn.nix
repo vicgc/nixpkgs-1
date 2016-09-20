@@ -192,7 +192,7 @@ in
     environment.etc = {
       "local/openvpn/${frontendName}.ovpn".source = ovpn;
       "local/openvpn/networks.json.example".text = defaultAccessNets;
-      "local/openvpn/README".text = readFile ./README.openvpn;
+      "local/openvpn/README.txt".text = readFile ./README.openvpn;
     };
 
     networking.firewall =

@@ -113,7 +113,7 @@ in
     ) //
     {
       environment.etc."local/vxlan/config.json.example".text = exampleConfig;
-      environment.etc."local/vxlan/README".text = readFile ./README.vxlan;
+      environment.etc."local/vxlan/README.txt".text = readFile ./README.vxlan;
     }
   );
 }
