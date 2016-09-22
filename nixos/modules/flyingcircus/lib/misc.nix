@@ -17,4 +17,18 @@ rec {
        else passAndHash;
   # returns only a password
   generatePassword = { serviceName, length }: generatePasswordHash {inherit serviceName length; passOnly = true;};
+
+  passwordActivation = serviceName: uid: password:
+    let script = ''
+     install -d -o ${uid} -g service -m 02775 \
+        /etc/local/${serviceName}/
+      if [[ ! -e /etc/local/${serviceName}/password ]]; then
+        ( umask 007;
+          echo ${password} > /etc/local/${serviceName}/password
+          chown ${serviceName}:service /etc/local/${serviceName}/password
+        )
+      fi
+      chmod 0660 /etc/local/${serviceName}/password
+    '';
+    in script;
 }
