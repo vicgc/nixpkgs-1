@@ -3,33 +3,70 @@
 let
   cfg = config.flyingcircus.roles.loghost;
   fclib = import ../lib;
-  listenOn = head (fclib.listenAddresses config "ethsrv");
 
-  loghostService = findFirst
+  listenOn = head (fclib.listenAddresses config "ethsrv");
+    loghostService = findFirst
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
 
-  # [password, hash]
-  generatedPasswordWebUi = fclib.generatePasswordHash {
-    serviceName = "graylog-webui";
-    length = 32; };
-  passwordWebUiHashed =
-    if cfg.passwordWebUiHashed  == null
-    then (fclib.configFromFile
-            /etc/local/graylog-ui/passwordHash
-            (builtins.elemAt generatedPasswordWebUi 1))
-    else cfg.passwordWebUiHashed;
-  passwordWebUi = builtins.elemAt generatedPasswordWebUi 0;
+  serviceUser = "graylog";
 
-  # password
-  generatedPasswordSecret = fclib.generatePassword {
-    serviceName = "graylog";
-    length = 96; };
+  # -- files --
+  rootPasswordFile = "/etc/local/graylog/password";
+  rootPasswordSha2File = "/etc/local/graylog/password_sha2";
+  passwordSecretFile = "/etc/local/graylog/password_secret";
+  # -- passwords --
+  generatedRootPassword = mkPassword "graylog.rootPassword";
+  generatedRootPasswordSha2 = mkSha2 generatedRootPassword;
+  generatedPasswordSecret = mkPassword "graylog.passwordSecret";
+
+  rootPassword =
+    fclib.configFromFile
+      rootPasswordFile
+      generatedRootPassword;
+
+  rootPasswordSha2 =
+    if cfg.rootPasswordSha2  == null
+    then (fclib.configFromFile
+            rootPasswordSha2File
+            generatedRootPasswordSha2)
+    else cfg.rootPasswordSha2;
+
   passwordSecret =
     if cfg.passwordSecret == null
-    then (fclib.configFromFile /etc/local/graylog/password generatedPasswordSecret)
+    then (fclib.configFromFile
+            passwordSecretFile
+            generatedPasswordSecret)
     else cfg.passwordSecret;
+
+  # -- helper functions --
+  passwordActivation = file: password: user:
+    let script = ''
+     install -d -o ${toString config.ids.uids."${user}"} -g service -m 02775 \
+        $(dirname ${file})
+      if [[ ! -e ${file} ]]; then
+        ( umask 007;
+          echo ${password} > ${file}
+          chown ${user}:service ${file}
+        )
+      fi
+      chmod 0660 ${file}
+    '';
+    in script;
+
+  mkPassword = identifier:
+    removeSuffix "\n" (readFile
+      (pkgs.runCommand identifier {}
+        "${pkgs.apg}/bin/apg -a 1 -M lnc -n 1 -m 32 > $out")
+      );
+
+  mkSha2 = text:
+    removeSuffix "\n" (readFile
+      (pkgs.runCommand text {}
+        "echo -n ${text} | sha256sum | cut -f1 -d \" \" > $out")
+      );
+
 in
 {
 
@@ -43,7 +80,7 @@ in
         description = "Enable the Flying Circus graylog server role.";
       };
 
-      passwordWebUiHashed = mkOption {
+      rootPasswordSha2 = mkOption {
         type = types.nullOr types.string;
         default = null;
         description = ''
@@ -71,14 +108,14 @@ in
       system.activationScripts.fcio-loghost =
         stringAfter
           [ ]
-          (fclib.passwordActivation "graylog-webui" (toString config.ids.uids.graylog) passwordWebUiHashed +
-          fclib.passwordActivation "graylog" (toString config.ids.uids.graylog) passwordSecret);
+          (passwordActivation rootPasswordFile rootPassword serviceUser +
+           passwordActivation rootPasswordSha2File rootPasswordSha2 serviceUser +
+           passwordActivation passwordSecretFile passwordSecret serviceUser);
 
       services.graylog = {
       	enable = true;
   	    elasticsearchClusterName = "graylog";
-        passwordSecret = passwordSecret;
-        rootPasswordSha2 = passwordWebUiHashed;
+        inherit passwordSecret rootPasswordSha2;
         # ipv6 would be nice too
         webListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog";
         restListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog/api";
