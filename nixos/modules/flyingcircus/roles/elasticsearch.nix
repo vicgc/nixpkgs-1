@@ -9,6 +9,7 @@ let
     (filter
       (s: s.service == "elasticsearch-node")
       config.flyingcircus.enc_services);
+  thisNode = "${config.networking.hostName}.${config.networking.domain}";
 
   defaultClusterName =
     lib.attrByPath ["parameters" "resource_group"] "elasticsearch" config.flyingcircus.enc;
@@ -44,7 +45,7 @@ in
 
     services.elasticsearch = {
       enable = true;
-      host = "${config.networking.hostName}.${config.networking.domain}";
+      host = thisNode;
       dataDir = "/srv/elasticsearch";
       cluster_name = clusterName;
       extraConf = ''
@@ -64,12 +65,39 @@ in
       Clustering:
     '';
 
-    # flyingcircus.services.sensu-client.checks = {
-    #   elasticsearch = {
-    #     notification = "elasticsearch alive";
-    #     command = "check-elasticsearch-ping.rb -h localhost -P ${lib.escapeShellArg password}";
-    #   };
-    # };
+    flyingcircus.services.sensu-client.checks = {
+
+      es_circuit_breakers = {
+        notification = "ES: Circuit Breakers active";
+        command = "check-es-circuit-breakers.rb -h ${thisNode}";
+      };
+
+      es_cluster_health = {
+        notification = "ES: Cluster Health";
+        command = "check-es-cluster-health.rb -h ${thisNode}";
+      };
+
+      es_file_descriptor = {
+        notification = "ES: File descriptors in use";
+        command = "check-es-file-descriptors.rb -h ${thisNode}";
+      };
+
+      es_heap = {
+        notification = "ES: Heap too full";
+        command = "check-es-heap.rb -h ${thisNode} -w 75 -c 90 -P";
+      };
+
+      es_node_status = {
+        notification = "ES: Node status";
+        command = "check-es-node-status.rb -h ${thisNode}";
+      };
+
+      es_shard_allocation_status = {
+        notification = "ES: Shard allocation status";
+        command = "check-es-shard-allocation-status.rb -s ${thisNode}";
+      };
+
+    };
 
   };
 
