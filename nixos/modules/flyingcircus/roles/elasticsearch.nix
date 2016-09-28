@@ -19,6 +19,12 @@ let
     then (fclib.configFromFile /etc/local/elasticsearch/clusterName defaultClusterName)
     else cfg.password;
 
+  currentMemory = fclib.current_memory config 1024;
+  esHeap =
+    fclib.min [
+      (currentMemory / 2)
+      (31 * 1024)];
+
 in
 {
 
@@ -51,10 +57,20 @@ in
       extraConf = ''
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
+        bootstrap.memory_lock: true
       '';
     };
-    systemd.services.elasticsearch.serviceConfig.LimitNOFILE = 65536;
+    systemd.services.elasticsearch = {
+      environment = {
+        ES_HEAP_SIZE = "${toString esHeap}m";
+      };
+      serviceConfig.LimitNOFILE = 65536;
+    };
 
+    # System tweaks
+    boot.kernel.sysctl = {
+      "vm.max_map_count" = "262144";
+    };
 
     system.activationScripts.fcio-elasticsearch = ''
       install -d -o ${toString config.ids.uids.elasticsearch} -g service -m 02775 \
