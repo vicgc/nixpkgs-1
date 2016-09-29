@@ -14,24 +14,19 @@ let
 
   # -- files --
   rootPasswordFile = "/etc/local/graylog/password";
-  rootPasswordSha2File = "/etc/local/graylog/password_sha2";
   passwordSecretFile = "/etc/local/graylog/password_secret";
   # -- passwords --
   generatedRootPassword = mkPassword "graylog.rootPassword";
-  generatedRootPasswordSha2 = mkSha2 generatedRootPassword;
   generatedPasswordSecret = mkPassword "graylog.passwordSecret";
 
   rootPassword =
-    fclib.configFromFile
-      rootPasswordFile
-      generatedRootPassword;
-
-  rootPasswordSha2 =
-    if cfg.rootPasswordSha2  == null
+    if cfg.rootPassword  == null
     then (fclib.configFromFile
-            rootPasswordSha2File
-            generatedRootPasswordSha2)
-    else cfg.rootPasswordSha2;
+            rootPasswordFile
+            generatedRootPassword)
+    else cfg.rootPassword;
+
+  rootPasswordSha2 = mkSha2 rootPassword;
 
   passwordSecret =
     if cfg.passwordSecret == null
@@ -63,8 +58,8 @@ let
 
   mkSha2 = text:
     removeSuffix "\n" (readFile
-      (pkgs.runCommand text {}
-        "echo -n ${text} | sha256sum | cut -f1 -d \" \" > $out")
+      (pkgs.runCommand "dummy" { inherit text; }
+        "echo -n $text | sha256sum | cut -f1 -d \" \" > $out")
       );
 
 in
@@ -80,11 +75,11 @@ in
         description = "Enable the Flying Circus graylog server role.";
       };
 
-      rootPasswordSha2 = mkOption {
+      rootPassword = mkOption {
         type = types.nullOr types.string;
         default = null;
         description = ''
-          The sha256 hash of your graylogs's webui password. If null, a random hash will be generated.
+          The password for of your graylogs's webui root user. If null, a random password will be generated.
         '';
       };
 
@@ -109,7 +104,6 @@ in
         stringAfter
           [ ]
           (passwordActivation rootPasswordFile rootPassword serviceUser +
-           passwordActivation rootPasswordSha2File rootPasswordSha2 serviceUser +
            passwordActivation passwordSecretFile passwordSecret serviceUser);
 
       services.graylog = {
