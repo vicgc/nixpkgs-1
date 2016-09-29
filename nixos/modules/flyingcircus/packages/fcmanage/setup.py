@@ -47,6 +47,7 @@ setup(
     install_requires=[
         'fc.maintenance',
         'fc.util',
+        'requests',
     ],
     tests_require=['pytest', 'mock'],
     extras_require={'test': ['pytest', 'mock']},
