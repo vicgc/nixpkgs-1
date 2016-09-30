@@ -100,12 +100,21 @@ class Channel:
         except OSError:
             return
 
+    def load(self, name):
+        """Load channel as given name."""
+        subprocess.check_call(
+            ['nix-channel', '--add', self.resolved_url, name])
+        subprocess.check_call(['nix-channel', '--update'])
+
+    def switch(self, build_options):
+        """Build the "self" channel and switch system to it."""
+        self.load('nixos')
+        subprocess.check_call(
+            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
+
     def prepare_maintenance(self):
         print('>>>>>>>> building')
-        subprocess.check_call(
-            ['nix-channel', '--add', self.resolved_url, 'next'])
-        subprocess.check_call(['nix-channel', '--update'])
-        # Process output of this:
+        self.load('next')
         call = subprocess.Popen(
              ['nixos-rebuild',
               '-I',
@@ -158,11 +167,6 @@ class Channel:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.shellscript.ShellScriptActivity(script),
                 '5m', comment=msg))
-
-    def switch(self, build_options):
-        """Build the current nixos channel and switch system to it."""
-        subprocess.check_call(
-            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
 
 
 def load_enc(enc_path):
@@ -276,27 +280,39 @@ def update_inventory():
     ])
 
 
+def build_channel_with_maintenance(build_options):
+    current_channel = Channel.current('nixos')
+    if not Channel.current('next'):
+        # If there is already a next channel, don't try another update.
+        # We announced the previous update and should stick to that not
+        # updating another one.
+        #
+        # How do we cope for emergency updates where we need to update
+        # *now*? How can we force this?
+        next_channel = Channel(enc['parameters']['environment_url'])
+        if next_channel != current_channel:
+            print('Preparing switch form {} to to {}.'.format(
+                current_channel, next_channel))
+            next_channel.prepare_maintenance()
+    if current_channel is None:
+        print('There is currently no channel active. Not building.')
+    else:
+        print('Rebuilding {}'.format(current_channel))
+        current_channel.switch(build_options)
+
+
 def build_channel(build_options):
     print('Switching channel ...')
     try:
-        current_channel = Channel.current('nixos')
-        if enc and not Channel.current('next'):
-            # If there is already a next channel, don't try another update.
-            # We announced the previous update and should stick to that not
-            # updating another one.
-            #
-            # How do we cope for emergency updates where we need to update
-            # *now*? How can we force this?
-            next_channel = Channel(enc['parameters']['environment_url'])
-            if next_channel != current_channel:
-                print('Preparing switch form {} to to {}.'.format(
-                    current_channel, next_channel))
-                next_channel.prepare_maintenance()
-        if current_channel is None:
-            print('There is currently no channel active. Not building.')
+        if os.path.exists('/etc/local/build-with-maintenance'):
+            build_channel_with_maintenance(build_options)
         else:
-            print('Rebuilding {}'.format(current_channel))
-            current_channel.switch(build_options)
+            if enc:
+                channel = Channel(enc['parameters']['environment_url'])
+            else:
+                channel = Channel.current('nixos')
+            if channel:
+                channel.switch(build_options)
     except Exception:
         logging.exception('Error switching channel')
 
