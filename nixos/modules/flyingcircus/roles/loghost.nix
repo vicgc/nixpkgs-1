@@ -5,7 +5,7 @@ let
   fclib = import ../lib;
 
   listenOn = head (fclib.listenAddresses config "ethsrv");
-    loghostService = findFirst
+  loghostService = findFirst
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
@@ -149,6 +149,6 @@ in
       #     '';
       #     api = services.graylog.restListenUri;
       #   }
-      # }
+      #
     };
 }
