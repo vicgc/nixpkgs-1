@@ -26,11 +26,11 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "collectd-5.4.2";
+  name = "collectd-5.4.3";
 
   src = fetchurl {
     url = "http://collectd.org/files/${name}.tar.bz2";
-    sha256 = "14z3qkqbmfjvqvcb2v17480f7c8j7wa49myk0zlxpd9qq40fk2cp";
+    sha256 = "1na3wwwzn430vw8mvwigjyxjl9d5329jb75sby8gi8yj996csb3b";
   };
 
   buildInputs = [
