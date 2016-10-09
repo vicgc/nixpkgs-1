@@ -5,13 +5,13 @@ assert stdenv.isLinux -> libcap != null;
 stdenv.mkDerivation rec {
   name = "chrony-${version}";
 
-  version = "2.1.1";
-  
+  version = "2.4";
+
   src = fetchurl {
     url = "http://download.tuxfamily.org/chrony/${name}.tar.gz";
-    sha256 = "b0565148eaa38e971291281d76556c32f0138ec22e9784f8bceab9c65f7ad7d4";
+    sha256 = "07rrys5axrz4grfy7fj3ds0r9ny1qcwiswsb2318jciklb6yf14d";
   };
-  
+
   buildInputs = [ readline texinfo ] ++ stdenv.lib.optional stdenv.isLinux libcap;
 
   configureFlags = [
