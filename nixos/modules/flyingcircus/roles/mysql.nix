@@ -117,7 +117,7 @@ in
         query_cache_size           = 80M
 
         # * InnoDB
-        innodb_buffer_pool_size         = ${toString (current_memory * 80 / 100)}M
+        innodb_buffer_pool_size         = ${toString (current_memory * 70 / 100)}M
         innodb_log_buffer_size          = 64M
         innodb_file_per_table           = 1
         innodb_read_io_threads          = ${toString (cores * 4)}
