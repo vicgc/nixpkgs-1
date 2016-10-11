@@ -73,7 +73,6 @@ in
   boot.loader.grub.version = 2;
   boot.supportedFilesystems = [ "xfs" ];
   boot.vesa = false;
-  boot.consoleLogLevel = 4;
 
   networking.hostName = if config.flyingcircus.enc ? name
     then config.flyingcircus.enc.name
