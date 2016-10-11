@@ -41,6 +41,7 @@ in
     '';
 
   boot.blacklistedKernelModules = [ "bochs_drm" ];
+  boot.kernelModules = [ "i6300esb" ];
   boot.initrd.supportedFilesystems = [ "xfs" ];
   boot.kernelParams = [
     # Crash management
@@ -72,7 +73,6 @@ in
   boot.loader.grub.version = 2;
   boot.supportedFilesystems = [ "xfs" ];
   boot.vesa = false;
-  boot.consoleLogLevel = 0;
 
   networking.hostName = if config.flyingcircus.enc ? name
     then config.flyingcircus.enc.name
