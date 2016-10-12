@@ -90,7 +90,7 @@ in
       additionalOptions = {
         services.dnsmasq = {
           enable = true;
-          extraConfig = dnsmasqConf;
+          extraConfig = lib.mkOverride 100 dnsmasqConf;
         };
 
         services.chrony.extraConfig = ''
@@ -98,8 +98,8 @@ in
           allow ${net6}
         '';
 
-        # See openvpn.nix for additional firewall rules
-        networking.firewall.allowedUDPPorts = [ 53 67 68 123 port ];
+        # See default.nix and openvpn.nix for additional firewall rules
+        networking.firewall.allowedUDPPorts = [ 67 68 123 port ];
       };
 
     in

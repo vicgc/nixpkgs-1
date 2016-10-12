@@ -227,6 +227,14 @@ in
       account required        pam_unix.so
     '';
 
+    services.dnsmasq = {
+      enable = true;
+      extraConfig = lib.mkOverride 500 ''
+        domain-needed
+        # interface=ethfe
+      '';
+    };
+
     services.openvpn.servers.access.config = serverConfig;
 
     system.activationScripts.openvpn-pki =
