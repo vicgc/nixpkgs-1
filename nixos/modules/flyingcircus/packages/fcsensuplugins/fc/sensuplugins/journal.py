@@ -94,11 +94,11 @@ class Journal(nagiosplugin.Resource):
         # reducing them by exceptions of the rule
 
         if critical_hits and 'criticalexceptions' in patterns:
-            warning_hits = \
+            critical_hits = \
                 reduce(lambda H, e:
                        [h for h in H if not re.search(e, h)],
                        patterns['criticalexceptions'],
-                       warning_hits)
+                       critical_hits)
 
         return (warning_hits, critical_hits)
 
