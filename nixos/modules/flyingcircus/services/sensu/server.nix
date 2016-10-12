@@ -111,7 +111,7 @@ in {
       };
       script = let
         curl = ''
-          ${pkgs.curl}/bin/curl -s\
+          ${pkgs.curl}/bin/curl -s \
              -u "sensu-server:${server_password}" \
              -H "content-type:application/json" \
         '';
@@ -161,7 +161,7 @@ in {
         )
 
         ${curl} -XDELETE ${api}/users/guest >/dev/null
-        ${curl} -XPUT ${api}/vhosts/sensu
+        ${curl} -XPUT ${api}/vhosts/%2Fsensu
 
         ${clients}
       '';
@@ -182,8 +182,7 @@ in {
       path = [ pkgs.sensu pkgs.openssl pkgs.bash pkgs.mailutils ];
       requires = [
         "rabbitmq.service"
-        "redis.service"
-        "prepare-rabbitmq-for-sensu.service" ];
+        "redis.service" ];
       serviceConfig = {
         User = "sensuserver";
         ExecStart = "${pkgs.sensu}/bin/sensu-server -c ${sensu_server_json} " +

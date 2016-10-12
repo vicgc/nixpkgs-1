@@ -16,6 +16,10 @@ in
       root:1
     '';
 
+    systemd.additionalUpstreamSystemUnits =
+    [ "systemd-quotacheck.service"
+      "quotaon.service" ];
+
     system.activationScripts.setupXFSQuota = {
       text =
       let

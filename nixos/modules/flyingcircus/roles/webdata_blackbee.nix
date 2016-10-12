@@ -33,19 +33,32 @@ in
 
     system.activationScripts.webdata_blackbee = ''
       test -L /home/pricing || ln -s /srv/s-blackbee/pricing /home/pricing
+      test -L /bin/bash || ln -s /run/current-system/sw/bin/bash /bin/bash
     '';
 
     networking.extraHosts = additional_hosts;
 
     environment.systemPackages = [
-
+      pkgs.htop
+      pkgs.innotop
+      pkgs.mailx
+      pkgs.mc
       pkgs.percona   # client is required on almost all nodes
-
+      pkgs.sshpass
+      pkgs.sysbench
+      pkgs.wget
     ];
 
     environment.shellAliases = {
-        gopricing = "cd /home/pricing && sudo -u s-blackbee bash";
+        gopricing = "cd /home/pricing && sudo -u s-blackbee bash --login";
+        more = "less -e";
     };
+
+    systemd.extraConfig = ''
+      DefaultLimitNOFILE=64000
+      DefaultLimitNPROC=64173
+      DefaultLimitSIGPENDING=64173
+    '';
 
   };
 
