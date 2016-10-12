@@ -9,6 +9,7 @@ criticalpatterns:
 
 criticalexceptions:
       - 'ACPI Error: Method parse/execution failed'
+      - 'sensu-client.*: {"timestamp":".*","level":"error"'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
@@ -18,3 +19,4 @@ warningpatterns:
 warningexceptions:
       - '0 failures 0 errors'
       - 'Cannot add dependency job for unit.*quota'
+      - 'sensu-client.*: {"timestamp":".*","level":"warn"'
