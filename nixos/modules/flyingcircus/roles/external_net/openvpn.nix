@@ -77,6 +77,51 @@ let
     (fclib.listenAddresses config "ethfe");
 
   #
+  # management & monitoring
+  #
+  mgmPort = "11194";
+
+  mgmPsk = builtins.hashString "md5" ("OpenVPN@" + config.networking.hostName);
+
+  checkOpenVPN = pkgs.writeScript "check_openvpn" ''
+    #!${pkgs.expect}/bin/expect -f
+    set timeout 20
+
+    puts "OpenVPN: checking management interface"
+    spawn -noecho ${pkgs.netcat}/bin/nc localhost ${mgmPort}
+
+    exit -onexit {
+      puts "OpenVPN CRITICAL"
+      exit 2
+    }
+
+    expect {
+      "PASSWORD:" {
+        send "${mgmPsk}\n"
+      } timeout {
+        puts "OpenVPN UNKNOWN - Timeout"
+        exit -onexit { }
+        exit 3
+      }
+    }
+
+    sleep .1
+
+    expect "INFO:OpenVPN Management Interface" {
+      send "state\n"
+    }
+
+    sleep .1
+
+    expect "CONNECTED,SUCCESS" {
+      send "quit\n"
+      puts "OpenVPN OK"
+      exit -onexit { }
+      exit 0
+    }
+  '';
+
+  #
   # server
   #
   accessNets = (fromJSON
@@ -109,6 +154,7 @@ let
 
     keepalive 10 120
     plugin ${openvpn}/lib/openvpn/plugins/openvpn-plugin-auth-pam.so openvpn
+    management localhost ${mgmPort} ${pkgs.writeText "openvpn-mgm-psk" mgmPsk}
 
     comp-lzo
     user nobody
@@ -193,6 +239,15 @@ in
       "local/openvpn/${frontendName}.ovpn".source = ovpn;
       "local/openvpn/networks.json.example".text = defaultAccessNets;
       "local/openvpn/README.txt".text = readFile ./README.openvpn;
+    };
+
+    flyingcircus.services.sensu-client.checks =
+    {
+      openvpn_port = {
+        notification = "OpenVPN management interface";
+        command = toString checkOpenVPN;
+        interval = 300;
+      };
     };
 
     networking.firewall =
