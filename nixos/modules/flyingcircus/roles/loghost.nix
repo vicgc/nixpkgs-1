@@ -133,22 +133,41 @@ in
         *.* @${loghostService.address}:5140;RSYSLOG_SyslogProtocol23Format
       '';
       # WIP: rest client
-      # systemd.services.configure-inputs-for-graylog = {
-      #   description = "Enable Inputs for Graylog";
-      #   requires = [ "graylog.service" ];
-      #   after = [ "graylog.service" ];
-      #   serviceConfig = {
-      #     Type = "oneshot";
-      #     User = "graylog";
-      #   };
-      #   script = let
-      #     curl = ''
-      #       ${pkgs.curl}/bin/curl -s\
-      #         -u "${services.graylog.rootUsername}:${passwordWebUi}" \
-      #         -H "content-type:application/json" \
-      #     '';
-      #     api = services.graylog.restListenUri;
-      #   }
-      #
+      systemd.services.configure-inputs-for-graylog = {
+         description = "Enable Inputs for Graylog";
+         requires = [ "graylog.service" ];
+         after = [ "graylog.service" ];
+         serviceConfig = {
+           Type = "oneshot";
+           User = "graylog";
+         };
+         script = let
+           python = pkgs.python34Packages;
+           curl = ''
+             ${pkgs.curl}/bin/curl -s\
+               -u "${services.graylog.rootUsername}:${passwordWebUi}" \
+               -H "content-type:application/json" \
+           '';
+           api = services.graylog.restListenUri;
+           data_body = {
+             configuration = {
+               bind_address = "0.0.0.0";
+               port = "10514";
+             };
+             title = "Syslog UDP";
+             type = "org.graylog2.inputs.syslog.udp.SyslogUDPInput";
+             global = false;
+             node = node_id;
+           };
+        in
+
+          ${curl} -XGET ${api}/system/input
+
+
+             }
+           }
+
+
+         }
     };
-}
+  }

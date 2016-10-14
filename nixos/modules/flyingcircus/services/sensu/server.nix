@@ -138,6 +138,11 @@ in {
               ${curl} -XPUT \
                 -d'${builtins.toJSON password_body}' \
                 ${api}/users/${client.node}
+
+              # Permission for clients in order: conf, write, read
+              # exchange.declare -> configure "keepalives"
+              # queue.declare -> configure "node-*"
+              # queue.bind -> write "node-*"
               ${curl} -XPUT \
                 -d'${builtins.toJSON permissions_body}' \
                 ${api}/permissions/%2Fsensu/${client.node}
