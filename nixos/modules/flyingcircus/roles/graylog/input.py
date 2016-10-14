@@ -1,0 +1,55 @@
+#! /run/current-system/sw/bin/env nix-shell
+#! nix-shell -i python3 -p python34Packages.python -p python34Packages.requests2 -p python34Packages.click -I nixpkgs=/root/nixpkgs
+#
+# input sample
+# {
+#     "configuration":  {
+#     "tls_key_password":  "P@ssw0rd",
+#     "recv_buffer_size":  1048576,
+#     "max_message_size":  2097152,
+#     "bind_address":  "0.0.0.0",
+#     "port":  12201,
+#     "tls_enable":  false,
+#     "use_null_delimiter":  true
+#     },
+#     "title":  "myNewGlobalGelfTcpInput",
+#     "global":  true,
+#     "type":  "org.graylog2.inputs.gelf.tcp.GELFTCPInput"
+# }
+# 201 -> success
+# returns input id
+#
+# requests.post(api + '/system/inputs/', auth=(user, pw), json=data).text
+# >>> '{"id":"57fe09c2ec3fa136a780adb9"}'
+import click
+import json
+import requests
+
+
+@click.command()
+@click.option('-u', '--user', default='admin', show_default=True)
+@click.option('-p', '--password', default='admin', show_default=True)
+@click.argument('api')
+@click.argument('input_conf')
+def cli(user, password, api, input_conf):
+    '''Configure a Graylog input node.'''
+    r = requests.get(api + '/system/cluster/node', auth=(user, password))
+    r.raise_for_status()
+    data = json.loads(input_conf)
+    data['node'] = r.json()['node_id']
+
+    # check if there is input with this name currently configured, if so return
+    r = requests.get(api + '/system/inputstates', auth=(user, password))
+    r.raise_for_status()
+    for _input in r.json()['states']:
+        if _input['name'] == data['title']:
+            return None
+
+    # create input for UDP
+    r = requests.post(api + '/system/inputs',
+                      auth=(user, password), json=data)
+    r.raise_for_status()
+    return r.value()
+
+if __name__ == '__main__':
+    cli()

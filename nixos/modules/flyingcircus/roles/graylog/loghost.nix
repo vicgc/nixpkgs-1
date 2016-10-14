@@ -142,13 +142,9 @@ in
            User = "graylog";
          };
          script = let
-           python = pkgs.python34Packages;
-           curl = ''
-             ${pkgs.curl}/bin/curl -s\
-               -u "${services.graylog.rootUsername}:${passwordWebUi}" \
-               -H "content-type:application/json" \
-           '';
            api = services.graylog.restListenUri;
+           user = services.graylog.rootUsername;
+           pw = passwordWebUi;
            data_body = {
              configuration = {
                bind_address = "0.0.0.0";
@@ -157,17 +153,15 @@ in
              title = "Syslog UDP";
              type = "org.graylog2.inputs.syslog.udp.SyslogUDPInput";
              global = false;
-             node = node_id;
            };
         in
-
-          ${curl} -XGET ${api}/system/input
-
-
-             }
-           }
-
-
-         }
+          ''
+           ${pkgs.python34Packages.python}/bin/python3 ./input.py \
+              -u ${user} \
+              -p ${pw} \
+              ${api} \
+              \"${toJSON data_body}\"
+          '' ;
+      };
     };
   }
