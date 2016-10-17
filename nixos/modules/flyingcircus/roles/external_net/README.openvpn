@@ -24,6 +24,9 @@ Tunables
   must be a subnet in the 10.0.0.0/8 range and the IPv6 network in fc00::7
   (ULA).
 
+- Set proto to either "udp6" (default) or "tcp6". TCP tunnels may have
+  performance issues but higher firewall passing prospects.
+
 - Extra routes (CIDR notation) in the network configuration file will be pushed
   to the client. This allows the OpenVPN server to create connectivity to
   auxiliary networks).
