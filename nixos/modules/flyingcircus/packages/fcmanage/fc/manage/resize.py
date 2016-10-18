@@ -91,6 +91,29 @@ class Disk(object):
         return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).\
             decode().strip()
 
+    def xfs_quota_report(self):
+        """Queries current XFS quota state.
+
+        Example output:
+            # xfs_quota -xc 'report -p' /
+            Project quota on / (/dev/disk/by-label/root)
+                                        Blocks
+            Project ID       Used       Soft       Hard    Warn/Grace
+            ---------- --------------------------------------------------
+            rootfs       37208256   41943040   41943040     00 [--------]
+
+        Returns pair of (used, block_hard_limit) numbers rounded to the
+        next full GiB value.
+        """
+        report = self.xfsq('report -p')
+        m = re.search(r'^{}\s+(\d+)\s+\d+\s+(\d+)\s+'.format(self.proj),
+                      report, re.MULTILINE)
+        if not m:
+            raise RuntimeError('failed to parse xfs_quota output', report)
+        used = m.group(1)
+        blocks_hard = m.group(2)
+        return (round(float(used) / 2**20), round(float(blocks_hard) / 2**20))
+
     def should_change_quota(self, partition, enc_disk_gb):
         """Returns True if a new quota setting is necessary."""
         if not enc_disk_gb:
@@ -99,30 +122,35 @@ class Disk(object):
                                             partition]).decode().strip()
         blk_size_gb = int(round(float(blk_size) / 2**30))
         if enc_disk_gb > blk_size_gb:
+            # disk grow pending
             return False
-        limits = self.xfsq('report -p')
-        m = re.search(r'^{}\s+\d+\s+\d+\s+(\d+)\s+'.format(self.proj), limits,
-                      re.MULTILINE)
-        if not m:
-            raise RuntimeError('failed to find bhard quota limit', limits)
-        bhard = m.group(1)
-        bhard_gb = int(round(float(bhard) / 2**20))
-        print('resize: lsblk={} GiB, enc={} GiB, quota={} GiB'.format(
-            blk_size_gb, enc_disk_gb, bhard_gb))
+        used_gb, bhard_gb = self.xfs_quota_report()
+        print('resize: blk={} GiB, enc={} GiB, q_used={} GiB, q_limit={} GiB'
+              .format(blk_size_gb, enc_disk_gb, used_gb, bhard_gb))
         if enc_disk_gb == blk_size_gb and bhard_gb == 0:
+            # no action necessary; quota not active
             return False
+        if bhard_gb != 0 and used_gb == 0:
+            # something is fishy here -> reinit quota
+            return True
+        # logical disk size different from current quota?
         return bhard_gb != enc_disk_gb
 
     def set_quota(self, disk_gb):
-        """Ensures only as much space as allotted can be used."""
+        """Ensures only as much space as allotted can be used.
+
+        XFS quotas are reinitialized no matter what since we don't know
+        if we have been in a consistent state beforehand. This takes a
+        bit longer than just setting bsoft and bhard values, but is also
+        more reliable.
+        """
         if not disk_gb:
             return
-        print('resize: Setting XFS quota to {} GiB'.format(disk_gb))
+        print('resize: Setting XFS quota hard limit to {} GiB'.format(disk_gb))
         print(self.xfsq('project -s {}'.format(self.proj), ionice=True))
         print(self.xfsq('timer -p 1m' ))
         print(self.xfsq('limit -p bsoft={d}g bhard={d}g {p}'.format(
             d=disk_gb, p=self.proj)))
-        print(self.xfsq('report -p'))
 
     def remove_quota(self):
         """Removes project quota as growing filesystems don't need it."""
@@ -149,7 +177,8 @@ def resize_filesystems(enc):
     d = Disk(disk, 'rootfs', '/')
     enc_size = int(enc['parameters'].get('disk'))
     if d.should_grow():
-        d.remove_quota()
+        if d.xfs_quota_report() != (0, 0):
+            d.remove_quota()
         d.grow()
     elif d.should_change_quota(partition, enc_size):
         d.set_quota(enc_size)
