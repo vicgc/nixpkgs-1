@@ -237,11 +237,6 @@ in {
         command = "check_uptime";
         interval = 300;
       };
-      users = {
-        notification = "Too many users logged in";
-        command = "check_users -w 5 -c 10";
-        interval = 300;
-      };
       systemd_units = {
         notification = "SystemD has failed units";
         command = "check-failed-units.rb";
