@@ -70,7 +70,7 @@ class Disk(object):
         subprocess.check_call(['resizepart', self.dev, '1', partition_size])
         subprocess.check_call(['xfs_growfs', '/dev/disk/by-label/root'])
 
-    def should_grow(self):
+    def should_grow_blkdev(self):
         """Returns True if a FS grow operation is necessary."""
         self.ensure_gpt_consistency()
         free = self.free_sectors()
@@ -124,17 +124,17 @@ class Disk(object):
         if enc_disk_gb > blk_size_gb:
             # disk grow pending
             return False
-        used_gb, bhard_gb = self.xfs_quota_report()
+        used_gb, bhard_limit_gb = self.xfs_quota_report()
         print('resize: blk={} GiB, enc={} GiB, q_used={} GiB, q_limit={} GiB'
-              .format(blk_size_gb, enc_disk_gb, used_gb, bhard_gb))
-        if enc_disk_gb == blk_size_gb and bhard_gb == 0:
+              .format(blk_size_gb, enc_disk_gb, used_gb, bhard_limit_gb))
+        if enc_disk_gb == blk_size_gb and bhard_limit_gb == 0:
             # no action necessary; quota not active
             return False
-        if bhard_gb != 0 and used_gb == 0:
+        if enc_disk_gb < blk_size_gb and bhard_limit_gb != 0 and used_gb == 0:
             # something is fishy here -> reinit quota
             return True
-        # logical disk size different from current quota?
-        return bhard_gb != enc_disk_gb
+        # logical disk size different from current quota? -> change quota
+        return bhard_limit_gb != enc_disk_gb
 
     def set_quota(self, disk_gb):
         """Ensures only as much space as allotted can be used.
@@ -146,7 +146,7 @@ class Disk(object):
         """
         if not disk_gb:
             return
-        print('resize: Setting XFS quota hard limit to {} GiB'.format(disk_gb))
+        print('resize: Setting XFS quota limits to {} GiB'.format(disk_gb))
         print(self.xfsq('project -s {}'.format(self.proj), ionice=True))
         print(self.xfsq('timer -p 1m' ))
         print(self.xfsq('limit -p bsoft={d}g bhard={d}g {p}'.format(
@@ -155,8 +155,11 @@ class Disk(object):
     def remove_quota(self):
         """Removes project quota as growing filesystems don't need it."""
         print('resize: Removing XFS quota')
-        print(self.xfsq('project -C {}'.format(self.proj), ionice=True))
-        print(self.xfsq('limit -p bsoft=0 bhard=0 {}'.format(self.proj)))
+        used, bhard_limit = self.xfs_quota_report()
+        if used > 0:
+            print(self.xfsq('project -C {}'.format(self.proj), ionice=True))
+        if bhard_limit > 0:
+            print(self.xfsq('limit -p bsoft=0 bhard=0 {}'.format(self.proj)))
 
 
 def resize_filesystems(enc):
@@ -176,9 +179,8 @@ def resize_filesystems(enc):
     disk = partition[:-1]
     d = Disk(disk, 'rootfs', '/')
     enc_size = int(enc['parameters'].get('disk'))
-    if d.should_grow():
-        if d.xfs_quota_report() != (0, 0):
-            d.remove_quota()
+    if d.should_grow_blkdev():
+        d.remove_quota()
         d.grow()
     elif d.should_change_quota(partition, enc_size):
         d.set_quota(enc_size)
