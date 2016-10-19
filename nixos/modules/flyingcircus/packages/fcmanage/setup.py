@@ -30,10 +30,10 @@ class PyTest(TestCommand):
 
 setup(
     name='fc.manage',
-    version='1.0',
+    version='2.0',
     description=__doc__,
     url='https://flyingcircus.io',
-    author='Christian Theune, Christian Kauhaus',
+    author='Christian Theune, Christian Kauhaus, Christian Zagrodnick',
     author_email='mail@flyingcircus.io',
     license='ZPL',
     classifiers=[
@@ -47,6 +47,7 @@ setup(
     install_requires=[
         'fc.maintenance',
         'fc.util',
+        'requests',
     ],
     tests_require=['pytest', 'mock'],
     extras_require={'test': ['pytest', 'mock']},
