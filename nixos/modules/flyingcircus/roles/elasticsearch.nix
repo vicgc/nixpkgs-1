@@ -65,6 +65,7 @@ in
         ES_HEAP_SIZE = "${toString esHeap}m";
       };
       serviceConfig.LimitNOFILE = 65536;
+      serviceConfig.LimitMEMLOCK = "infinity";
     };
 
     # System tweaks
