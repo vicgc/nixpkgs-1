@@ -11,8 +11,7 @@ let
       config.flyingcircus.enc_services);
   thisNode = "${config.networking.hostName}.${config.networking.domain}";
 
-  defaultClusterName =
-    lib.attrByPath ["parameters" "resource_group"] "elasticsearch" config.flyingcircus.enc;
+  defaultClusterName = config.networking.hostName;
 
   clusterName =
     if cfg.clusterName == null
