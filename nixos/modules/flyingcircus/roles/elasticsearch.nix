@@ -78,7 +78,10 @@ in
     '';
 
     environment.etc."local/elasticsearch/README.txt".text = ''
-      Clustering:
+      ElasticSearch is running on this VM.
+
+      It is forming the cluster "${clusterName}". To change the cluster name,
+      add a file "clusterName" here, with the cluster name as sole contents.
     '';
 
     flyingcircus.services.sensu-client.checks = {
