@@ -133,9 +133,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    ids.gids.sensuclient = 207;
-    ids.uids.sensuclient = 207;
-
     system.activationScripts.sensu-client = ''
       install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
     '';
@@ -173,14 +170,13 @@ in {
       group = "sensuclient";
       # Allow sensuclient to interact with services. This especially helps to
       # check supervisor with a group-writable socket:
-      extraGroups = ["service"];
+      extraGroups = [ "service" ];
     };
 
     # needs to be adjusted, when we fix issue https://github.com/flyingcircusio/vulnix/issues/13
     security.sudo.extraConfig = ''
        # Sensu sudo rules
-       Cmnd_Alias VULNIX_DIR = ${pkgs.coreutils}/bin/mkdir -p /var/cache/vulnix, \
-              ${pkgs.coreutils}/bin/chown sensuclient\:sensuclient /var/cache/vulnix
+       Cmnd_Alias VULNIX_DIR = ${pkgs.coreutils}/bin/install -o sensuclient -g sensuclient -d /var/cache/vulnix
        Cmnd_Alias VULNIX_CMD = ${pkgs.vulnix}/bin/vulnix
 
        %sensuclient ALL=(root) VULNIX_DIR
@@ -189,17 +185,21 @@ in {
 
     systemd.services.sensu-client = {
       wantedBy = [ "multi-user.target" ];
-      path = [ pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash pkgs.lm_sensors ];
+      path = [
+        pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash
+        pkgs.lm_sensors pkgs.coreutils
+      ];
       serviceConfig = {
         User = "sensuclient";
-        ExecStart = "${sensu}/bin/sensu-client -L warn -c ${client_json} ${local_sensu_configuration}";
+        ExecStart = ''
+          ${sensu}/bin/sensu-client -L warn -c ${client_json} ${local_sensu_configuration}
+        '';
         Restart = "always";
         RestartSec = "5s";
       };
-      preStart= ''
-          /var/setuid-wrappers/sudo ${pkgs.coreutils}/bin/mkdir -p /var/cache/vulnix && \
-          /var/setuid-wrappers/sudo ${pkgs.coreutils}/bin/chown sensuclient:sensuclient /var/cache/vulnix
-        '';
+      preStart = ''
+        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient -d /var/cache/vulnix
+      '';
       environment = { EMBEDDED_RUBY = "true"; };
     };
 
@@ -235,11 +235,6 @@ in {
       uptime = {
         notification = "Host was down";
         command = "check_uptime";
-        interval = 300;
-      };
-      users = {
-        notification = "Too many users logged in";
-        command = "check_users -w 5 -c 10";
         interval = 300;
       };
       systemd_units = {

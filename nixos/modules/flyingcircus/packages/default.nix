@@ -12,6 +12,8 @@
 
     cron = pkgs.callPackage ./cron.nix { };
 
+    dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
+
     easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
 
     fcmaintenance = pkgs.callPackage ./fcmaintenance { };
@@ -39,7 +41,7 @@
     sensu = pkgs.callPackage ./sensu { };
     uchiwa = pkgs.callPackage ./uchiwa { };
 
-    vulnix = pkgs.callPackage ./vulnix.nix { };
+    vulnix = pkgs.callPackage ./vulnix { };
 
     rabbitmq_delayed_message_exchange =
       pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };

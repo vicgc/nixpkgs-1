@@ -3,11 +3,16 @@
 from fc.util.directory import connect
 from fc.util.lock import locked
 import argparse
+import fc.maintenance
+import fc.maintenance.lib.shellscript
 import filecmp
+import io
 import json
 import logging
 import os
 import os.path as p
+import re
+import requests
 import shutil
 import signal
 import socket
@@ -15,20 +20,153 @@ import subprocess
 import sys
 import tempfile
 
-
 # TODO
 #
 # - better integration with dev-checkouts, not killing them with the channel
 #   version
 # - better channel management
-#   - explicitly download nixpkgs from our hydra
-#   - keep a "current" version
-#   - keep the "next" version
-#   - validate the next version and decide whether to switch automatically
+#   + explicitly download nixpkgs from our hydra
+#   + keep a "current" version
+#   + keep the "next" version
+#   + validate the next version and decide whether to switch automatically
 #     or whether to create a maintenance window and let the current one stay
 #     for now, but keep updating ENC data.
 
 enc = None
+
+
+ACTIVATE = """\
+nix-channel --add {url} nixos
+nix-channel --update
+nixos-rebuild switch
+nix-channel --remove next
+"""
+
+ACTIVATE_MESSAGE = """\
+System update to {channel}. The following services will be affected in this\
+order:
+
+{changes}
+
+"""
+
+
+class Channel:
+
+    PHRASES = re.compile('would (\w+) the following units: (.*)$')
+
+    # global, to avoid re-connecting (with ssl handshake and all)
+    session = requests.session()
+
+    def __init__(self, url):
+        self.url = self.resolved_url = url
+        while True:
+            response = self.session.head(self.resolved_url)
+            response.raise_for_status()
+            if response.is_redirect:
+                self.resolved_url = response.headers['location']
+            else:
+                break
+
+    def __str__(self):
+        def last(url):
+            """Return last "significant" element from url."""
+            for element in reversed(url.split('/')):
+                if element:
+                    return element
+        channel = last(self.url)
+        revision = last(self.resolved_url)
+        if channel == revision:  # channel unknown
+            return '<Channel {}>'.format(revision)
+        else:
+            return '<Channel {} ({})>'.format(
+                revision, channel)
+
+    def __eq__(self, other):
+        if isinstance(other, Channel):
+            return self.resolved_url == other.resolved_url
+        return NotImplemented
+
+    @classmethod
+    def current(cls, channel_name):
+        try:
+            nix_channels = p.expanduser('~/.nix-channels')
+            if p.getsize(nix_channels):
+                with open(nix_channels) as f:
+                    for line in f.readlines():
+                        url, name = line.strip().split(' ', 1)
+                        if name == channel_name:
+                            return Channel(url)
+        except OSError:
+            return
+
+    def load(self, name):
+        """Load channel as given name."""
+        subprocess.check_call(
+            ['nix-channel', '--add', self.resolved_url, name])
+        subprocess.check_call(['nix-channel', '--update'])
+
+    def switch(self, build_options):
+        """Build the "self" channel and switch system to it."""
+        self.load('nixos')
+        subprocess.check_call(
+            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
+
+    def prepare_maintenance(self):
+        print('>>>>>>>> building')
+        self.load('next')
+        call = subprocess.Popen(
+             ['nixos-rebuild',
+              '-I',
+              'nixpkgs=/nix/var/nix/profiles/per-user/root/channels/next',
+              '--no-build-output',
+              'dry-activate'],
+             stderr=subprocess.PIPE)
+        output = []
+        for line in call.stderr.readlines():
+            line = line.decode('UTF-8').strip()
+            print(line)
+            output.append(line)
+        print('<<<<<<<<< finished build.')
+        changes = self.detect_changes(output)
+        self.register_maintenance(changes)
+
+    def detect_changes(self, output):
+        changes = {}
+        for line in output:
+            m = self.PHRASES.match(line)
+            if m is not None:
+                action = m.group(1)
+                units = [unit.strip() for unit in m.group(2).split(',')]
+                changes[action] = units
+        return changes
+
+    def register_maintenance(self, changes):
+        notifications = []
+
+        def notify(category):
+            services = changes.get(category)
+            if services:
+                notifications.append(
+                    '{}: {}'.format(
+                        category.capitalize(),
+                        ', '.join(s.replace('.service', '', 1)
+                                  for s in services)))
+
+        notify('stop')
+        notify('restart')
+        notify('start')
+        notify('reload')
+
+        msg = ACTIVATE_MESSAGE.format(
+            channel=self,
+            changes='\n'.join(notifications))
+
+        script = io.StringIO(ACTIVATE.format(url=self.resolved_url))
+        with fc.maintenance.ReqManager() as rm:
+            rm.add(fc.maintenance.Request(
+                fc.maintenance.lib.shellscript.ShellScriptActivity(script),
+                '5m', comment=msg))
 
 
 def load_enc(enc_path):
@@ -142,18 +280,41 @@ def update_inventory():
     ])
 
 
+def build_channel_with_maintenance(build_options):
+    current_channel = Channel.current('nixos')
+    if not Channel.current('next'):
+        # If there is already a next channel, don't try another update.
+        # We announced the previous update and should stick to that not
+        # updating another one.
+        #
+        # How do we cope for emergency updates where we need to update
+        # *now*? How can we force this?
+        next_channel = Channel(enc['parameters']['environment_url'])
+        if next_channel != current_channel:
+            print('Preparing switch form {} to to {}.'.format(
+                current_channel, next_channel))
+            next_channel.prepare_maintenance()
+    if current_channel is None:
+        print('There is currently no channel active. Not building.')
+    else:
+        print('Rebuilding {}'.format(current_channel))
+        current_channel.switch(build_options)
+
+
 def build_channel(build_options):
     print('Switching channel ...')
     try:
-        if enc:
-            channel_url = enc['parameters']['environment_url']
-            subprocess.check_call(
-                ['nix-channel', '--add', channel_url, 'nixos'])
-        subprocess.check_call(['nix-channel', '--update'])
-        subprocess.check_call(
-            ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
+        if os.path.exists('/etc/local/build-with-maintenance'):
+            build_channel_with_maintenance(build_options)
+        else:
+            if enc:
+                channel = Channel(enc['parameters']['environment_url'])
+            else:
+                channel = Channel.current('nixos')
+            if channel:
+                channel.switch(build_options)
     except Exception:
-        logging.exception('Error switching channel ')
+        logging.exception('Error switching channel')
 
 
 def build_dev(build_options):
@@ -168,14 +329,11 @@ def build_dev(build_options):
 
 
 def build(build_options):
-    nix_channels = p.expanduser('~/.nix-channels')
-    try:
-        if p.getsize(nix_channels):
-            build_channel(build_options)
-            return
-    except OSError:
-        pass
-    build_dev(build_options)
+    current_channel = Channel.current('nixos')
+    if current_channel is None:
+        build_dev(build_options)
+    else:
+        build_channel(build_options)
 
 
 def maintenance():

@@ -6,6 +6,7 @@ let
   fclib = import ../../lib;
   decomposeCIDR = fclib.decomposeCIDR pkgs;
   cfg = config.flyingcircus;
+  extnet = cfg.roles.external_net;
   parameters = lib.attrByPath [ "enc" "parameters" ] {} cfg;
   interfaces = lib.attrByPath [ "interfaces" ] {} parameters;
   location = lib.attrByPath [ "location" ] null parameters;
@@ -17,6 +18,7 @@ let
     {
       "ipv4": "10.70.67.0/24",
       "ipv6": "fd3e:65c4:fc10:${fclib.toHex id16bit}::/64",
+      "proto": "udp6",
       "extraroutes": []
     }
   '';
@@ -59,19 +61,65 @@ let
   pushRoutes4 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route ${decomposeCIDR cidr}\"")
-      (filter fclib.isIp4 (attrNames allNetworks ++ extraroutes));
-
+      ((filter fclib.isIp4
+        (attrNames allNetworks ++ extraroutes)) ++ [extnet.vxlan4]);
 
   pushRoutes6 =
     lib.concatMapStringsSep "\n"
       (cidr: "push \"route-ipv6 ${cidr}\"")
-      (filter fclib.isIp6 (attrNames allNetworks ++ extraroutes));
+      ((filter fclib.isIp6
+        (attrNames allNetworks ++ extraroutes)) ++ [extnet.vxlan6]);
 
   # Caution: we also deliver FE addresses here, so these should be included in
   # the pushed routes.
   pushNameservers = lib.concatMapStringsSep "\n"
     (a: "push \"dhcp-option DNS ${a}\"")
-    (lib.attrByPath [ (toString location) ] "" cfg.static.nameservers);
+    (fclib.listenAddresses config "ethfe");
+
+  #
+  # management & monitoring
+  #
+  mgmPort = "11194";
+
+  mgmPsk = builtins.hashString "md5" ("OpenVPN@" + config.networking.hostName);
+
+  checkOpenVPN = pkgs.writeScript "check_openvpn" ''
+    #!${pkgs.expect}/bin/expect -f
+    set timeout 20
+
+    puts "OpenVPN: checking management interface"
+    spawn -noecho ${pkgs.netcat}/bin/nc localhost ${mgmPort}
+
+    exit -onexit {
+      puts "OpenVPN CRITICAL"
+      exit 2
+    }
+
+    expect {
+      "PASSWORD:" {
+        send "${mgmPsk}\n"
+      } timeout {
+        puts "OpenVPN UNKNOWN - Timeout"
+        exit -onexit { }
+        exit 3
+      }
+    }
+
+    sleep .1
+
+    expect "INFO:OpenVPN Management Interface" {
+      send "state\n"
+    }
+
+    sleep .1
+
+    expect "CONNECTED,SUCCESS" {
+      send "quit\n"
+      puts "OpenVPN OK"
+      exit -onexit { }
+      exit 0
+    }
+  '';
 
   #
   # server
@@ -84,12 +132,14 @@ let
     server-ipv6 ${accessNets.ipv6}
   '';
 
+  proto = lib.attrByPath [ "proto" ] "udp6" accessNets;
+
   serverConfig = ''
     # OpenVPN server config for ${frontendName}
     ${serverAddrs}
 
     port 1194
-    proto udp6
+    proto ${proto}
     dev tun
     multihome
 
@@ -104,6 +154,7 @@ let
 
     keepalive 10 120
     plugin ${openvpn}/lib/openvpn/plugins/openvpn-plugin-auth-pam.so openvpn
+    management localhost ${mgmPort} ${pkgs.writeText "openvpn-mgm-psk" mgmPsk}
 
     comp-lzo
     user nobody
@@ -113,6 +164,7 @@ let
     ${pushRoutes4}
     ${pushRoutes6}
     push "dhcp-option DOMAIN ${domain}"
+    push "dhcp-option DOMAIN fcio.net"
     ${pushNameservers}
   '';
 
@@ -125,7 +177,8 @@ let
     client
     dev tun
 
-    proto udp
+    proto ${lib.removeSuffix "6" proto}
+    #proto ${proto}
     remote ${frontendName}
     nobind
     persist-key
@@ -157,6 +210,21 @@ let
     </tls-auth>
   '';
 
+  # Provide additional rules for VxLAN gateways. We need to mix it up here since
+  # everything should go into the same FW ruleset.
+  srvRG = if lib.hasAttrByPath [ "enc_addresses" "srv" ] cfg
+    then map (x: fclib.stripNetmask x.ip) cfg.enc_addresses.srv
+    else [];
+
+  dontMasqueradeSrvRG = lib.concatMapStringsSep "\n"
+    (addr:
+      let
+        ipt = fclib.iptables addr;
+        src = if fclib.isIp4 addr then extnet.vxlan4 else extnet.vxlan6;
+      in
+      "${ipt} -t nat -A openvpn -s ${src} -d ${addr} -j RETURN")
+    srvRG;
+
 in
 {
   options = {
@@ -170,16 +238,35 @@ in
     environment.etc = {
       "local/openvpn/${frontendName}.ovpn".source = ovpn;
       "local/openvpn/networks.json.example".text = defaultAccessNets;
-      "local/openvpn/README".text = readFile ./README.openvpn;
+      "local/openvpn/README.txt".text = readFile ./README.openvpn;
     };
 
-    networking.firewall = {
+    flyingcircus.services.sensu-client.checks =
+    {
+      openvpn_port = {
+        notification = "OpenVPN management interface";
+        command = toString checkOpenVPN;
+        interval = 300;
+      };
+    };
+
+    networking.firewall =
+    assert accessNets.ipv4 != extnet.vxlan4;
+    assert accessNets.ipv6 != extnet.vxlan6;
+    {
       allowedUDPPorts = [ 1194 ];
+      allowedTCPPorts = [ 1194 ];
       extraCommands = ''
         ip46tables -t nat -N openvpn || true
         ip46tables -t nat -F openvpn
-        iptables -t nat -A openvpn -s 10/8 \! -d 10/8 -j MASQUERADE
-        ip6tables -t nat -A openvpn -s fc00::/7 \! -d fc00::/7 -j MASQUERADE
+        ${dontMasqueradeSrvRG}
+        iptables -t nat -A openvpn -s ${accessNets.ipv4} -d ${extnet.vxlan4} -j RETURN
+        ip6tables -t nat -A openvpn -s ${accessNets.ipv6} -d ${extnet.vxlan6} -j RETURN
+        iptables -t nat -A openvpn -s ${extnet.vxlan4} \! -d ${extnet.vxlan4} -j MASQUERADE
+        ip6tables -t nat -A openvpn -s ${extnet.vxlan6} \! -d ${extnet.vxlan6} -j MASQUERADE
+        iptables -t nat -A openvpn -s ${accessNets.ipv4} \! -d ${accessNets.ipv4} -j MASQUERADE
+        ip6tables -t nat -A openvpn -s ${accessNets.ipv6} \! -d ${accessNets.ipv6} -j MASQUERADE
+
         ip46tables -t nat -D POSTROUTING -j openvpn || true
         ip46tables -t nat -A POSTROUTING -j openvpn
       '';
@@ -194,6 +281,14 @@ in
       auth    required        pam_unix.so    shadow    nodelay
       account required        pam_unix.so
     '';
+
+    services.dnsmasq = {
+      enable = true;
+      extraConfig = lib.mkOverride 500 ''
+        domain-needed
+        # interface=ethfe
+      '';
+    };
 
     services.openvpn.servers.access.config = serverConfig;
 
