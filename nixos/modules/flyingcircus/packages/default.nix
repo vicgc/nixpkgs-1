@@ -12,6 +12,8 @@
 
     cron = pkgs.callPackage ./cron.nix { };
 
+    dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
+
     easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
 
     fcmaintenance = pkgs.callPackage ./fcmaintenance { };

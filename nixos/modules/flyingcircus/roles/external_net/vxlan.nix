@@ -71,7 +71,7 @@ let
       dhcp-option=option:mtu,${toString mtu}
       dhcp-option=option:ntp-server,0.0.0.0
       dhcp-range=::,constructor:${dev},ra-names
-      dhcp-range=${lib.concatStringsSep "," params.dhcp},4h
+      dhcp-range=${lib.concatStringsSep "," params.dhcp},24h
       domain=ext.${domain}
       domain-needed
       interface=ethfe,${dev}
