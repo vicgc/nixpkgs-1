@@ -12,7 +12,7 @@ Create a virtualenv::
 
     virtualenv -p python3.4 .
     bin/pip install -e ../fcutil
-    bin/pip install -e .\[test]
+    bin/pip install -e .\[dev]
 
 Run unit tests::
 
@@ -29,7 +29,7 @@ NixOS hacking
 
 Use either nix-build to get a result::
 
-    nix-build -I nixpkgs=path/to/nixpkgs
+    nix-build -I nixpkgs=path/to/nixpkgs shell.nix
 
 or nix-shell for interactive python stuff::
 

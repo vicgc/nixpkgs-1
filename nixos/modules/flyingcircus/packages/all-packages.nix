@@ -1,10 +1,12 @@
 { pkgs }:
 
-{
+rec {
 
-  boost159 = pkgs.callPackage ./boost-1.59.nix { };
+  boost159 = pkgs.callPackage ./boost/1.59.nix { };
+  boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
   cron = pkgs.callPackage ./cron.nix { };
+  collectd = pkgs.callPackage ./collectd.nix { };
 
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
 
@@ -13,31 +15,45 @@
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
-  fcutil = pkgs.callPackage ./fcutil { };
+
+  innotop = pkgs.callPackage ./percona/innotop.nix { };
+
+  linux_4_3 = pkgs.callPackage ./kernel/linux-4.3.nix { };
 
   mc = pkgs.callPackage ./mc.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
   mongodb32 = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
 
-  nagiosplugin = pkgs.callPackage ./nagiosplugin.nix { };
+  nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
+  percona = percona57;
+  percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
+  percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
-  pypkgs = pkgs.callPackage ./pypkgs.nix { };
 
   qemu = pkgs.callPackage ./qemu-2.5.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
     x86Only = true;
   };
-
-  sensu = pkgs.callPackage ./sensu { };
-  uchiwa = pkgs.callPackage ./uchiwa { };
-
-  vulnix = pkgs.callPackage ./vulnix { };
+  qpress = pkgs.callPackage ./percona/qpress.nix { };
 
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+
+  sensu = pkgs.callPackage ./sensu { };
+
+  uchiwa = pkgs.callPackage ./uchiwa { };
+
+  varnish =
+    (pkgs.callPackage ../../../../pkgs/servers/varnish { }).overrideDerivation
+    (old: {
+      buildFlags = "localstatedir=/var/spool";
+    });
+  vulnix = pkgs.callPackage ./vulnix { };
+
+  xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
 
 }

@@ -17,7 +17,6 @@ import <nixpkgs/nixos/tests/make-test.nix> ({
         imports = [ ../static/default.nix
                     ../roles/default.nix
                     ../services/default.nix
-                    ../packages/default.nix
                     ../platform/default.nix ];
 
         flyingcircus.ssl.generate_dhparams = false;

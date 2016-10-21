@@ -66,3 +66,7 @@ Create a virtualenv::
 Run tests::
 
     bin/py.test
+
+Alternatively, build the Nix expression::
+
+    nix-build -I nixpkgs=path/to/nixpkgs shell.nix

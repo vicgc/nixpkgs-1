@@ -17675,5 +17675,9 @@ let
       maintainers = [ maintainers.makefu ];
     };
   };
-
-}; in pythonPackages
+} //
+# Augment this list with custom FC packages.
+# This addition should be kept across NixOS upgrades.
+(import ../../nixos/modules/flyingcircus/packages/python-packages.nix {
+  inherit pkgs stdenv python self callPackage buildPythonPackage;
+}); in pythonPackages
