@@ -31,7 +31,6 @@
           pkgs.kernelPatches.mips_ext3_n32
         ];
       extraConfig =  ''
-          DEBUG_INFO y
           IP_MULTIPLE_TABLES y
           IPV6_MULTIPLE_TABLES y
           LATENCYTOP y
