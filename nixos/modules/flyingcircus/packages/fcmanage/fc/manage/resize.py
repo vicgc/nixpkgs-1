@@ -9,6 +9,7 @@ import fc.maintenance
 import fc.maintenance.lib.reboot
 import fc.manage.dmi_memory
 import json
+import os
 import os.path
 import re
 import shutil
@@ -150,7 +151,7 @@ class Disk(object):
             return
         print('resize: Setting XFS quota limits to {} GiB'.format(disk_gb))
         print(self.xfsq('project -s {}'.format(self.proj), ionice=True))
-        print(self.xfsq('timer -p 1m' ))
+        print(self.xfsq('timer -p 1m'))
         print(self.xfsq('limit -p bsoft={d}g bhard={d}g {p}'.format(
             d=disk_gb, p=self.proj)))
 
