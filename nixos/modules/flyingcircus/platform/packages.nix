@@ -69,17 +69,8 @@
     ];
 
     nixpkgs.config.packageOverrides = pkgs: {
-      collectd = pkgs.collectd.override { libvirt = null; };
 
-      linux_4_3 = pkgs.linux_4_3.override {
-        extraConfig = ''
-          DEBUG_INFO y
-          IP_MULTIPLE_TABLES y
-          IPV6_MULTIPLE_TABLES y
-          LATENCYTOP y
-          SCHEDSTATS y
-        '';
-      };
+      collectd = pkgs.collectd.override { libvirt = null; };
 
       nagiosPluginsOfficial =
         pkgs.nagiosPluginsOfficial.overrideDerivation (old: {
