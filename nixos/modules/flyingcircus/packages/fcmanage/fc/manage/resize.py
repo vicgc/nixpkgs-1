@@ -5,11 +5,13 @@ looking up the device by checking the root partition by label first.
 """
 
 import argparse
-import fc.manage.dmi_memory
 import fc.maintenance
 import fc.maintenance.lib.reboot
+import fc.manage.dmi_memory
 import json
+import os.path
 import re
+import shutil
 import subprocess
 
 
@@ -228,11 +230,58 @@ def cpu_change(enc):
             fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
 
 
+def check_qemu_reboot():
+    """Schedules a reboot if the Qemu binary environment has changed."""
+    if os.path.exists('/tmp/fc-data/qemu-binary-generation-booted'):
+        shutil.move('/tmp/fc-data/qemu-binary-generation-booted',
+                    '/run/qemu-binary-generation-booted')
+    # Schedule maintenance if the current marker differs from booted
+    # marker.
+    if not os.path.exists('/run/qemu-binary-generation-current'):
+        return
+
+    try:
+        with open('/run/qemu-binary-generation-current', encoding='ascii') \
+                as f:
+            current_generation = int(f.read().strip())
+    except:
+        return
+
+    try:
+        with open('/run/qemu-binary-generation-booted', encoding='ascii') as f:
+            booted_generation = int(f.read().strip())
+    except:
+        booted_generation = 0
+
+    if booted_generation >= current_generation:
+        return
+
+    msg = 'Cold restart because the Qemu binary environment has changed.'
+    with fc.maintenance.ReqManager() as rm:
+        rm.add(fc.maintenance.Request(
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+
+
+def check_kernel_reboot():
+    """Schedules a reboot if the kernel has changed."""
+    if (os.lstat('/run/current-system/kernel').st_ino !=
+            os.lstat('/run/booted-system/kernel')):
+        with fc.maintenance.ReqManager() as rm:
+            rm.add(fc.maintenance.Request(
+                fc.maintenance.lib.reboot.RebootActivity('reboot'),
+                900,
+                'Reboot to activate changed kernel.'))
+
+
 def main():
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
                    help='path to enc.json (default: %(default)s)')
     args = a.parse_args()
+
+    resize_filesystems()
+    check_qemu_reboot()
+    check_kernel_reboot()
 
     if args.enc_path:
         with open(args.enc_path) as f:
