@@ -162,11 +162,11 @@ in {
         }
     '';
 
-    users.extraGroups.sensuclient.gid = config.ids.gids.sensuclient;
+    users.extraGroups.sensuclient.gid = config.flyingcircus.static.ids.gids.sensuclient;
 
     users.extraUsers.sensuclient = {
       description = "sensu client daemon user";
-      uid = config.ids.uids.sensuclient;
+      uid = config.flyingcircus.static.ids.uids.sensuclient;
       group = "sensuclient";
       # Allow sensuclient to interact with services. This especially helps to
       # check supervisor with a group-writable socket:
