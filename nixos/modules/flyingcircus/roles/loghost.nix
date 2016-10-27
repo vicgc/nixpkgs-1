@@ -31,13 +31,17 @@ in
   config = mkMerge [
 
     (mkIf config.flyingcircus.roles.loghost.enable {
-      # XXX Access should *onl* be allowed from directory and same-rg.
-    	networking.firewall.allowedTCPPorts = [ 9000 ];
 
+      networking.firewall.extraCommands = ''
+        # Allow access to installed nginx on FE interface.
+        ip46tables -A nixos-fw -p tcp --dport 9000 -i ethsrv -j nixos-fw-accept
+      '';
       services.graylog = {
         inherit passwordSecret rootPasswordSha2;
       	enable = true;
   	    elasticsearchClusterName = "graylog";
+        elasticsearchDiscoveryZenPingUnicastHosts =
+          "${config.networking.hostName}.${config.networking.domain}:9300";
   	    extraConfig = ''
           # IPv6 would be nice, too :/
           web_listen_uri http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog
@@ -45,16 +49,15 @@ in
           trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
   	    '';
     	};
-    	services.elasticsearch2 = {
-      	enable = true;
-      	cluster_name = "graylog";
-      	extraConf = ''
-          discovery_zen_ping_multicast_enabled : false
-          # List of Elasticsearch nodes to connect to
-          elasticsearch_discovery_zen_ping_unicast_hosts : localhost:9300
-        '';
-    	};
-    	flyingcircus.roles.mongodb.enable = true;
+
+      flyingcircus.roles.mongodb.enable = true;
+    	flyingcircus.roles.elasticsearch = {
+        enable = true;
+        dataDir = "/var/lib/elasticsearch";
+        clusterName = "graylog";
+        heapDivisor = 3;
+        esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
+      };
     })
     (mkIf (loghostService != null) {
       services.rsyslogd.extraConfig = ''
