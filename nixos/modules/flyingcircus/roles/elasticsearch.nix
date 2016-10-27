@@ -4,11 +4,14 @@ let
   cfg = config.flyingcircus.roles.elasticsearch;
   fclib = import ../lib;
 
-  esNodes = map
-    (service: service.address)
-    (filter
-      (s: s.service == "elasticsearch-node")
-      config.flyingcircus.enc_services);
+  esNodes =
+    if cfg.esNodes == null
+    then map
+      (service: service.address)
+      (filter
+        (s: s.service == "elasticsearch-node")
+        config.flyingcircus.enc_services)
+    else cfg.esNodes;
   thisNode = "${config.networking.hostName}.${config.networking.domain}";
 
   defaultClusterName = config.networking.hostName;
@@ -16,12 +19,12 @@ let
   clusterName =
     if cfg.clusterName == null
     then (fclib.configFromFile /etc/local/elasticsearch/clusterName defaultClusterName)
-    else cfg.password;
+    else cfg.clusterName;
 
   currentMemory = fclib.current_memory config 1024;
   esHeap =
     fclib.min [
-      (currentMemory / 2)
+      (currentMemory / cfg.heapDivisor)
       (31 * 1024)];
 
 in
@@ -43,6 +46,28 @@ in
           The clusterName elasticsearch will use.
         '';
       };
+
+      dataDir = mkOption {
+        type = types.path;
+        default = "/srv/elasticsearch";
+        description = ''
+          Data directory for elasticsearch.
+        '';
+      };
+
+      heapDivisor = mkOption {
+        type = types.int;
+        default = 2;
+        description = ''
+          Tweak amount of memory to use for ES heap
+          (systemMemory / heapDivisor)
+        '';
+      };
+
+      esNodes = mkOption {
+        type = types.listOf types.string;
+        default = null;
+      };
     };
   };
 
@@ -51,7 +76,7 @@ in
     services.elasticsearch = {
       enable = true;
       host = thisNode;
-      dataDir = "/srv/elasticsearch";
+      dataDir = cfg.dataDir;
       cluster_name = clusterName;
       extraConf = ''
         node.name: ${config.networking.hostName}
