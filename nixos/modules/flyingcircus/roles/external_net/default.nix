@@ -55,6 +55,8 @@ in
 
     environment.systemPackages = [ pkgs.mosh ];
 
-    networking.firewall.allowedUDPPorts = [ 60001 ];
+    # we need 53/udp in any case, both openvpn and vxlan use dnsmasq
+    # 60000-60003 is for mosh
+    networking.firewall.allowedUDPPorts = [ 53 60000 60001 60002 60003 ];
   };
 }

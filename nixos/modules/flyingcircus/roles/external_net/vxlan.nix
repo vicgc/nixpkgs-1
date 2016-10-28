@@ -71,7 +71,7 @@ let
       dhcp-option=option:mtu,${toString mtu}
       dhcp-option=option:ntp-server,0.0.0.0
       dhcp-range=::,constructor:${dev},ra-names
-      dhcp-range=${lib.concatStringsSep "," params.dhcp},4h
+      dhcp-range=${lib.concatStringsSep "," params.dhcp},24h
       domain=ext.${domain}
       domain-needed
       interface=ethfe,${dev}
@@ -90,7 +90,7 @@ in
       additionalOptions = {
         services.dnsmasq = {
           enable = true;
-          extraConfig = dnsmasqConf;
+          extraConfig = lib.mkOverride 100 dnsmasqConf;
         };
 
         services.chrony.extraConfig = ''
@@ -98,8 +98,8 @@ in
           allow ${net6}
         '';
 
-        # See openvpn.nix for additional firewall rules
-        networking.firewall.allowedUDPPorts = [ 53 67 68 123 port ];
+        # See default.nix and openvpn.nix for additional firewall rules
+        networking.firewall.allowedUDPPorts = [ 67 68 123 port ];
       };
 
     in
@@ -113,7 +113,7 @@ in
     ) //
     {
       environment.etc."local/vxlan/config.json.example".text = exampleConfig;
-      environment.etc."local/vxlan/README".text = readFile ./README.vxlan;
+      environment.etc."local/vxlan/README.txt".text = readFile ./README.vxlan;
     }
   );
 }

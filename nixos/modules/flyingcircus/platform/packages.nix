@@ -69,6 +69,8 @@
     ];
 
     nixpkgs.config.packageOverrides = pkgs: {
+      collectd = pkgs.collectd.override { libvirt = null; };
+
       linux_4_3 = pkgs.linux_4_3.override {
         extraConfig = ''
           DEBUG_INFO y
@@ -80,9 +82,9 @@
       };
 
       nagiosPluginsOfficial =
-        pkgs.nagiosPluginsOfficial.overrideDerivation (oldAttrs: {
+        pkgs.nagiosPluginsOfficial.overrideDerivation (old: {
           buildInputs = [ pkgs.openssh pkgs.openssl pkgs.perl ];
-          preConfigure= "
+          preConfigure= ''
             configureFlagsArray=(
               --with-openssl=${pkgs.openssl}
               --with-ping-command='/var/setuid-wrappers/ping -n -w %d -c %d %s'
@@ -91,7 +93,7 @@
               # be run, some mailer daemon needs to be installed.
               --with-mailq-command=/run/current-system/sw/bin/mailq
             )
-          ";
+          '';
         });
 
       varnish =
