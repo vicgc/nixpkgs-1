@@ -1,4 +1,4 @@
-"""Resizes filesystems or memory if needed.
+"""Resizes filesystems, or reboots due to memory or Qemu changes if needed.
 
 We expect the root partition to be partition 1 on its device, but we're
 looking up the device by checking the root partition by label first.
