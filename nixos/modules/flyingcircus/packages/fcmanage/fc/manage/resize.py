@@ -1,4 +1,4 @@
-"""Resizes filesystems or memory if needed.
+"""Resizes filesystems, or reboots due to memory or Qemu changes if needed.
 
 We expect the root partition to be partition 1 on its device, but we're
 looking up the device by checking the root partition by label first.
@@ -233,9 +233,16 @@ def cpu_change(enc):
 
 def check_qemu_reboot():
     """Schedules a reboot if the Qemu binary environment has changed."""
+    # Update the -booted marker if necessary. We need to store the marker
+    # in a place where it does not get removed after _internal_ reboots
+    # of the virtual machine. However, if we got rebooted with a fresh
+    # Qemu instance, we need to update it from the marker on the tmp
+    # partition.
+    if not os.path.isdir('/var/lib/qemu'):
+        os.makedirs('/var/lib/qemu')
     if os.path.exists('/tmp/fc-data/qemu-binary-generation-booted'):
         shutil.move('/tmp/fc-data/qemu-binary-generation-booted',
-                    '/run/qemu-binary-generation-booted')
+                    '/var/lib/qemu/qemu-binary-generation-booted')
     # Schedule maintenance if the current marker differs from booted
     # marker.
     if not os.path.exists('/run/qemu-binary-generation-current'):
@@ -246,15 +253,22 @@ def check_qemu_reboot():
                 as f:
             current_generation = int(f.read().strip())
     except:
+        # Do not perform maintenance if no current marker is there.
         return
 
     try:
-        with open('/run/qemu-binary-generation-booted', encoding='ascii') as f:
+        with open('/var/lib/qemu/qemu-binary-generation-booted',
+                  encoding='ascii') as f:
             booted_generation = int(f.read().strip())
     except:
+        # Assume 0 as the generation marker as that is our upgrade path:
+        # VMs started with an earlier version of fc.qemu will not have
+        # this marker at all.
         booted_generation = 0
 
     if booted_generation >= current_generation:
+        # We do not automatically downgrade. If we ever want that then I
+        # want us to reconsider the side-effects.
         return
 
     msg = 'Cold restart because the Qemu binary environment has changed.'
@@ -280,7 +294,6 @@ def main():
                    help='path to enc.json (default: %(default)s)')
     args = a.parse_args()
 
-    resize_filesystems()
     check_qemu_reboot()
     check_kernel_reboot()
 
