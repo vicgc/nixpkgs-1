@@ -2,15 +2,15 @@
 
 let
   cfg = config.flyingcircus.roles.loghost;
-  fclib = import ../lib;
+  fclib = import ../../lib;
 
   listenOn = head (fclib.listenAddresses config "ethsrv");
-  loghostService = findFirst
+  serviceUser = "graylog";
+
+  loghostService = lib.findFirst
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
-
-  serviceUser = "graylog";
 
   # -- files --
   rootPasswordFile = "/etc/local/graylog/password";
@@ -34,6 +34,9 @@ let
             passwordSecretFile
             generatedPasswordSecret)
     else cfg.passwordSecret;
+
+  webListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog";
+  restListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog/api";
 
   # -- helper functions --
   passwordActivation = file: password: user:
@@ -95,7 +98,8 @@ in
 
   };
 
-  config = mkIf cfg.enable {
+  config = mkMerge [
+    (mkIf cfg.enable {
 
       # XXX Access should *onl* be allowed from directory and same-rg.
     	networking.firewall.allowedTCPPorts = [ 9000 ];
@@ -109,10 +113,8 @@ in
       services.graylog = {
       	enable = true;
   	    elasticsearchClusterName = "graylog";
-        inherit passwordSecret rootPasswordSha2;
+        inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
         # ipv6 would be nice too
-        webListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog";
-        restListenUri = "http://${listenOn}:9000/tools/${config.flyingcircus.enc.name}/graylog/api";
   	    extraConfig = ''
           trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
   	    '';
@@ -129,10 +131,6 @@ in
     	};
     	flyingcircus.roles.mongodb.enable = true;
 
-      services.rsyslogd.extraConfig = ''
-        *.* @${loghostService.address}:5140;RSYSLOG_SyslogProtocol23Format
-      '';
-      # WIP: rest client
       systemd.services.configure-inputs-for-graylog = {
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
@@ -142,26 +140,40 @@ in
            User = "graylog";
          };
          script = let
-           api = services.graylog.restListenUri;
-           user = services.graylog.rootUsername;
-           pw = passwordWebUi;
+           api = restListenUri;
+           user = "admin";
+           pw = rootPassword;
+
            data_body = {
              configuration = {
                bind_address = "0.0.0.0";
-               port = "10514";
+               expand_structured_data = false;
+               force_rdns = false;
+               recv_buffer_size = 262144;
+               store_full_message =  false;
+               allow_override_date =  true;
+               port = 10514;
              };
-             title = "Syslog UDP";
+             title = "Syslog UDP"; # be careful changing it, it's used as
+                                   # a primary key for identifying the config
+                                   # object
              type = "org.graylog2.inputs.syslog.udp.SyslogUDPInput";
              global = false;
            };
         in
-          ''
-           ${pkgs.python34Packages.python}/bin/python3 ./input.py \
-              -u ${user} \
-              -p ${pw} \
-              ${api} \
-              \"${toJSON data_body}\"
+          ''${pkgs.fcmanage}/bin/fc-graylog \
+          -u '${user}' \
+          -p '${removeSuffix "\n" pw}' \
+          '${api}' \
+          '${builtins.toJSON data_body}'
           '' ;
       };
-    };
+
+    })
+    (mkIf (loghostService != null) {
+      services.rsyslogd.extraConfig = ''
+        *.* @${loghostService.address}:5140;RSYSLOG_SyslogProtocol23Format
+      '';
+    }
+    )];
   }

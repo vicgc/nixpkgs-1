@@ -32,24 +32,25 @@ import requests
 @click.argument('api')
 @click.argument('input_conf')
 def cli(user, password, api, input_conf):
-    '''Configure a Graylog input node.'''
-    r = requests.get(api + '/system/cluster/node', auth=(user, password))
+    """Configure a Graylog input node."""
+    s = requests.Session()
+    s.auth = (user, password)
+    r = s.get(api + '/system/cluster/node')
     r.raise_for_status()
     data = json.loads(input_conf)
     data['node'] = r.json()['node_id']
 
     # check if there is input with this name currently configured, if so return
-    r = requests.get(api + '/system/inputstates', auth=(user, password))
+    r = s.get(api + '/system/inputstates')
     r.raise_for_status()
     for _input in r.json()['states']:
-        if _input['name'] == data['title']:
+        if _input['message_input']['title'] == data['title']:
             return None
 
     # create input for UDP
-    r = requests.post(api + '/system/inputs',
-                      auth=(user, password), json=data)
+    r = s.post(api + '/system/inputs', json=data)
     r.raise_for_status()
-    return r.value()
+    return r.json()['id']
 
 if __name__ == '__main__':
     cli()

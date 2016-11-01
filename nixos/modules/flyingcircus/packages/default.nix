@@ -65,14 +65,11 @@
     rabbitmq_delayed_message_exchange =
       pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
-    vulnix = pkgs.callPackage ./vulnix.nix { };
+    vulnix = pkgs.callPackage ./vulnix { };
 
     elasticsearch2 = pkgs.callPackage ./elasticsearch2 { };
     elasticsearchPlugins = lib.recurseIntoAttrs (
       pkgs.callPackage ./elasticsearch/plugins.nix { }
     );
-    rabbitmq_delayed_message_exchange =
-      pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
-
   };
 }

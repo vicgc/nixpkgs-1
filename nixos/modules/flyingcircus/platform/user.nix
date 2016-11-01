@@ -161,6 +161,7 @@ in
 
       # Upstream services from a future release
       graylog = 243;
+
     };
 
     ids.gids = {
