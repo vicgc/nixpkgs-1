@@ -32,6 +32,10 @@ rec {
   mongodb = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
+  nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
+    libuv = pkgs.libuvVersions.v1_9_1;
+    openssl = pkgs.openssl_1_0_2;
+  };
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
