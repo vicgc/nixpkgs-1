@@ -120,16 +120,14 @@ in
   	    '';
     	};
 
-    	services.elasticsearch2 = {
-      	enable = true;
-      	cluster_name = "graylog";
-      	extraConf = ''
-          discovery_zen_ping_multicast_enabled : false
-          # List of Elasticsearch nodes to connect to
-          elasticsearch_discovery_zen_ping_unicast_hosts : localhost:9300
-        '';
-    	};
     	flyingcircus.roles.mongodb.enable = true;
+      flyingcircus.roles.elasticsearch = {
+        enable = true;
+        dataDir = "/var/lib/elasticsearch";
+        clusterName = "graylog";
+        heapDivisor = 3;
+        esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
+      };
 
       systemd.services.configure-inputs-for-graylog = {
          description = "Enable Inputs for Graylog";
