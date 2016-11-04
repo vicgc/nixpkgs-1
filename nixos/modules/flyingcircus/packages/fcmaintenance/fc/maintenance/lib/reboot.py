@@ -37,8 +37,13 @@ class RebootActivity(Activity):
         # finished properly on the next fc.maintenance run. For the same
         # reason, updates for ourself won't be persisted by Request.save().
 
+    def finish(self, message):
+        """Signal to ReqManager that we are done."""
+        self.stdout = message
+        self.returncode = 0
+
     def other_coldboot(self):
-        """Returns True if there is also a cold reboot pending.
+        """Checks if there is another pending cold boot.
 
         Given that there are two reboot requests, one warm reboot and a
         cold reboot, the warm reboot will trigger and update boottime.
@@ -46,34 +51,36 @@ class RebootActivity(Activity):
         > initial_boottime). But some setups require that the cold
         reboot must win regardless of issue order (e.g. Qemu), so we
         must skip warm reboots if a cold reboot is present.
+
+        Returns cold boot request on success.
         """
         try:
             for req in self.request.other_requests():
                 if (isinstance(req.activity, RebootActivity) and
                         req.activity.coldboot):
-                    self.returncode = 0
-                    return True
-        except AttributeError:
-            return
-        return False
+                    return req
+        except AttributeError:  # self.request has not been set
+            pass
+        return
 
     def run(self):
-        if not self.coldboot and self.other_coldboot():
-            self.returncode = 0
-            return
+        if not self.coldboot:
+            coldboot_req = self.other_coldboot()
+            if coldboot_req:
+                return self.finish('cold boot pending ({}), skipped'.format(
+                    coldboot_req.id))
         boottime = self.boottime()
         if not boottime > self.initial_boottime:
             self.boom()
             return
-        self.stdout = 'booted at {} UTC'.format(
-            time.asctime(time.gmtime(boottime)))
-        self.returncode = 0
         try:
             with open('starttime') as f:
                 started = float(f.read().strip())
                 self.duration = time.time() - started
         except (IOError, ValueError):
             pass
+        self.finish('booted at {} UTC'.format(
+            time.asctime(time.gmtime(boottime))))
 
 
 def main():

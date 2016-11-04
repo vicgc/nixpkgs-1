@@ -63,6 +63,8 @@ def test_dont_perfom_warm_reboot_if_cold_reboot_pending(reqdir, defused_boom,
         reqs = sorted(rm.requests.values(), key=lambda r: r.activity.action,
                       reverse=True)
         reqs[0].execute()
+        reqs[0].save()
         assert defused_boom.call_count == 0
         reqs[1].execute()
+        reqs[1].save()
         assert defused_boom.call_count == 1
