@@ -87,7 +87,9 @@ def main():
     args = a.parse_args()
 
     action = 'poweroff' if args.poweroff else 'reboot'
+    defaultcomment = 'Scheduled {}'.format(
+        'cold boot' if args.poweroff else 'reboot')
     with ReqManager(spooldir=args.spooldir) as rm:
         rm.add(Request(RebootActivity(action),
                        900 if args.poweroff else 600,
-                       args.comment if args.comment else 'Scheduled reboot'))
+                       args.comment if args.comment else defaultcomment))
