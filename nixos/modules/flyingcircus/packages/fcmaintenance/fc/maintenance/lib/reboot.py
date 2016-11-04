@@ -18,6 +18,7 @@ class RebootActivity(Activity):
     def __init__(self, action='reboot'):
         assert action in ['reboot', 'poweroff']
         self.action = action
+        self.coldboot = (action == 'poweroff')
         # small allowance for VM clock skew
         self.initial_boottime = self.boottime() + 1
 
@@ -36,19 +37,50 @@ class RebootActivity(Activity):
         # finished properly on the next fc.maintenance run. For the same
         # reason, updates for ourself won't be persisted by Request.save().
 
+    def finish(self, message):
+        """Signal to ReqManager that we are done."""
+        self.stdout = message
+        self.returncode = 0
+
+    def other_coldboot(self):
+        """Checks if there is another pending cold boot.
+
+        Given that there are two reboot requests, one warm reboot and a
+        cold reboot, the warm reboot will trigger and update boottime.
+        Thus, the following cold reboot will not be performed (boottime
+        > initial_boottime). But some setups require that the cold
+        reboot must win regardless of issue order (e.g. Qemu), so we
+        must skip warm reboots if a cold reboot is present.
+
+        Returns cold boot request on success.
+        """
+        try:
+            for req in self.request.other_requests():
+                if (isinstance(req.activity, RebootActivity) and
+                        req.activity.coldboot):
+                    return req
+        except AttributeError:  # self.request has not been set
+            pass
+        return
+
     def run(self):
-        if not self.boottime() > self.initial_boottime:
+        if not self.coldboot:
+            coldboot_req = self.other_coldboot()
+            if coldboot_req:
+                return self.finish('cold boot pending ({}), skipped'.format(
+                    coldboot_req.id))
+        boottime = self.boottime()
+        if not boottime > self.initial_boottime:
             self.boom()
             return
-        self.stdout = 'booted at {} UTC'.format(
-            time.asctime(time.gmtime(self.boottime())))
-        self.returncode = 0
         try:
             with open('starttime') as f:
                 started = float(f.read().strip())
                 self.duration = time.time() - started
         except (IOError, ValueError):
             pass
+        self.finish('booted at {} UTC'.format(
+            time.asctime(time.gmtime(boottime))))
 
 
 def main():
@@ -62,7 +94,9 @@ def main():
     args = a.parse_args()
 
     action = 'poweroff' if args.poweroff else 'reboot'
-    comment = args.comment if args.comment else (
-        'Scheduled machine {}'.format(action))
-    rm = ReqManager(spooldir=args.spooldir)
-    rm.add(Request(RebootActivity(action), 10 * 60, comment=comment))
+    defaultcomment = 'Scheduled {}'.format(
+        'cold boot' if args.poweroff else 'reboot')
+    with ReqManager(spooldir=args.spooldir) as rm:
+        rm.add(Request(RebootActivity(action),
+                       900 if args.poweroff else 600,
+                       args.comment if args.comment else defaultcomment))

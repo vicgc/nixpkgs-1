@@ -212,7 +212,7 @@ def memory_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
 
 
 def cpu_change(enc):
@@ -228,7 +228,7 @@ def cpu_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
 
 
 def check_qemu_reboot():
@@ -271,21 +271,20 @@ def check_qemu_reboot():
         # want us to reconsider the side-effects.
         return
 
-    msg = 'Cold restart because the Qemu binary environment has changed.'
+    msg = 'Cold restart because the Qemu binary environment has changed'
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
 
 
 def check_kernel_reboot():
     """Schedules a reboot if the kernel has changed."""
-    if (os.lstat('/run/current-system/kernel').st_ino !=
-            os.lstat('/run/booted-system/kernel')):
+    if (os.stat('/run/current-system/kernel').st_ino !=
+            os.stat('/run/booted-system/kernel').st_ino):
         with fc.maintenance.ReqManager() as rm:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.reboot.RebootActivity('reboot'),
-                900,
-                'Reboot to activate changed kernel.'))
+                comment='Reboot to activate changed kernel'))
 
 
 def main():

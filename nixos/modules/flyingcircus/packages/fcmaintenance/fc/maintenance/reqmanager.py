@@ -91,6 +91,7 @@ class ReqManager:
                 continue
             try:
                 req = Request.load(d)
+                req._reqmanager = self
                 self.requests[req.id] = req
             except Exception as exc:
                 LOG.exception('error loading request from %s', d)
@@ -113,10 +114,12 @@ class ReqManager:
             return None
         self.requests[request.id] = request
         request.dir = self.dir(request)
+        request._reqmanager = self
         request.save()
         return request
 
     def find_by_comment(self, comment):
+        """Returns first request with `comment` or None."""
         for r in self.requests.values():
             if r.comment == comment:
                 return r
