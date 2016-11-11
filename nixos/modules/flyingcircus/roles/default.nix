@@ -23,8 +23,7 @@ in
      ./generic.nix
      ./haproxy.nix
      ./java.nix
-     ./loghost-client.nix
-     ./loghost.nix
+     ./graylog/loghost.nix
      ./mailserver.nix
      ./mongodb
      ./mysql.nix

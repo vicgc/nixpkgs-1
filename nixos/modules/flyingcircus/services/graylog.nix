@@ -19,6 +19,8 @@ let
     elasticsearch_discovery_zen_ping_unicast_hosts = ${cfg.elasticsearchDiscoveryZenPingUnicastHosts}
     message_journal_dir = ${cfg.messageJournalDir}
     mongodb_uri = ${cfg.mongodbUri}
+    web_listen_uri = ${cfg.webListenUri}
+    rest_listen_uri = ${cfg.restListenUri}
 
     ${cfg.extraConfig}
   '';
@@ -115,6 +117,18 @@ in
         type = types.str;
         default = "mongodb://localhost/graylog";
         description = "MongoDB connection string. See http://docs.mongodb.org/manual/reference/connection-string/ for details";
+      };
+
+      restListenUri = mkOption {
+        type = types.str;
+        default = "127.0.0.1:9000/api";
+        description = "The Uri to Graylogs API server.";
+      };
+
+      webListenUri = mkOption {
+        type = types.str;
+        default = "127.0.0.1:9000";
+        description = "The Uri to Graylogs WebUI.";
       };
 
       extraConfig = mkOption {

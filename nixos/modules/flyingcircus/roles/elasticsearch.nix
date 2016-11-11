@@ -14,8 +14,7 @@ let
     else cfg.esNodes;
   thisNode = "${config.networking.hostName}.${config.networking.domain}";
 
-  defaultClusterName =
-    lib.attrByPath ["parameters" "resource_group"] "elasticsearch" config.flyingcircus.enc;
+  defaultClusterName = config.networking.hostName;
 
   clusterName =
     if cfg.clusterName == null
@@ -104,7 +103,11 @@ in
     '';
 
     environment.etc."local/elasticsearch/README.txt".text = ''
-      Clustering:
+      Elasticsearch is running on this VM.
+
+      It is forming the cluster "${clusterName}". To change the cluster name,
+      add a file named "clusterName" here, with the cluster name as its sole
+      contents.
     '';
 
     flyingcircus.services.sensu-client.checks = {
