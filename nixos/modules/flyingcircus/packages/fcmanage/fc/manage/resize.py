@@ -15,6 +15,10 @@ import re
 import shutil
 import subprocess
 
+class QuotaError(RuntimeError):
+    """Failed to parse XFS quota report."""
+    pass
+
 
 class Disk(object):
     """Resizes root filesystem.
@@ -109,10 +113,12 @@ class Disk(object):
         next full GiB value.
         """
         report = self.xfsq('report -p')
+        if not report:
+            return (0, 0)
         m = re.search(r'^{}\s+(\d+)\s+\d+\s+(\d+)\s+'.format(self.proj),
                       report, re.MULTILINE)
         if not m:
-            raise RuntimeError('failed to parse xfs_quota output', report)
+            raise QuotaError('failed to parse xfs_quota output', report)
         used = m.group(1)
         blocks_hard = m.group(2)
         return (round(float(used) / 2**20), round(float(blocks_hard) / 2**20))
