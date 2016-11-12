@@ -31,7 +31,8 @@ class RebootActivity(Activity):
     def boom(self):
         with open('starttime', 'w') as f:
             print(time.time(), file=f)
-        subprocess.check_call(['systemctl', self.action])
+        opt = '-h' if self.coldboot else '-r'
+        subprocess.check_call(['shutdown', opt, '1', self.request.comment])
         # We won't be able to pick up the return code of this command as
         # systemd terminates our process right away. The request will be
         # finished properly on the next fc.maintenance run. For the same
