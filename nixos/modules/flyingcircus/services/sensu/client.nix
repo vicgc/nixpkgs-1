@@ -261,14 +261,14 @@ in {
         '';
         interval = 600;
       };
-      vulnix = {
-        notification = "Security vulnerabilities in the last 6h";
-        command = "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
-          "${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
-          "-w " +
-          "https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml";
-        interval = 21600;
-      };
+      # vulnix = {
+      #   notification = "Security vulnerabilities in the last 6h";
+      #   command = "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
+      #     "${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
+      #     "-w " +
+      #     "https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml";
+      #   interval = 21600;
+      # };
       manage = {
         notification = "The FC manage job is not enabled.";
         command = "${check_timer} fc-manage";
