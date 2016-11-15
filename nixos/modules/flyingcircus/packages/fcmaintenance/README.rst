@@ -12,7 +12,7 @@ Create a virtualenv::
 
     virtualenv -p python3.4 .
     bin/pip install -e ../fcutil
-    bin/pip install -e .\[test]
+    bin/pip install -e .\[dev]
 
 Run unit tests::
 
@@ -20,7 +20,6 @@ Run unit tests::
 
 Test coverage report::
 
-    bin/pip install -e .\[dev]
     bin/py.test --cov=fc.maintenance --cov-report=html
 
 

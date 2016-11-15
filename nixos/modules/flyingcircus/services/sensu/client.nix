@@ -162,11 +162,11 @@ in {
         }
     '';
 
-    users.extraGroups.sensuclient.gid = config.ids.gids.sensuclient;
+    users.extraGroups.sensuclient.gid = config.flyingcircus.static.ids.gids.sensuclient;
 
     users.extraUsers.sensuclient = {
       description = "sensu client daemon user";
-      uid = config.ids.uids.sensuclient;
+      uid = config.flyingcircus.static.ids.uids.sensuclient;
       group = "sensuclient";
       # Allow sensuclient to interact with services. This especially helps to
       # check supervisor with a group-writable socket:
@@ -186,8 +186,12 @@ in {
     systemd.services.sensu-client = {
       wantedBy = [ "multi-user.target" ];
       path = [
-        pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash
-        pkgs.lm_sensors pkgs.coreutils
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.glibc
+        pkgs.lm_sensors
+        pkgs.nagiosPluginsOfficial
+        pkgs.sensu
       ];
       serviceConfig = {
         User = "sensuclient";
@@ -197,10 +201,13 @@ in {
         Restart = "always";
         RestartSec = "5s";
       };
+      environment = {
+        EMBEDDED_RUBY = "true";
+        LANG = "en_US.iso88591";
+      };
       preStart = ''
         /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient -d /var/cache/vulnix
       '';
-      environment = { EMBEDDED_RUBY = "true"; };
     };
 
     flyingcircus.services.sensu-client.checks = {

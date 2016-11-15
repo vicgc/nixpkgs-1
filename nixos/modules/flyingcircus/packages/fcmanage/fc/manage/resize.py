@@ -1,16 +1,23 @@
-"""Resizes filesystems or memory if needed.
+"""Resizes filesystems, or reboots due to memory or Qemu changes if needed.
 
 We expect the root partition to be partition 1 on its device, but we're
 looking up the device by checking the root partition by label first.
 """
 
 import argparse
-import fc.manage.dmi_memory
 import fc.maintenance
 import fc.maintenance.lib.reboot
+import fc.manage.dmi_memory
 import json
+import os
+import os.path
 import re
+import shutil
 import subprocess
+
+class QuotaError(RuntimeError):
+    """Failed to parse XFS quota report."""
+    pass
 
 
 class Disk(object):
@@ -106,10 +113,12 @@ class Disk(object):
         next full GiB value.
         """
         report = self.xfsq('report -p')
+        if not report:
+            return (0, 0)
         m = re.search(r'^{}\s+(\d+)\s+\d+\s+(\d+)\s+'.format(self.proj),
                       report, re.MULTILINE)
         if not m:
-            raise RuntimeError('failed to parse xfs_quota output', report)
+            raise QuotaError('failed to parse xfs_quota output', report)
         used = m.group(1)
         blocks_hard = m.group(2)
         return (round(float(used) / 2**20), round(float(blocks_hard) / 2**20))
@@ -148,7 +157,7 @@ class Disk(object):
             return
         print('resize: Setting XFS quota limits to {} GiB'.format(disk_gb))
         print(self.xfsq('project -s {}'.format(self.proj), ionice=True))
-        print(self.xfsq('timer -p 1m' ))
+        print(self.xfsq('timer -p 1m'))
         print(self.xfsq('limit -p bsoft={d}g bhard={d}g {p}'.format(
             d=disk_gb, p=self.proj)))
 
@@ -209,7 +218,7 @@ def memory_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
 
 
 def cpu_change(enc):
@@ -225,7 +234,63 @@ def cpu_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 900, msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
+
+
+def check_qemu_reboot():
+    """Schedules a reboot if the Qemu binary environment has changed."""
+    # Update the -booted marker if necessary. We need to store the marker
+    # in a place where it does not get removed after _internal_ reboots
+    # of the virtual machine. However, if we got rebooted with a fresh
+    # Qemu instance, we need to update it from the marker on the tmp
+    # partition.
+    if not os.path.isdir('/var/lib/qemu'):
+        os.makedirs('/var/lib/qemu')
+    if os.path.exists('/tmp/fc-data/qemu-binary-generation-booted'):
+        shutil.move('/tmp/fc-data/qemu-binary-generation-booted',
+                    '/var/lib/qemu/qemu-binary-generation-booted')
+    # Schedule maintenance if the current marker differs from booted
+    # marker.
+    if not os.path.exists('/run/qemu-binary-generation-current'):
+        return
+
+    try:
+        with open('/run/qemu-binary-generation-current', encoding='ascii') \
+                as f:
+            current_generation = int(f.read().strip())
+    except:
+        # Do not perform maintenance if no current marker is there.
+        return
+
+    try:
+        with open('/var/lib/qemu/qemu-binary-generation-booted',
+                  encoding='ascii') as f:
+            booted_generation = int(f.read().strip())
+    except:
+        # Assume 0 as the generation marker as that is our upgrade path:
+        # VMs started with an earlier version of fc.qemu will not have
+        # this marker at all.
+        booted_generation = 0
+
+    if booted_generation >= current_generation:
+        # We do not automatically downgrade. If we ever want that then I
+        # want us to reconsider the side-effects.
+        return
+
+    msg = 'Cold restart because the Qemu binary environment has changed'
+    with fc.maintenance.ReqManager() as rm:
+        rm.add(fc.maintenance.Request(
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
+
+
+def check_kernel_reboot():
+    """Schedules a reboot if the kernel has changed."""
+    if (os.stat('/run/current-system/kernel').st_ino !=
+            os.stat('/run/booted-system/kernel').st_ino):
+        with fc.maintenance.ReqManager() as rm:
+            rm.add(fc.maintenance.Request(
+                fc.maintenance.lib.reboot.RebootActivity('reboot'),
+                comment='Reboot to activate changed kernel'))
 
 
 def main():
@@ -233,6 +298,9 @@ def main():
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
                    help='path to enc.json (default: %(default)s)')
     args = a.parse_args()
+
+    check_qemu_reboot()
+    check_kernel_reboot()
 
     if args.enc_path:
         with open(args.enc_path) as f:
