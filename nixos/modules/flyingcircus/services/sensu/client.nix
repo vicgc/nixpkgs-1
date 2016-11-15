@@ -186,8 +186,12 @@ in {
     systemd.services.sensu-client = {
       wantedBy = [ "multi-user.target" ];
       path = [
-        pkgs.sensu pkgs.glibc pkgs.nagiosPluginsOfficial pkgs.bash
-        pkgs.lm_sensors pkgs.coreutils
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.glibc
+        pkgs.lm_sensors
+        pkgs.nagiosPluginsOfficial
+        pkgs.sensu
       ];
       serviceConfig = {
         User = "sensuclient";
@@ -197,10 +201,13 @@ in {
         Restart = "always";
         RestartSec = "5s";
       };
+      environment = {
+        EMBEDDED_RUBY = "true";
+        LANG = "en_US.iso88591";
+      };
       preStart = ''
         /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient -d /var/cache/vulnix
       '';
-      environment = { EMBEDDED_RUBY = "true"; };
     };
 
     flyingcircus.services.sensu-client.checks = {
