@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }: with lib;
+^{ config, lib, pkgs, ... }: with lib;
 
 let
   cfg = config.flyingcircus.roles.elasticsearch;
@@ -65,7 +65,7 @@ in
       };
 
       esNodes = mkOption {
-        type = types.listOf types.string;
+        type = types.nullOr (types.listOf types.string);
         default = null;
       };
     };
