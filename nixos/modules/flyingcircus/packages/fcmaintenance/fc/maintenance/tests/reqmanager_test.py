@@ -13,6 +13,7 @@ import os.path as p
 import pytest
 import pytz
 import shortuuid
+import socket
 import sys
 import unittest.mock
 import uuid
@@ -153,8 +154,9 @@ def test_delete_disappeared_requests(connect, reqmanager):
     endm.assert_called_once_with({'123abc': {'result': 'deleted'}})
 
 
+@unittest.mock.patch('fc.util.directory.connect')
 @freezegun.freeze_time('2016-04-20 12:00:00')
-def test_execute_all_due(tmpdir):
+def test_execute_all_due(connect, tmpdir):
     with request_population(3, tmpdir) as (rm, reqs):
         reqs[0].state = State.running
         reqs[1].state = State.tempfail
@@ -165,8 +167,9 @@ def test_execute_all_due(tmpdir):
             assert len(r.attempts) == 1
 
 
+@unittest.mock.patch('fc.util.directory.connect')
 @freezegun.freeze_time('2016-04-20 12:00:00')
-def test_execute_not_due(tmpdir):
+def test_execute_not_due(connect, tmpdir):
     with request_population(3, tmpdir) as (rm, reqs):
         reqs[0].state = State.error
         reqs[1].state = State.postpone
@@ -176,13 +179,34 @@ def test_execute_not_due(tmpdir):
             assert len(r.attempts) == 0
 
 
-def test_execute_logs_exception(reqmanager, caplog):
+@unittest.mock.patch('fc.util.directory.connect')
+def test_execute_logs_exception(connect, reqmanager, caplog):
     req = reqmanager.add(Request(Activity(), 1))
     req.state = State.due
     os.chmod(req.dir, 0o000)  # simulates I/O error
     reqmanager.execute()
     assert 'Permission denied' in caplog.text
     os.chmod(req.dir, 0o755)  # py.test cannot clean up 0o000 dirs
+
+
+@unittest.mock.patch('fc.util.directory.connect')
+def test_execute_marks_service_status(connect, reqmanager):
+    req = reqmanager.add(Request(Activity(), 1))
+    req.state = State.due
+    reqmanager.execute()
+    assert [
+        unittest.mock.call(unittest.mock.ANY, False),
+        unittest.mock.call(unittest.mock.ANY, True)] == \
+        connect().mark_node_service_status.call_args_list
+
+
+@unittest.mock.patch('fc.util.directory.connect')
+def test_execute_proceeds_on_connection_error(connect, reqmanager):
+    connect().mark_node_service_status.side_effect = socket.error()
+    req = reqmanager.add(Request(Activity(), 1))
+    req.state = State.due
+    reqmanager.execute()
+    assert req.state == State.success
 
 
 @unittest.mock.patch('fc.util.directory.connect')
