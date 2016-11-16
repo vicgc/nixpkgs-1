@@ -13,6 +13,7 @@ import os.path as p
 import pytest
 import pytz
 import shortuuid
+import socket
 import sys
 import unittest.mock
 import uuid
@@ -190,6 +191,15 @@ def test_execute_marks_service_status(connect, reqmanager):
         unittest.mock.call(unittest.mock.ANY, False),
         unittest.mock.call(unittest.mock.ANY, True)] == \
         connect().mark_node_service_status.call_args_list
+
+
+@unittest.mock.patch('fc.util.directory.connect')
+def test_execute_proceeds_on_connection_error(connect, reqmanager):
+    connect().mark_node_service_status.side_effect = socket.error()
+    req = reqmanager.add(Request(Activity(), 1))
+    req.state = State.due
+    reqmanager.execute()
+    assert req.state == State.success
 
 
 @unittest.mock.patch('fc.util.directory.connect')

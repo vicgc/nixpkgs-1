@@ -44,6 +44,7 @@ class ReqManager:
 
     directory = None
     lockfile = None
+    in_maintenance = False  # 'maintenance' flag set in directory
 
     def __init__(self, spooldir=DEFAULT_DIR, enc_path=None):
         """Initialize ReqManager and create directories if necessary."""
@@ -161,6 +162,36 @@ class ReqManager:
                 requests.append(request)
         yield from sorted(requests)
 
+    def enter_maintenance(self):
+        """Set myself in 'maintenance' mode.
+
+        This method is idempotent since we need to call it for every
+        request. ReqManager's current design does not allow to query if
+        there are runnable requests at all without causing side effects
+        (humm). Tolerates directory failures as there a some maintenance
+        actions that need to proceed anyway.
+        """
+        if self.in_maintenance:
+            return
+        try:
+            LOG.debug('marking node as "out of service"')
+            self.directory.mark_node_service_status(socket.gethostname(),
+                                                    False)
+            self.in_maintenance = True
+        except socket.error:
+            LOG.error('failed to set "out of service" directory flag')
+
+    def leave_maintenance(self):
+        if not self.in_maintenance:
+            return
+        try:
+            LOG.debug('marking node as "in service"')
+            self.directory.mark_node_service_status(socket.gethostname(),
+                                                    True)
+            self.in_maintenance = False
+        except socket.error:
+            LOG.error('failed to set "in service" directory flag')
+
     @require_directory
     @require_lock
     def execute(self):
@@ -170,14 +201,11 @@ class ReqManager:
         After that, select the oldest due request as next active request.
         """
         LOG.debug('executing maintenance requests')
-        hostname = socket.gethostname()
         set_maintenance = False
         try:
             for req in self.runnable():
                 LOG.info('(req %s) starting execution', req.id)
-                if not set_maintenance:
-                    self.directory.mark_node_service_status(hostname, False)
-                    set_maintenance = True
+                self.enter_maintenance()
                 try:
                     req.execute()
                 except Exception:
@@ -189,7 +217,7 @@ class ReqManager:
                     pass
                 LOG.debug('(req %s) executed, state %s', req.id, req.state)
         finally:
-            self.directory.mark_node_service_status(hostname, True)
+            self.leave_maintenance()
 
     @require_lock
     @require_directory
@@ -233,9 +261,10 @@ class ReqManager:
             req.save()
 
 
-def transaction(spooldir=DEFAULT_DIR, enc_path=None):
+def transaction(spooldir=DEFAULT_DIR, enc_path=None, do_scheduling=True):
     with ReqManager(spooldir, enc_path) as rm:
-        rm.schedule()
+        if do_scheduling:
+            rm.schedule()
         rm.execute()
         rm.postpone()
         rm.archive()
@@ -250,12 +279,16 @@ Schedules, runs, and archives maintenance requests.
                    help='requests spool dir (default: %(default)s)')
     a.add_argument('-E', '--enc-path', metavar='PATH', default=None,
                    help='full path to enc.json')
+    a.add_argument('-S', '--no-scheduling', default=False, action='store_true',
+                   help='skip maintenance scheduling, for example to test '
+                   'local modifications in the request json (default: '
+                   '%(default)s)')
     args = a.parse_args()
     logging.basicConfig(format='%(levelname)s: %(message)s',
                         level=logging.DEBUG if args.verbose else logging.INFO)
     # this is really annoying
     logging.getLogger('iso8601').setLevel(logging.INFO)
-    transaction(args.spooldir, args.enc_path)
+    transaction(args.spooldir, args.enc_path, not args.no_scheduling)
 
 
 def list_maintenance():
