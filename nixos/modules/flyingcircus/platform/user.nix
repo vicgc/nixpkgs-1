@@ -56,9 +56,9 @@ let
   admins_group =
     if admins_group_data == null
     then {}
-    else {
-      ${admins_group_data.name}.gid = admins_group_data.gid;
-    };
+    else
+      lib.setAttrByPath [ admins_group_data.name "gid" ]  admins_group_data.gid;
+
 
   current_rg =
     if lib.hasAttrByPath ["parameters" "resource_group"] cfg.enc
@@ -94,7 +94,7 @@ let
           (permission: {
             name = permission.name;
             value = {
-              gid = config.ids.gids.${permission.name};
+              gid = cfg.static.ids.gids.${permission.name};
             };
           })
           permissions));
@@ -150,7 +150,6 @@ in
 
 
   config = {
-
     ids.uids = {
       # Our custom services
       sensuserver = 31001;
@@ -196,10 +195,10 @@ in
       mutableUsers = false;
       users = map_userdata userdata;
       groups =
-        get_permission_groups permissions
-        // { service.gid = config.ids.gids.service; }
-        // admins_group
-        // get_group_memberships userdata;
+        admins_group
+        // get_group_memberships userdata
+        // { service.gid = cfg.static.ids.gids.service; }
+        // get_permission_groups permissions;
     };
 
     # needs to be first in sudoers because of the %admins rule

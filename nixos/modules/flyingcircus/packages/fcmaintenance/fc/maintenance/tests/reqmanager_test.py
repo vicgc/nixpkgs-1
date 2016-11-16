@@ -114,6 +114,13 @@ def test_do_add_two_reqs_with_identical_comments(reqmanager):
         assert len(rm.requests) == 2
 
 
+def test_list_other_requests(reqmanager):
+    with reqmanager as rm:
+        first = rm.add(Request(Activity(), 1))
+        second = rm.add(Request(Activity(), 1))
+        assert first.other_requests() == [second]
+
+
 @unittest.mock.patch('fc.util.directory.connect')
 def test_schedule_empty(connect, reqmanager):
     rpccall = connect().schedule_maintenance
