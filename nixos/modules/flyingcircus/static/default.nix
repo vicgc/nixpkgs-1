@@ -92,32 +92,5 @@ with lib;
       vagrant = true;
     };
 
-    flyingcircus.static.ids.uids = {
-      # Our custom services
-      sensuserver = 31001;
-      sensuapi = 31002;
-      uchiwa = 31003;
-      sensuclient = 31004;
-      powerdns = 31005;
-    };
-
-    flyingcircus.static.ids.gids = {
-      # The generic 'service' GID is different from Gentoo.
-      # But 101 is already used in NixOS.
-      service = 900;
-
-      # Our permissions
-      login = 500;
-      code = 501;
-      stats = 502;
-      sudo-srv = 503;
-
-      # Our custom services
-      sensuserver = 31001;
-      sensuapi = 31002;
-      uchiwa = 31003;
-      sensuclient = 31004;
-    };
-
   };
 }
