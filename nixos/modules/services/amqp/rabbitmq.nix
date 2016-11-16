@@ -133,7 +133,7 @@ in {
         RABBITMQ_SERVER_START_ARGS = "-rabbit error_logger tty -rabbit sasl_error_logger false";
         RABBITMQ_PID_FILE = "${cfg.dataDir}/pid";
         SYS_PREFIX = "";
-        RABBITMQ_PLUGINS_DIR = "${cfg.dataDir}/plugins";
+        RABBITMQ_PLUGINS_DIR = plugins;
         RABBITMQ_ENABLED_PLUGINS_FILE = pkgs.writeText "enabled_plugins" ''
           [ ${concatStringsSep "," cfg.plugins} ].
         '';
