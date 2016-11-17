@@ -33,10 +33,10 @@ class RebootActivity(Activity):
             print(time.time(), file=f)
         opt = '-h' if self.coldboot else '-r'
         subprocess.check_call(['shutdown', opt, '1', self.request.comment])
-        # We won't be able to pick up the return code of this command as
-        # systemd terminates our process right away. The request will be
-        # finished properly on the next fc.maintenance run. For the same
-        # reason, updates for ourself won't be persisted by Request.save().
+        self.finish('shutdown at {}'.format(
+            time.strftime('%Y-%m-%d %H:%M:%S UTC',
+                          time.gmtime(time.time() + 60))))
+        time.sleep(59)  # `shutdown` waits 1min until kicking off action
 
     def finish(self, message):
         """Signal to ReqManager that we are done."""
