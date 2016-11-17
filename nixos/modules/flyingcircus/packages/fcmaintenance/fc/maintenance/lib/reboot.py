@@ -36,7 +36,8 @@ class RebootActivity(Activity):
         self.finish('shutdown at {}'.format(
             time.strftime('%Y-%m-%d %H:%M:%S UTC',
                           time.gmtime(time.time() + 60))))
-        time.sleep(59)  # `shutdown` waits 1min until kicking off action
+        self.request.save()
+        time.sleep(120)  # `shutdown` waits 1min until kicking off action
 
     def finish(self, message):
         """Signal to ReqManager that we are done."""
