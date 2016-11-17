@@ -218,7 +218,8 @@ def memory_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 600,
+            comment=msg))
 
 
 def cpu_change(enc):
@@ -234,7 +235,8 @@ def cpu_change(enc):
     print('resize:', msg)
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 600,
+            comment=msg))
 
 
 def check_qemu_reboot():
@@ -280,7 +282,8 @@ def check_qemu_reboot():
     msg = 'Cold restart because the Qemu binary environment has changed'
     with fc.maintenance.ReqManager() as rm:
         rm.add(fc.maintenance.Request(
-            fc.maintenance.lib.reboot.RebootActivity('poweroff'), comment=msg))
+            fc.maintenance.lib.reboot.RebootActivity('poweroff'), 600,
+            comment=msg))
 
 
 def check_kernel_reboot():
