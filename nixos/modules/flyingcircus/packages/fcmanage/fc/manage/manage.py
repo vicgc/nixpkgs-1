@@ -354,7 +354,7 @@ def seed_enc(path):
 
 def exit_timeout(signum, frame):
     print("Execution timed out. Exiting.")
-    sys.exit()
+    sys.exit(1)
 
 
 def parse_args():
@@ -372,7 +372,7 @@ def parse_args():
                    'to system_state.json')
     a.add_argument('-m', '--maintenance', default=False, action='store_true',
                    help='run scheduled maintenance')
-    a.add_argument('-t', '--timeout', default=30 * 60, type=int,
+    a.add_argument('-t', '--timeout', default=3600, type=int,
                    help='abort execution after <INT> seconds')
 
     build = a.add_mutually_exclusive_group()
