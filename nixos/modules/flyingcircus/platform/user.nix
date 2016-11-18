@@ -21,6 +21,10 @@ let
     if builtins.pathExists cfg.userdata_path
     then builtins.fromJSON (builtins.readFile cfg.userdata_path)
     else [];
+  permissionsdata =
+    if builtins.pathExists cfg.permissions_path
+    then builtins.fromJSON (builtins.readFile cfg.permissions_path)
+    else [];
 
   get_primary_group = user:
     builtins.getAttr user.class {
@@ -29,23 +33,23 @@ let
     };
 
   # Data read from Directory (list) -> users.users structure (list)
-  map_userdata = userdata:
-  lib.listToAttrs
-    (map
-      (user: {
-        name = user.uid;
-        value = {
-          createHome = true;
-          description = user.name;
-          group = get_primary_group user;
-          hashedPassword = lib.removePrefix "{CRYPT}" user.password;
-          home = user.home_directory;
-          shell = "/run/current-system/sw" + user.login_shell;
-          uid = user.id;
-          openssh.authorizedKeys.keys = user.ssh_pubkey;
-        };
-      })
-      userdata);
+  map_userdata = users:
+    lib.listToAttrs
+      (map
+        (user: {
+          name = user.uid;
+          value = {
+            createHome = true;
+            description = user.name;
+            group = get_primary_group user;
+            hashedPassword = lib.removePrefix "{CRYPT}" user.password;
+            home = user.home_directory;
+            shell = "/run/current-system/sw" + user.login_shell;
+            uid = user.id;
+            openssh.authorizedKeys.keys = user.ssh_pubkey;
+          };
+        })
+      users);
 
 
   admins_group_data =
@@ -80,11 +84,6 @@ let
   get_group_memberships = users:
     lib.mapAttrs (name: groupdata: lib.zipAttrs groupdata)
       (lib.zipAttrs (map get_group_memberships_for_user users));
-
-  permissions =
-    if builtins.pathExists cfg.permissions_path
-    then builtins.fromJSON (builtins.readFile cfg.permissions_path)
-    else [];
 
   get_permission_groups = permissions:
     lib.listToAttrs
@@ -193,10 +192,10 @@ in
       mutableUsers = false;
       users = map_userdata userdata;
       groups =
-        get_permission_groups permissions
-        // { service.gid = config.ids.gids.service; }
-        // admins_group
-        // get_group_memberships userdata;
+        admins_group
+        // { service.gid = cfg.static.ids.gids.service; }
+        // get_group_memberships userdata
+        // get_permission_groups permissionsdata;
     };
 
     # needs to be first in sudoers because of the %admins rule
