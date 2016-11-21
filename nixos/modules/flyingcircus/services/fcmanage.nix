@@ -20,7 +20,7 @@ in {
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --maintenance --build";
+        default = "--directory --system-state --maintenance --channel";
         description = "Steps to run by the agent.";
       };
     };
