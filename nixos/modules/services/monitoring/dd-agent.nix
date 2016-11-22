@@ -17,6 +17,10 @@ let
     dogstatsd_log_file: /var/log/datadog/dogstatsd.log
     pup_log_file:       /var/log/datadog/pup.log
 
+    # logging to files already. Also the useless error messages fill up the
+    # log.
+    log_to_syslog: no
+
     # proxy_host: my-proxy.com
     # proxy_port: 3128
     # proxy_user: user
@@ -57,7 +61,7 @@ let
     instances:
       - use_mount: no
   '';
-  
+
   networkConfig = pkgs.writeText "network.yaml" ''
     init_config:
 
@@ -68,7 +72,7 @@ let
           - lo
           - lo0
   '';
-  
+
   postgresqlConfig = pkgs.writeText "postgres.yaml" cfg.postgresqlConfig;
   nginxConfig = pkgs.writeText "nginx.yaml" cfg.nginxConfig;
   mongoConfig = pkgs.writeText "mongo.yaml" cfg.mongoConfig;
@@ -148,7 +152,7 @@ in {
       default = null;
       type = types.uniq (types.nullOr types.string);
     };
-    
+
     mongoConfig = mkOption {
       description = "MongoDB integration configuration";
       default = null;
