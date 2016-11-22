@@ -11,6 +11,10 @@ let
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
+  mailoutService = lib.findFirst
+    (s: s.service == "mailserver-mailout")
+    null
+    config.flyingcircus.enc_services;
 
   # -- files --
   rootPasswordFile = "/etc/local/graylog/password";
@@ -126,6 +130,20 @@ in
         # ipv6 would be nice too
   	    extraConfig = ''
           trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
+          ${let rg = config.flyingcircus.enc.parameters.resource_group;
+            in
+            optionalString (mailoutService != null) ''
+            # Email transport
+            transport_email_enabled = true
+            transport_email_hostname = ${mailoutService.address}
+            transport_email_port = 25
+            transport_email_use_auth = false
+            transport_email_use_ssl = false
+            transport_email_use_tls = false
+            transport_email_subject_prefix = [graylog/${rg}]
+            transport_email_from_email = admin+graylog+${rg}@flyingcircus.io
+            transport_email_from_name = Graylog2 ${rg}
+          ''}
   	    '';
     	};
 
