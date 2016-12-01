@@ -111,7 +111,7 @@ in rec {
       flyingcircus = {
 
             users = hydraJob
-              (import modules/flyingcircus/tests/fc-users.nix {
+              (import modules/flyingcircus/tests/users.nix {
                   inherit system; }
             );
 

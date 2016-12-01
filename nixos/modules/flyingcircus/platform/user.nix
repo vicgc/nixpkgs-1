@@ -109,6 +109,13 @@ let
       (user: " ${config.systemd.package}/bin/loginctl disable-linger ${user.uid}")
       userdata;
 
+  # merge a list of sets recursively
+  mergeSets = listOfSets:
+    if (builtins.length listOfSets) == 1 then
+      builtins.head listOfSets
+    else
+      lib.recursiveUpdate (builtins.head listOfSets) (mergeSets (builtins.tail listOfSets));
+
 in
 
 {
@@ -165,12 +172,19 @@ in
     users = {
       mutableUsers = false;
       users = map_userdata userdata;
-      groups =
+      groups = mergeSets [
         admins_group
-        // { service.gid = config.ids.gids.service; }
-        // (lib.traceSeq (get_group_memberships userdata) (get_group_memberships userdata))
-        // (lib.traceSeq (get_permission_groups permissionsdata) (get_permission_groups permissionsdata));
+        { service.gid = config.ids.gids.service; }
+        (get_group_memberships userdata)
+        (get_permission_groups permissionsdata)
+        ];
 
+      /*groups = listOfSets:
+
+        lib.recursiveUpdate
+          (lib.recursiveUpdate admins_group { service.gid = config.ids.gids.service; })
+          (lib.recursiveUpdate (get_group_memberships userdata) (get_permission_groups permissionsdata));
+          */
     };
 
     # needs to be first in sudoers because of the %admins rule
