@@ -109,6 +109,12 @@ in rec {
         simple;
 
       flyingcircus = {
+
+            users = hydraJob
+              (import modules/flyingcircus/tests/fc-users.nix {
+                  inherit system; }
+            );
+
             percona-57 = hydraJob
               (import modules/flyingcircus/tests/percona.nix {
                   percona = pkgs.callPackage
