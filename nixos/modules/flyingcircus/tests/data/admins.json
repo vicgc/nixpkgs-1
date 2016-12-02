@@ -2,10 +2,6 @@
  "gid": 2003,
  "name": "admins",
  "technical_contacts": [
-  "ab@flyingcircus.io",
-  "kc@flyingcircus.io",
-  "ct@flyingcircus.io",
-  "cz@flyingcircus.io",
-  "fl@flyingcircus.io"
+  "foo@flyingcircus.io"
  ]
 }

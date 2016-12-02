@@ -18,6 +18,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} :
                   ../packages/default.nix
                   ../platform/default.nix
                    ];
+
+      environment.systemPackages = [ pkgs.shadow ];
       flyingcircus.ssl.generate_dhparams = false;
 
       flyingcircus.load_enc = false;
@@ -39,8 +41,25 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} :
 
     subtest "admin-user", sub {
       # check for group memberships
-      $machine->succeed("test \"`id zagy`\" = \"uid=1000(zagy) gid=100(users) groups=500(login),503(sudo-srv),2003(admins),100(users)\"")
+      $machine->succeed("test \"`id foo`\" = \"uid=1000(foo) gid=100(users) groups=500(login),503(sudo-srv),2003(admins),100(users)\"");
+      # ssh key exists
+      $machine->succeed("test \"`cat /etc/ssh/authorized_keys.d/foo`\" = 'ssh-ed25519 some_hash foo\@computer'>/dev/console");
+      # password is set
+      $machine->succeed("passwd --status foo | grep -v NP -q");
+
     };
+    subtest "memberships", sub {
+      # group memberships
+      # - member of login
+      $machine->succeed("test \"`id foo2`\" = \"uid=1001(foo2) gid=100(users) groups=500(login),100(users)\"");
+      # - member of admins
+      $machine->succeed("test \"`id foo3`\" = \"uid=1002(foo3) gid=100(users) groups=2003(admins),100(users)\"");
+      # - member of sudo-srv
+      $machine->succeed("test \"`id foo4`\" = \"uid=1003(foo4) gid=100(users) groups=503(sudo-srv),100(users)\"");
+      # - member of any groups
+      $machine->succeed("test \"`id foo5`\" = \"uid=1004(foo5) gid=100(users) groups=100(users)\"");
+    };
+
 
   '';
 })

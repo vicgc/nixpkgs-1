@@ -1,212 +1,86 @@
-[
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/abittner",
-  "id": 1152,
-  "login_shell": "/bin/bash",
-  "name": "Alexander Bittner",
-  "password": "{CRYPT}$6$FrY8Rmj2$uloUlzWs/AWrKA6PFp03eIyWZ58FF1h.ypFFJm8Ms8jJ8F1KOxkgtHvePei2WcaOB/58yKTxQpD6ewB5Q4OMa1",
-  "permissions": {
-   "test": [
-    "admins",
-    "login",
-    "stats",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxnzx7B1Khw688K3DReYnKpEOng+nerk4mFGXOhWz1hOvU6QfI0K3oyZj79wSyBo4V/FG1xxOIxphm58jARvPmdEhpDEZh/ekbQ5DN7/tq65tMJuHaRWE2E2zKBAqV2vhqkYvQ5lbANeOAu6ismvSu/fglcUi0aS1d1MsgWXQvNKv4p5ylHfp3Y+b4YPeQpsNvwcJEKI0Y9HYSpHYE+DMQjojSgpntcBsgaKDf5AbyCve2wHRW0e2SpejpYrKjYOoySXXMTElfoF915D6pVhmWJy7ZrrvZkiwT6JgYs5NlGrLoyG7NGhDOF4/HyrABelX2C5feN7geIt6TUU0TW4S0Q== abittner",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCjc5f9XnxEeB75nPpxDPdh36bqQuk7b3u45JWMIcHM/3ooJwhuHrkXjQrJUWLNqYK23Hkk4Wlpdozo2E8msAgErSXY6Pnm5MMl4pDpc9kHRQUDIEVKTf4nz6vpOFWh/TZmK9799r67DY1JmORZmovivNNdRryyHUVp8wfV2ADDMszXKTd3wCXU8IZPWyMdpnKoIducPEZh8OybbmN3Ebv9SmuHUHHVQpBeA5R9DqnLUGFcQ09oP2TtFTW6A9qo6yyqxZ11LT/FnLhmqJUyRx2Eyvo8IG0TS/unmJJngCRrAyuzZ8cHcCP/bS7lful9hJQ2sAA/Nlkjh2qCBrBPiJp fimn@fimn01"
-  ],
-  "uid": "abittner"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/benjamin.birkenhake",
-  "id": 1627,
-  "login_shell": "/bin/bash",
-  "name": "Benjamin Birkenhake",
-  "password": "{CRYPT}$6$rounds=100000$qnxg2wFFflPjeQMw$odI8c.miEbwz3s8A7uawfwQUmyWkP.VCIlDfD16QlNXimhKXzl9R4pD9kZOGz8YXbiHUTCE7uJW7N0pOWj8KU0",
-  "permissions": {
-   "test": []
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1KYaE2X3NEPjbtXK0oQACfll2TauHG38fXcBnv0wtxMe1hf7hVHDDHWxasG7Z0r3O/P+OKHqcEl2eVnUGfMZWYMh7Ome9kdJoEE2PqHw9Mk5sEYAq0pD7r45a7kziIiXSUmTZEckTxn+LwiRD1UdZyhNZTB1HPkaA0oQLERBuMPmdROKe0SUflr5MrO86ThG7FyhZDtOBzmbWOdMK0XU3beDoFs2d2UlcSmxRW0Z+zmS8wNp4sw0MmaUhhTjFaOC4Xf0gCC9xcz7YdkC+CRYRZ8cb6xOdgzTxtrL1Bju9oHsWujUopPD676QUiIERrMp+SE5NzUOLFv/vUyDbXa++Q== benjamin@birkenhake.org"
-  ],
-  "uid": "benjamin.birkenhake"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/ckauhaus",
-  "id": 1046,
-  "login_shell": "/bin/bash",
-  "name": "Christian Kauhaus",
-  "password": "{CRYPT}$6$rounds=100000$PBt6m7CZbgLceP20$X7S5h1C1CZ1V0Ylrb3GlyvN/OAC2DLSmziW62193x952AuPaF9n5/rGEwtTqnmyQ6J4NBnCToWeyVuVK5nFOs.",
-  "permissions": {
-   "test": [
-    "admins",
-    "login",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCz7v7YuSEuG4R8Lq6UL6xWB2ew5UMp8zdijRbX8uao9gvMNWbvhbfFE6O8/Pp27H8Hneeqe9nOh/AxeIP+YJU3AM74QWhvqgP/emHThvUzPc9pOILwrLCgTCf8gXzR5Rvsor4XIxNNZj5BKXo71GLbpKBVYWiBNW1Z5YG4pAbcAldWS1LK6zdj6cc94D2Y4S2CGNfafJNW0BG+E0rdTvpoJPfiLMP0b0J+M2SM7fJRUHUZgeYZux44NPP74NC5YcKF7ejoHqiUy4H09Be5ukNhIRuSjeM0dlmiUfAcKndcLA6EuomDZvXCACc7l6Ukn5tC1sSrw7l7VGK0DC65A459 ckauhaus@lionel"
-  ],
-  "uid": "ckauhaus"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/ctheune",
-  "id": 1003,
-  "login_shell": "/bin/bash",
-  "name": "Christian Theune",
-  "password": "{CRYPT}$6$rounds=100000$DCn7vlMYWtGYofna$1SNArTqCOcbjW2fj8FyBO451FVaEK0u/NnQH70v748bw3hCmQJz6XZSWhLAjoLKOQsWCz78aIYpZnC.saFjBd/",
-  "permissions": {
-   "test": [
-    "admins",
-    "login",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSj4vk5i9UlqkQSq+u7+O9BcK6Ag918T36J4vy4K2zhYacu7t0TQBFqpao3ohMEYlbYsi0VEeQEKGbQ6mVJbGAi0UZJwhMdTQ0AptmjPJle3fxZHSzXzSOyssukygb5UNBqelvdM8B4c5qOuVz75fEhaPfzYs3w/qVKT4W2M+162xoZstNLI8WH13OKFoiMU3ubUb9tQD8icsWhF1N2gScV/Anb3QdSHw0V18EOXpEM/rfwRf+uK7Vs84c41eFKWKBERkRGdm5Z6mtaqQ7nqvHdkloTTbfsPUBFq/dgUlmVTLUE36mRBs9cmsFLVsKwPDRntHPXULnrl9U3y6uLDVf ctheune@mindy",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1edRV8SYlXhhzpCuxWrP3M/J7uIvqes4AXqV7zPXjMhi/taslT3rAMHla/pgvKtNMYl42K7mc5SVfOwroYUgG6aAyuXF6vMwdBZ+W99UcqkD6P1DSD34UPdAIGDnMMLgOtP7wlkamykeJPbvMCUfS6WaHVn/BRSM8ck1JIhp9/qQ8AiM0s8Tl7r6gQDF1ISiOeLQe/pdmBMDn4qJ74DoXBqJtGhm7o8uZq48WkDgKq6cWTMswa/+5l3Lp85ceBpYgJUWXXCKVAvDeTHRlHTRXUINR1klU9rRBKfY1g6GRAeggIfFBlT1bbdbx6kZmxyIsHrrMhTY6+5Ay+nn5DQo9 ctheune@boxy",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvxJ1IjobViSEMW5zaqfXsrFLM7I4T40afPz6qCzQHIY4IPmGHaAMTgMOa4C0myDC91nDzp5zh/3dr7wLEW5nFXjlVjX5odpz9AIuwuAA3iwXRbPfjljoEamJyZ/2hT/7B46Liy3KBAjNMXvcITTCJAwZ0OQmUzCtP422eJNyAW+L/eZEWX8xF0NaTyNG9M+nPbF8j5f7D4vNDak3GYVOvlYCoLzgJh94RAt8koVsCoVyVXGqhvzeeo2srldPhNz7tJ09LRSHyTilVldfOZxgd0UKELO2t85chTUCL7Jee/4nUbEYakGpmZx3ilade25LEjI+zF6dg5nq5nVRX1QaT ctheune@sarahs-air.theune",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCZ3Ja86WcIT077SBkYxMMRvkHDsMLL0aVHjlHXn25pe3MBFfGmVHiNTYspQnWgdcrZZmWJXa5n+TPzpAISHOVz8Xva5qv6mYCzhXe8oCO3IH/juMLRf+wNKWLbGOVMufSB0izd0yE6hppJ44RHqv+EmqqcO84P2hLyUQdsKkiWRolAUnmCvSs+Z6tbJqF9Zs+SVe9dTl+IuLPk90bY17+ZLFgTw2P/e+6jFk1VHPsDNXA9onwtDxfUb3PCOyyOZISypPJY7BHmlRKmgTzEibT7arOofmEr7gc7G028kO1Ujo4iXFz5P90UURAoFpzxKVCOmbhBp+TryafDCcWzWUWN ctheune@thirteen"
-  ],
-  "uid": "ctheune"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/flanitz",
-  "id": 1574,
-  "login_shell": "/bin/zsh",
-  "name": "Frank Lanitz",
-  "password": "{CRYPT}$6$rounds=100000$dqjII2YYgfKyc6gF$FeTplXuGOa3yd2Vw9LGfzKMiK4IUNnZ0J6Lo0PSW9wkyPJysdCyQavvgIYkAIMwZiLFKVci1jIok0HlCeGT540",
-  "permissions": {
-   "test": [
-    "admins",
-    "login",
-    "stats",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACtwZOhqKCRHvdk8szRkjr79tTOjw2mIwwzz7mTDoexNUHWjDBqSXIXQbTEaBr9MWcCvVvzqB6Mk/IHlKXy5C2Qc0ycH7oMvcG/jg766jNS396J2j1OLEc3UM53YDQ/GrJWBWAOceb5o3rc/qz6+rl7Oqrnq+273iM8EmZF63esU5uY53SrL+3Hm1lgbnpO8DAA5HInindUyJMpnj/W640D+60qY76QoGMwnhU9aWWdgp2EkFEyYPbvMZYZnC18iiSk9qIAOkhNX1yXvhLJfXLX6eSz7YTTxAl7xelp0Ysuuzy2uejVYNEl1S14a8+aM04dN4gFh8K+lI9U8DdFuLENvtnyQ+3+s0P6aV6dRHjQAwF7q9kIOUZ2IVO9bBXoVimqQT8hL0/qMPaF4/Bmc8ffcmXEJkN7RhGUW8Xay4SPkbES73Lupc+WPSDOlAdRbEMI6gIHmXgYwuAlk8lT+CuBB4ljjiZUMwBfS3I8gCmfNHZN+Ip9fdO5QSiZoaflZ51P8wNgcMXID7/1aZpREOQnDqQpqzUoY82lZ3GMfWaZS8f8CGr9tayXz/vK3/W0TIirE6Gnq1ccUAzYcPXFhaWJtpudLzCkwCeVLqrQB8MGoaDEXVKjYMuSzMy70xlUGmI8ryJhXqMNHJjpfjgsGzlzzBZEZMwrO6SgDpX5BtzBDJC4gJw+QRBcomD2JT1VE/QCO9MOKgWuuhkA7DJ3Raq+b1e7enoXqyvrUB/8pO79MfDDJmgu2IcHswhx6Cp6mxsTTORi74x3IE7fz9ctZUJjQCeKqa9hYf7YF01nOzlRxWU7MaPjIrf4vdYaStZtSwVg2g9L2/TqQr9RUsPcDp9MACM8KEn4mz0uHAXxNsw0WwyqzM7MryL7U7mYLLmykGsgqd2tFlQQ8WmX9CgQbVOjf+imEXR6fwh frlan@trabant",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVWJXGKYk5Vt5b2lT55TjpOYz2dLlB95j9MFFhQ+VnEFYm6ylnPN4Ta5EIvdsecCKfAmUidfKb3T9vHIA4YqK3wVCICwjQkjD2yMl7mY9xVZA55R38A07QmOC4CziqHVHoLWuTQJREyFfC/FAEGn5KV/vsaV08U8VnIJftwCnfRiAvWA4UaRkfKNUft9rv41E4ZTAuZsHxm2PT649ATemyjdRZcNS2yQr5LSp1TmCU8wNobiGg++qf2SpjvUw2TgutyI8BGC7LB+fqwK6Tk/ILRI2l1wz0Vr1EwbMspGuoD/PTgUbvdG7wZLEj60KCCMEu/I0iaRyAVUVTJL/c2C07 flanitz@Franks-MacBook-Pro.local",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnTeoO8PqOnmA4/mlxJyqCyNfCA/6Rcr9gbDXFnSv1/bHsdAsNv81zSQ1uhz1jHobputNLHTsbCLPOVrRWcCb21K6IEdhdkYKQjhFv+S2Va4MsMPQyLXp6k13h1hQ+REB6AlzQNd2HrV7m6vhWqrNc3gvXWyMv+bDDNLME0gNnle7O6cx+LrR6DVX4lnv6AdunpIIrxlZBBcvnXATYtwW/f77QQHYTjIdhGiBFdSGYMG0YrUR5NroRXhizA4Vv4LKIvhOb0iZpden6D0dwOxdoc5UvVqle3wFpm5o9KtOW9DmS9Y1CCpUaEQec1+40PwQYCKS3SDQbf7KvEsOkmbDzhGARUk98oF+sa7oQwBUu2e+6C95Q81TVMVnRRDgxLcX2qP/S0g6DvFyR5WfPWEXRxTk4+IvrE9kymg9gknQ08jxRRzazMGevTv/unZmgiTQ7gi66wLqtZLWruh7nalrYhw3tpq2WeW1ATT7d7Lb+b+J2q3g9lTLIjbyHQ7hv5Ouk1T1JkwNx7oSEQrBhRkGaaLiwN/YhYuhyHkvVeCckSm3VsxPR/0grs+eA/pnKkfpO++9OHJ1OEi+hA9L/vM8GzrnwL79QHzvPxnodC4DqKRXHLjV1Ebm+4xbedlZsbdFi/vqwNrJURwqchMZ/cKdPI2z1g3MM5C3oC5HQHYuCcw== frlan@lanitz",
-   "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBICxSXeZXRKgSnfoulprtl1ZbDiW+b63vchIQOUrpPF+peDAyuVMnIw7oTCRiIbbjQuWuKRulynm8o5VuyRTY8w= flanitz@Franks-MacBook-Pro.local"
-  ],
-  "uid": "flanitz"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/mb",
-  "id": 1622,
-  "login_shell": "/bin/bash",
-  "name": "Maksim Bronsky",
-  "password": "{CRYPT}$6$rounds=100000$fr99pTysZBXQJH4g$SJaG000fTjbJaNimxdqiNF3clfxEIgvUAHuxyLaJoLoV8VFMQTjn7IeRgsXVL1xy8XJ3szK2/eM10ayGSuqCe/",
-  "permissions": {
-   "test": [
-    "admins"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt1XO6oiCeXJj6e3Ry2IGE+HFrq8GQfAOwNaJOwyxH7gtfmQ22HeosFBVnzRgi6xrOtJhEbi0gfG26Evq6dNSXlxPrQ1bsFFiY0sErfPd/5oEbYrXnr++uNKd+JY87kZ1IVVIWSPOC0aaoX4HLvo9SYtWg6PVlXtZYD0o7IE+8OPa9JsFfaKWWPsYh2wDevw/GqwCHSnTSp7Tl8cwIot+zj9EjUI1WPB+1Vk4eIeQoxIG/XBNq43j9Qei5o+0HQIVEqjPq3RvdTKpDxghRLj8SLmOIAuE/HDovvKx2aOU3ccpwp/Iomupy6NeJpXdmkuCXT+1LVeZm2Exggnhlinu/ plumps@Maksims-MacBook-Pro.local"
-  ],
-  "uid": "mb"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/pmp",
-  "id": 1087,
-  "login_shell": "/bin/bash",
-  "name": "FCIO Mail Account",
-  "password": "{CRYPT}$6$rounds=100000$WBmnyggwMmTDvvCy$Vy8V488jQUR52zYkhcfpjpunMq2nVjcUEc5RzRlBv2pY1lLyQpV.ZUs4JIvDD6bOOmnHDtrxSW89w466IIZir.",
-  "permissions": {
-   "test": [
-    "login",
-    "stats",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA1MDJf/ixCnyuiyS9PAUKfO+aIBe1YfFPtkKjQNUatxEGdp6+JvuXDzoGiPPA+/ITJ/oEbu7DL0KwZ+ltYUzot4B9QZSdOiEq/tliVAZqf3+XKPdqnVteY4qIswDi5+IUcnv6OgvPKLM/0xuGOtJglm2U21xTfLjwRVJet1WhTsM= zagy@lrrr.whq.gocept.com",
-   "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAyEBRUCXVGwulznzvKKmCZMMN39SESHDsTELcbwOT2RsxJ6EbB3BvtjKtFHg+j3wPF2d6NnSpXDO4wT2t21PNUwFGI2x3pJS8flfvdKqosFZprK3CSFkF3WpKWDnOGYdGsB7m4VA6jgH1+DXIyRRbYwJoQg0xDMUo9Lf4lpq+ULztwbE1zfcBu/oQaZ1dIFSYR+zqoCxurXpTtC0MmFePvzjmCV0U/XYcUJ6p3U2p/10jQQXzV4pK59HeN/r6jsRmTxfIQ+5jKWTPns5AoYF4wrFmdd4dSufC2Cyr0ulwd8JyaYBXhA6S02fY18k8RpkIhj3FRq3n9igwEGr616B92Q== ckauhaus@burns"
-  ],
-  "uid": "pmp"
- },
- {
-  "class": "service",
-  "gid": 101,
-  "home_directory": "/srv/test",
-  "id": 1545,
-  "login_shell": "/bin/bash",
-  "name": "test",
-  "password": "",
-  "permissions": {
-   "test": [
-    "login"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSj4vk5i9UlqkQSq+u7+O9BcK6Ag918T36J4vy4K2zhYacu7t0TQBFqpao3ohMEYlbYsi0VEeQEKGbQ6mVJbGAi0UZJwhMdTQ0AptmjPJle3fxZHSzXzSOyssukygb5UNBqelvdM8B4c5qOuVz75fEhaPfzYs3w/qVKT4W2M+162xoZstNLI8WH13OKFoiMU3ubUb9tQD8icsWhF1N2gScV/Anb3QdSHw0V18EOXpEM/rfwRf+uK7Vs84c41eFKWKBERkRGdm5Z6mtaqQ7nqvHdkloTTbfsPUBFq/dgUlmVTLUE36mRBs9cmsFLVsKwPDRntHPXULnrl9U3y6uLDVf ctheune@mindy"
-  ],
-  "uid": "test"
- },
- {
-  "class": "service",
-  "gid": 101,
-  "home_directory": "/home/test1",
-  "id": 1074,
-  "login_shell": "/bin/bash",
-  "name": "test1",
-  "password": "{CRYPT}$6$Tkp38qnbmD$xHY6KsUANWZjkV2u4UQ9Ju6TmFA7JGIThkGq3H9dNUgIkGmFZ8wTWohIi6wM9kYtfZ19LtZGlsMk80tLyfftl/",
-  "permissions": {
-   "test": []
-  },
-  "ssh_pubkey": [],
-  "uid": "test1"
- },
- {
-  "class": "service",
-  "gid": 101,
-  "home_directory": "/home/test2",
-  "id": 1075,
-  "login_shell": "/bin/zsh",
-  "name": "test2",
-  "password": "}gA6j2?m;+E#",
-  "permissions": {
-   "test": []
-  },
-  "ssh_pubkey": [],
-  "uid": "test2"
- },
- {
-  "class": "human",
-  "gid": 100,
-  "home_directory": "/home/zagy",
-  "id": 1000,
-  "login_shell": "/bin/zsh",
-  "name": "Christian Zagrodnick",
-  "password": "{CRYPT}$6$rounds=100000$7pGJW5EUlGol.PrV$1f2.0cZRPeuRXMm41ZXt3cq6RMlhEJC88H24lgxE/vCqxZS2/.6ov8bGGzd0RWOnPHgCFCQf2KtqB21boKKnE1",
-  "permissions": {
-   "test": [
-    "admins",
-    "login",
-    "sudo-srv"
-   ]
-  },
-  "ssh_pubkey": [
-   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII/V2m6ZLeYirvLbc5qGYbtBlRGLVbTUimUXIvfVdpvP zagy@drrr"
-  ],
-  "uid": "zagy"
- }
-]
+[{
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo",
+    "id": 1000,
+    "login_shell": "/bin/zsh",
+    "name": "Allan Foo",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "admins",
+            "login",
+            "sudo-srv"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo@computer"
+    ],
+    "uid": "foo"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo2",
+    "id": 1001,
+    "login_shell": "/bin/zsh",
+    "name": "Allan II. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "login"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo2@computer"
+    ],
+    "uid": "foo2"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo3",
+    "id": 1002,
+    "login_shell": "/bin/zsh",
+    "name": "Allan III. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "admins"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo3@computer"
+    ],
+    "uid": "foo3"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo4",
+    "id": 1003,
+    "login_shell": "/bin/zsh",
+    "name": "Allan IV. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "sudo-srv"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo4@computer"
+    ],
+    "uid": "foo4"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo5",
+    "id": 1004,
+    "login_shell": "/bin/zsh",
+    "name": "Allan V. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": []
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo5@computer"
+    ],
+    "uid": "foo5"
+}]
