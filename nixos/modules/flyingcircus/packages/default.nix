@@ -67,5 +67,7 @@
 
     vulnix = pkgs.callPackage ./vulnix { };
 
+    kibana = pkgs.callPackage ./kibana.nix { };
+
   };
 }

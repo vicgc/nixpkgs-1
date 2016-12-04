@@ -7,6 +7,7 @@
      ./fcmanage.nix
      ./graylog.nix
      ./influxdb011.nix
+     ./kibana.nix
      ./percona.nix
      ./powerdns.nix
      ./rsyslog.nix

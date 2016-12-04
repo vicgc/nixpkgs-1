@@ -160,6 +160,7 @@ in
       powerdns = 31005;
 
       # Upstream services from a future release
+      kibana = 211;
       graylog = 243;
     };
 
