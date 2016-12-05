@@ -21,6 +21,9 @@ let
     then (fclib.configFromFile /etc/local/elasticsearch/clusterName defaultClusterName)
     else cfg.clusterName;
 
+  additionalConfig =
+    fclib.configFromFile /etc/local/elasticsearch/elasticsearch.yml "";
+
   currentMemory = fclib.current_memory config 1024;
   esHeap =
     fclib.min [
@@ -82,6 +85,7 @@ in
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
         bootstrap.memory_lock: true
+        ${additionalConfig}
       '';
     };
     systemd.services.elasticsearch = {
