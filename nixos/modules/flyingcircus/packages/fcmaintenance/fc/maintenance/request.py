@@ -2,6 +2,7 @@ from .estimate import Estimate
 from .state import State, evaluate_state
 
 import contextlib
+import copy
 import datetime
 import iso8601
 import os
@@ -36,9 +37,10 @@ class Request:
     estimate = None
     next_due = None
     state = State.pending
-    dir = None
+    _reqmanager = None  # backpointer, will be set in ReqManager
 
     def __init__(self, activity, estimate, comment=None, dir=None):
+        activity.request = self
         self.activity = activity
         self.estimate = Estimate(estimate)
         self.comment = comment
@@ -162,6 +164,22 @@ class Request:
         if len(self.attempts) > self.MAX_RETRIES:
             self.state = State.retrylimit
         return self.state
+
+    def other_requests(self):
+        """Lists other requests currently active in the ReqManager."""
+        return [r for r in self._reqmanager.requests.values()
+                if r._reqid != self._reqid]
+
+
+def request_representer(dumper, data):
+    # remove backlink before dumping a Request object
+    d = copy.copy(data)
+    if hasattr(d, '_reqmanager'):
+        d._reqmanager = None
+    return dumper.represent_object(d)
+
+
+yaml.add_representer(Request, request_representer)
 
 
 class Attempt:

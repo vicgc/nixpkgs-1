@@ -20,7 +20,6 @@ Run unit tests::
 
 Test coverage report::
 
-    bin/pip install -e .\[dev]
     bin/py.test --cov=fc.maintenance --cov-report=html
 
 

@@ -19,6 +19,7 @@ class Activity:
     stderr = None
     returncode = None
     duration = None
+    request = None  # backpointer, will be set in Request
 
     def __init__(self):
         """Creates activity object (add args if you like).
