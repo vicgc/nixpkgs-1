@@ -18,11 +18,15 @@ rec {
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
-  linux_4_3 = pkgs.callPackage ./kernel/linux-4.3.nix { };
+  linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
+    kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
+  };
+  linuxPackages_4_4 = pkgs.recurseIntoAttrs
+    (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
 
   mc = pkgs.callPackage ./mc.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
-  mongodb32 = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+  mongodb = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
 
