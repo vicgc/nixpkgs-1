@@ -1,4 +1,6 @@
-{ config, lib, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }:
+
+with lib;
 
 let
   cfg = config.flyingcircus;
@@ -6,10 +8,12 @@ let
 
   # This looks clunky.
   version =
-      if cfg.roles.postgresql94.enable
-      then "9.4"
-      else if cfg.roles.postgresql93.enable
+      if cfg.roles.postgresql93.enable
       then "9.3"
+      else if cfg.roles.postgresql94.enable
+      then "9.4"
+      else if cfg.roles.postgresql95.enable
+      then "9.5"
       else null;
 
 
@@ -19,6 +23,7 @@ let
   package = {
     "9.3" = pkgs.postgresql93;
     "9.4" = pkgs.postgresql94;
+    "9.5" = pkgs.postgresql95;
   };
 
   current_memory = fclib.current_memory config 256;
@@ -80,14 +85,25 @@ in
       };
     };
 
+    flyingcircus.roles.postgresql95 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus PostgreSQL 9.5 server role.";
+      };
+    };
+
   };
 
   config = mkIf postgres_enabled {
+
     services.postgresql.enable = true;
     services.postgresql.package = builtins.getAttr version package;
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
+
+    environment.systemPackages = [ (builtins.getAttr version package) ];
 
     users.users.postgres = {
       shell = "/run/current-system/sw/bin/bash";
@@ -143,7 +159,9 @@ in
       #------------------------------------------------------------------------------
       wal_level = hot_standby
       wal_buffers = ${toString wal_buffers}MB
-      checkpoint_segments = 100
+      ${optionalString ((builtins.compareVersions "9.5" version) < 0)
+          "checkpoint_segments = 100"
+      }
       checkpoint_completion_target = 0.9
       archive_mode = off
 
