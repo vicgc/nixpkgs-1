@@ -1,23 +1,20 @@
-import <nixpkgs/nixos/tests/make-test.nix> ({
-    pkgs
-    ,percona
-    ,...} : {
+import ../../../tests/make-test.nix ({ pkgs, lib, percona, ... }:
+{
   name = "percona";
-  meta = with pkgs.stdenv.lib.maintainers; {
-    maintainers = [ theuni ];
-  };
 
   nodes = {
     master =
       { pkgs, config, ... }:
-
       {
         virtualisation.memorySize = 2048;
 
-        imports = [ ../static/default.nix
-                    ../roles/default.nix
-                    ../services/default.nix
-                    ../platform/default.nix ];
+        imports = [
+          ./prelude.nix
+          ../static/default.nix
+          ../roles/default.nix
+          ../services/default.nix
+          ../platform/default.nix
+        ];
 
         flyingcircus.ssl.generate_dhparams = false;
         flyingcircus.roles.mysql.enable = true;

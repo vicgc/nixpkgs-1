@@ -125,9 +125,7 @@ stdenv.mkDerivation {
     homepage = "http://boost.org/";
     description = "Collection of C++ libraries";
     license = stdenv.lib.licenses.boost;
-
     platforms = platforms.unix;
-    maintainers = with maintainers; [ peti wkennington ];
   };
 
   preConfigure = ''

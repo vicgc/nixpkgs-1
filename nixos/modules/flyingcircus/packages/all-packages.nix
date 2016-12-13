@@ -18,9 +18,11 @@ rec {
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
+  linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
     kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
   };
+  linuxPackages = linuxPackages_4_4;
   linuxPackages_4_4 = pkgs.recurseIntoAttrs
     (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
 

@@ -4,7 +4,7 @@
 # attributes if necessary.
 # Python _applications_ which should get built only against a specific Python
 # version are better off in all-packages.nix.
-{ pkgs, stdenv, python, self, callPackage, buildPythonPackage }:
+{ pkgs, stdenv, python, self, buildPythonPackage }:
 
 rec {
 
