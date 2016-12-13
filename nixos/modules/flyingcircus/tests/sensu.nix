@@ -9,7 +9,7 @@ import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
       { pkgs, config, ... }:
       {
         imports = [
-          ./prelude.nix
+          ./setup.nix
           ../static/default.nix
           ../services/default.nix
           ../platform/default.nix

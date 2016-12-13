@@ -9,7 +9,7 @@ import ../../../tests/make-test.nix ({ pkgs, lib, percona, ... }:
         virtualisation.memorySize = 2048;
 
         imports = [
-          ./prelude.nix
+          ./setup.nix
           ../static/default.nix
           ../roles/default.nix
           ../services/default.nix

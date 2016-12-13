@@ -24,7 +24,7 @@
 #       { pkgs, config }:
 #       {
 #         imports = [
-#           ./prelude.nix
+#           ./setup.nix
 #           ...
 #         ];
 #       };
