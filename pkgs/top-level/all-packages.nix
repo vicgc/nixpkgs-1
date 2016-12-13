@@ -15358,7 +15358,12 @@ let
 
   mg = callPackage ../applications/editors/mg { };
 
-}; # self_ =
+} //
+# Augment this list with custom FC packages.
+# This addition should be kept across NixOS upgrades.
+(import ../../nixos/modules/flyingcircus/packages/all-packages.nix {
+  inherit pkgs;
+}); # self_ =
 
 
   ### Deprecated aliases - for backward compatibility

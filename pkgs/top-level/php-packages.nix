@@ -33,34 +33,6 @@ let self = with self; {
     buildInputs = with pkgs; [ pkgconfig cyrus_sasl ];
   };
 
-  mongodb = buildPecl {
-    name = "mongodb-1.1.7";
-    sha256 = "0jcvrxqpg8v5xn39hr2h49946nq5v5dhh1rgl117cfm5v5jbbgv5";
-
-    configureFlags = [
-      "--with-mongodb=${pkgs.mongodb}"
-    ];
-
-    buildInputs = [
-       pkgs.pkgconfig
-       pkgs.openssl
-    ];
-  };
-
-  ssh2 =  buildPecl {
-    name = "ssh2-0.13";
-    sha256 = "1gn1wqi3b4awmk0g701rrgj622lp9bm0dpx8v2y3cnqbhjmvhb6b";
-
-    configureFlags = [
-      "--with-ssh2=${pkgs.libssh2}"
-    ];
-
-    buildInputs = [
-       pkgs.libssh2
-    ];
-  };
-
-
   xdebug = buildPecl {
     name = "xdebug-2.3.1";
 
@@ -160,4 +132,9 @@ let self = with self; {
       maintainers = with maintainers; [ globin offline ];
     };
   };
-}; in self
+} //
+# Augment this list with custom FC packages.
+# This addition should be kept across NixOS upgrades.
+(import ../../nixos/modules/flyingcircus/packages/php-packages.nix {
+  inherit pkgs php self buildPecl;
+}); in self

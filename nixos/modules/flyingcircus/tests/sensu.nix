@@ -1,22 +1,20 @@
 # This test has been broken but still signaled "green" earlier on.
 # I have disabled it for now.
-import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
+import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
+{
   name = "sensuserver";
-  meta = with pkgs.stdenv.lib.maintainers; {
-    maintainers = [ theuni ];
-  };
 
   nodes = {
     master =
       { pkgs, config, ... }:
-
       {
-        imports = [ ../static/default.nix
-                    ../services/default.nix
-                    ../packages/default.nix
-                    ../platform/default.nix ];
+        imports = [
+          ./prelude.nix
+          ../static/default.nix
+          ../services/default.nix
+          ../platform/default.nix
+        ];
 
-        flyingcircus.ssl.generate_dhparams = false;
         flyingcircus.services.sensu-server.enable = true;
         flyingcircus.services.sensu-client.enable = true;
         flyingcircus.services.sensu-client.password = "asdf";
@@ -31,6 +29,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} : {
     startAll;
 
     $master->waitForUnit("sensu-server");
+    $master->waitForUnit("sensu-api");
+    $master->waitForUnit("uchiwa");
     # $master->sleep(10);
     # This test was screwed and for some reason passed earlier on.
     # This is only to ensure we build the packages, for now.
