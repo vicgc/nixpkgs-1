@@ -21,9 +21,12 @@ mkIf (params ? location && params ? resource_group) {
     LoadPlugin processes
     LoadPlugin swap
     LoadPlugin syslog
-    LoadPlugin uptime
     LoadPlugin vmem
     LoadPlugin write_graphite
+
+    <LoadPlugin uptime>
+      Interval 360
+    </LoadPlugin>
 
     <Plugin "syslog">
         LogLevel info
