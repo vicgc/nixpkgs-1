@@ -29,6 +29,14 @@ mkIf (params ? location && params ? resource_group) {
         LogLevel info
     </Plugin>
 
+    <LoadPlugin df>
+      Interval 360
+    </LoadPlugin>
+    <Plugin df>
+      MountPoint "/"
+      MountPoint "/tmp"
+    </Plugin>
+
     <Plugin "disk">
       Disk "/^[sv]d[a-z]$|^vg.*-./"
     </Plugin>
