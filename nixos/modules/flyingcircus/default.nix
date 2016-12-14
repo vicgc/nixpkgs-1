@@ -14,7 +14,6 @@ in
     infrastructure_modules ++
     [./static
      ./platform
-     ./packages
      ./services
      ./roles
     ];

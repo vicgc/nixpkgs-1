@@ -185,10 +185,16 @@ in
     boot.kernelPackages = pkgs.linuxPackages_4_4;
 
     environment.etc = (
-      lib.optionalAttrs (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
-      { "directory.secret".text = cfg.enc.parameters.directory_secret;
-        "directory.secret".mode = "0600";}) //
-      { "nixos/configuration.nix".text = pkgs.lib.readFile ../files/etc_nixos_configuration.nix; };
+      lib.optionalAttrs
+        (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
+        {
+          "directory.secret".text = cfg.enc.parameters.directory_secret;
+          "directory.secret".mode = "0600";
+        })
+      // {
+        "nixos/configuration.nix".text =
+          lib.readFile ../files/etc_nixos_configuration.nix;
+      };
 
     services.openssh = {
       enable = true;
