@@ -21,6 +21,10 @@ let
     if builtins.pathExists cfg.userdata_path
     then builtins.fromJSON (builtins.readFile cfg.userdata_path)
     else [];
+  permissionsdata =
+    if builtins.pathExists cfg.permissions_path
+    then builtins.fromJSON (builtins.readFile cfg.permissions_path)
+    else [];
 
   get_primary_group = user:
     builtins.getAttr user.class {
@@ -29,24 +33,23 @@ let
     };
 
   # Data read from Directory (list) -> users.users structure (list)
-  map_userdata = userdata:
-  lib.listToAttrs
-    (map
-      (user: {
-        name = user.uid;
-        value = {
-          createHome = true;
-          description = user.name;
-          group = get_primary_group user;
-          hashedPassword = lib.removePrefix "{CRYPT}" user.password;
-          home = user.home_directory;
-          shell = "/run/current-system/sw" + user.login_shell;
-          uid = user.id;
-          openssh.authorizedKeys.keys = user.ssh_pubkey;
-        };
-      })
-      userdata);
-
+  map_userdata = users:
+    lib.listToAttrs
+      (map
+        (user: {
+          name = user.uid;
+          value = {
+            createHome = true;
+            description = user.name;
+            group = get_primary_group user;
+            hashedPassword = lib.removePrefix "{CRYPT}" user.password;
+            home = user.home_directory;
+            shell = "/run/current-system/sw" + user.login_shell;
+            uid = user.id;
+            openssh.authorizedKeys.keys = user.ssh_pubkey;
+          };
+        })
+      users);
 
   admins_group_data =
     if builtins.pathExists cfg.admins_group_path
@@ -81,11 +84,6 @@ let
     lib.mapAttrs (name: groupdata: lib.zipAttrs groupdata)
       (lib.zipAttrs (map get_group_memberships_for_user users));
 
-  permissions =
-    if builtins.pathExists cfg.permissions_path
-    then builtins.fromJSON (builtins.readFile cfg.permissions_path)
-    else [];
-
   get_permission_groups = permissions:
     lib.listToAttrs
       (builtins.filter
@@ -109,6 +107,15 @@ let
     map
       (user: " ${config.systemd.package}/bin/loginctl disable-linger ${user.uid}")
       userdata;
+
+  # merge a list of sets recursively
+  mergeSets = listOfSets:
+    if (builtins.length listOfSets) == 1 then
+      builtins.head listOfSets
+    else
+      lib.recursiveUpdate
+        (builtins.head listOfSets)
+        (mergeSets (builtins.tail listOfSets));
 
 in
 
@@ -148,35 +155,7 @@ in
 
   };
 
-
   config = {
-
-    ids.uids = {
-      # Our custom services
-      sensuserver = 31001;
-      sensuapi = 31002;
-      uchiwa = 31003;
-      sensuclient = 31004;
-      powerdns = 31005;
-    };
-
-    ids.gids = {
-      # The generic 'service' GID is different from Gentoo.
-      # But 101 is already used in NixOS.
-      service = 900;
-
-      # Our permissions
-      login = 500;
-      code = 501;
-      stats = 502;
-      sudo-srv = 503;
-
-      # Our custom services
-      sensuserver = 31001;
-      sensuapi = 31002;
-      uchiwa = 31003;
-      sensuclient = 31004;
-    };
 
     security.pam.services.sshd.showMotd = true;
     security.pam.access = ''
@@ -189,14 +168,24 @@ in
     - : ALL : ALL
     '';
 
+
+
     users = {
       mutableUsers = false;
       users = map_userdata userdata;
-      groups =
-        get_permission_groups permissions
-        // { service.gid = config.ids.gids.service; }
-        // admins_group
-        // get_group_memberships userdata;
+      groups = mergeSets [
+        admins_group
+        { service.gid = config.ids.gids.service; }
+        (get_group_memberships userdata)
+        (get_permission_groups permissionsdata)
+        ];
+
+      /*groups = listOfSets:
+
+        lib.recursiveUpdate
+          (lib.recursiveUpdate admins_group { service.gid = config.ids.gids.service; })
+          (lib.recursiveUpdate (get_group_memberships userdata) (get_permission_groups permissionsdata));
+          */
     };
 
     # needs to be first in sudoers because of the %admins rule

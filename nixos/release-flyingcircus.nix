@@ -129,6 +129,8 @@ in rec {
           });
         sensuserver = hydraJob
           (import modules/flyingcircus/tests/sensu.nix { inherit system; });
+        users = hydraJob
+          (import modules/flyingcircus/tests/users { inherit system; });
       };
 
       networking.scripted = {
