@@ -131,8 +131,8 @@ rec {
       test = passMeta (runTests driver);
       report = passMeta (releaseTools.gcovReport { coverageRuns = [ test ]; });
 
-    in (if makeCoverageReport then report else test) // {
-      inherit nodes driver test;
+    in (if makeCoverageReport then report else test) // { 
+      inherit nodes driver test; 
     };
 
   runInMachine =
