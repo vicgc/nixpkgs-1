@@ -12,23 +12,17 @@
 
 # Example usage:
 #
-# import ../../../tests/make-test.nix ({
-#   pkgs
-# , lib
-# , ...
-# }:
+# import ../../../tests/make-test.nix ({ ... }:
 # {
 #   name = "...";
-#   nodes = {
-#     master =
-#       { pkgs, config }:
-#       {
-#         imports = [
-#           ./setup.nix
-#           ...
-#         ];
-#       };
-#   };
+#   machine =
+#     { pkgs, config }:
+#     {
+#       imports = [
+#         ./setup.nix
+#         ...
+#       ];
+#     };
 #   testScript = ''
 #     ...
 #   '';
