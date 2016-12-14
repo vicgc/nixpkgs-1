@@ -121,5 +121,5 @@ with lib;
       sensuclient = 31004;
     };
 
-    };
+  };
 }

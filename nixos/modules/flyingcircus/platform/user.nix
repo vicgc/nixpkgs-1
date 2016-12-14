@@ -51,7 +51,6 @@ let
         })
       users);
 
-
   admins_group_data =
     if builtins.pathExists cfg.admins_group_path
     then builtins.fromJSON (builtins.readFile cfg.admins_group_path)
@@ -114,7 +113,9 @@ let
     if (builtins.length listOfSets) == 1 then
       builtins.head listOfSets
     else
-      lib.recursiveUpdate (builtins.head listOfSets) (mergeSets (builtins.tail listOfSets));
+      lib.recursiveUpdate
+        (builtins.head listOfSets)
+        (mergeSets (builtins.tail listOfSets));
 
 in
 

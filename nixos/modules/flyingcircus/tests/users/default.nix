@@ -1,42 +1,30 @@
 # Test that the user generation from ENC works fine.
 
-import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} :
+import ../../../../tests/make-test.nix ({ ... } :
 {
   name = "users";
-  meta = with pkgs.stdenv.lib.maintainers; {
-    maintainers = [ theuni ];
-  };
 
   machine =
     { config, lib, pkgs, modulesPath, ... }:
     with lib;
-
     {
-      imports = [ ../static/default.nix
-                  ../roles/default.nix
-                  ../services/default.nix
-                  ../packages/default.nix
-                  ../platform/default.nix
-                   ];
+      imports = [
+        ../setup.nix
+        ../../static/default.nix
+        ../../roles/default.nix
+        ../../services/default.nix
+        ../../platform/default.nix
+      ];
 
       environment.systemPackages = [ pkgs.shadow ];
-      flyingcircus.ssl.generate_dhparams = false;
 
       flyingcircus.load_enc = false;
-      flyingcircus.userdata_path = ./data/users.json;
-      flyingcircus.admins_group_path = ./data/admins.json;
-      flyingcircus.permissions_path = ./data/permissions.json;
-
-      flyingcircus.enc.parameters.resource_group = "test";
-      security.rngd.enable = false;
-      virtualisation.vlans = [];
-      networking.useDHCP = mkForce false;
-
+      flyingcircus.userdata_path = ./users.json;
+      flyingcircus.admins_group_path = ./admins.json;
+      flyingcircus.permissions_path = ./permissions.json;
     };
 
-
   testScript = ''
-
     $machine->waitForUnit("default.target");
 
     subtest "admin-user", sub {
@@ -59,7 +47,5 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...} :
       # - member of any groups
       $machine->succeed("test \"`id foo5`\" = \"uid=1004(foo5) gid=100(users) groups=100(users)\"");
     };
-
-
   '';
 })
