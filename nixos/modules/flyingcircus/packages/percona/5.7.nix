@@ -16,8 +16,9 @@ stdenv.mkDerivation rec {
     export PATH=$PATH:$TMPDIR
   '';
 
-  buildInputs = [ cmake bison ncurses openssl readline zlib boost ]
-     ++ stdenv.lib.optional stdenv.isDarwin perl;
+  buildInputs = [
+      cmake bison ncurses openssl readline zlib boost.out boost.dev
+    ] ++ stdenv.lib.optional stdenv.isDarwin perl;
 
   enableParallelBuilding = true;
 

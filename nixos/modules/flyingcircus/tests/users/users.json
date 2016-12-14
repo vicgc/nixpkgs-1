@@ -1,0 +1,86 @@
+[{
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo",
+    "id": 1000,
+    "login_shell": "/bin/zsh",
+    "name": "Allan Foo",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "admins",
+            "login",
+            "sudo-srv"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo@computer"
+    ],
+    "uid": "foo"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo2",
+    "id": 1001,
+    "login_shell": "/bin/zsh",
+    "name": "Allan II. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "login"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo2@computer"
+    ],
+    "uid": "foo2"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo3",
+    "id": 1002,
+    "login_shell": "/bin/zsh",
+    "name": "Allan III. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "admins"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo3@computer"
+    ],
+    "uid": "foo3"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo4",
+    "id": 1003,
+    "login_shell": "/bin/zsh",
+    "name": "Allan IV. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": [
+            "sudo-srv"
+        ]
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo4@computer"
+    ],
+    "uid": "foo4"
+}, {
+    "class": "human",
+    "gid": 100,
+    "home_directory": "/home/foo5",
+    "id": 1004,
+    "login_shell": "/bin/zsh",
+    "name": "Allan V. Foo ",
+    "password": "{CRYPT}$6$rounds=656000$g2DxibK/QjxnX1HO$sk0F8qhYDGbIpVit2vrNvWeevNtJ6cBPq6ftR10607LJc0FVtZzVmoHwtV.MbRqmGgNAKiqXBYNWy7m74crPq1",
+    "permissions": {
+        "test": []
+    },
+    "ssh_pubkey": [
+        "ssh-ed25519 some_hash foo5@computer"
+    ],
+    "uid": "foo5"
+}]

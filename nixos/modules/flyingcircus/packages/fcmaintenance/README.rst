@@ -28,7 +28,7 @@ NixOS hacking
 
 Use either nix-build to get a result::
 
-    nix-build -I nixpkgs=path/to/nixpkgs
+    nix-build -I nixpkgs=path/to/nixpkgs shell.nix
 
 or nix-shell for interactive python stuff::
 
