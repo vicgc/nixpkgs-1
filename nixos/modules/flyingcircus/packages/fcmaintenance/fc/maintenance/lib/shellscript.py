@@ -29,8 +29,9 @@ class ShellScriptActivity(Activity):
             f.write(self.script)
             os.fchmod(f.fileno(), 0o755)
 
+        script = os.path.join(os.getcwd(), 'script')
         p = subprocess.Popen(
-            ['./script'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            [script], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         (self.stdout, self.stderr) = [s.decode() for s in p.communicate()]
         self.returncode = p.returncode

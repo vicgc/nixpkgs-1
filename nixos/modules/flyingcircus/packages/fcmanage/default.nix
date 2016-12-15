@@ -1,12 +1,18 @@
-{ pkgs ? import <nixpkgs> { }
-, python34Packages ? pkgs.python34Packages
-, fcutil ? import ../fcutil { inherit pkgs python34Packages; }
-, fcmaintenance ? import ../fcmaintenance { inherit pkgs python34Packages; }
-}:
+{ pkgs
+, dmidecode
+, fcmaintenance
+, gptfdisk
+, lvm2
+, multipath_tools
+, nix
+, python34Packages
+, utillinux
+, xfsprogs }:
 
-with python34Packages;
-
-buildPythonPackage rec {
+let
+  py = python34Packages;
+in
+py.buildPythonPackage rec {
   name = "fc-manage-${version}";
   version = "1.0";
   namePrefix = "";
@@ -14,20 +20,20 @@ buildPythonPackage rec {
   src = ./.;
 
   buildInputs = [
-    mock
-    pytest
+    py.mock
+    py.pytest
   ];
 
-  propagatedBuildInputs = with pkgs;
-    [ dmidecode
-      fcmaintenance
-      fcutil
-      gptfdisk
-      lvm2
-      multipath_tools
-      nix
-      python34Packages.requests2
-      utillinux
-      xfsprogs
-    ];
+  propagatedBuildInputs = [
+    dmidecode
+    fcmaintenance
+    gptfdisk
+    lvm2
+    multipath_tools
+    nix
+    py.fcutil
+    py.requests2
+    utillinux
+    xfsprogs
+  ];
 }
