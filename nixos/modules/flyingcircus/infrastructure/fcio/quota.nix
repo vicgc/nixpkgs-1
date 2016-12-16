@@ -13,28 +13,22 @@ in
     '';
 
     environment.etc.projid.text = ''
-      root:1
+      rootfs:1
     '';
 
-    systemd.additionalUpstreamSystemUnits =
-    [ "systemd-quotacheck.service"
-      "quotaon.service" ];
+    systemd.additionalUpstreamSystemUnits = [
+      "systemd-quotacheck.service"
+      "quotaon.service"
+    ];
 
     system.activationScripts.setupXFSQuota = {
       text =
-      let
-        msg = "Reboot to activate filesystem quotas";
-      in
+        let
+          msg = "Reboot to activate filesystem quotas";
+        in
         # keep the grep expression in sync with that one in fcmanage/resize.py
         with pkgs; ''
-          if egrep -q ' / .*usrquota,.*prjquota' /proc/self/mounts; then
-            if ! ${xfsprogs}/bin/xfs_quota -x -c 'state -p' / | \
-                grep -qi 'Accounting:.*ON'; then
-              ${xfsprogs}/bin/xfs_quota -x -c 'project -s root' / 2>/dev/null
-              ${xfsprogs}/bin/xfs_quota -x -c 'timer -p 1m' / 2>/dev/null
-              # fc-resize sets the actual quota limit
-            fi
-          else
+          if ! egrep -q ' / .*usrquota,.*prjquota' /proc/self/mounts; then
             if ! ${fcmaintenance}/bin/list-maintenance | fgrep -q "${msg}";
             then
               ${fcmaintenance}/bin/scheduled-reboot -c "${msg}"

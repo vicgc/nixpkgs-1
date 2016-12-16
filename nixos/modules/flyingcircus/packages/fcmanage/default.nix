@@ -26,6 +26,7 @@ buildPythonPackage rec {
       lvm2
       multipath_tools
       nix
+      python34Packages.requests2
       utillinux
       xfsprogs
     ];

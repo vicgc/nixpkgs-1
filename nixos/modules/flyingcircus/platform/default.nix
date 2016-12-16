@@ -45,6 +45,7 @@ in
     ./ssl/dhparams.nix
     ./systemd.nix
     ./user.nix
+    ../services/vxlan-client.nix
   ];
 
   options = {
@@ -181,13 +182,13 @@ in
       TMOUT=43200
     '';
 
-    boot.kernelPackages = pkgs.linuxPackages_4_3;
+    boot.kernelPackages = pkgs.linuxPackages_4_4;
 
     environment.etc = (
       lib.optionalAttrs (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
       { "directory.secret".text = cfg.enc.parameters.directory_secret;
         "directory.secret".mode = "0600";}) //
-      { "nixos/configuration.nix".text = lib.readFile ../files/etc_nixos_configuration.nix; };
+      { "nixos/configuration.nix".text = pkgs.lib.readFile ../files/etc_nixos_configuration.nix; };
 
     services.openssh = {
       enable = true;

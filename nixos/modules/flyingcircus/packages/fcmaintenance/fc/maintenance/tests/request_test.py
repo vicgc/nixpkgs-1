@@ -48,9 +48,11 @@ def test_save_yaml(tmpdir):
     r.save()
     with open(str(tmpdir / 'request.yaml')) as f:
         assert f.read() == """\
-!!python/object:fc.maintenance.request.Request
+&id001 !!python/object:fc.maintenance.request.Request
 _reqid: {id}
-activity: !!python/object:fc.maintenance.activity.Activity {{}}
+_reqmanager: null
+activity: !!python/object:fc.maintenance.activity.Activity
+  request: *id001
 attempts: []
 comment: my comment
 dir: {tmpdir}

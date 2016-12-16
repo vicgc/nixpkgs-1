@@ -152,14 +152,12 @@ in
   config = {
 
     ids.uids = {
-
       # Our custom services
       sensuserver = 31001;
       sensuapi = 31002;
       uchiwa = 31003;
       sensuclient = 31004;
       powerdns = 31005;
-
     };
 
     ids.gids = {
@@ -178,7 +176,6 @@ in
       sensuapi = 31002;
       uchiwa = 31003;
       sensuclient = 31004;
-
     };
 
     security.pam.services.sshd.showMotd = true;
