@@ -21,7 +21,7 @@ let
 
   localConfig =
     if pathExists /etc/local/mysql
-    then "!include ${/etc/local/mysql}"
+    then "!includedir ${/etc/local/mysql}"
     else "";
 
 in
