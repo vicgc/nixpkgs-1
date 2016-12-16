@@ -9,7 +9,11 @@ let
     (filter
       (s: s.service == "elasticsearch-node")
       config.flyingcircus.enc_services);
-  thisNode = "${config.networking.hostName}.${config.networking.domain}";
+
+  thisNode =
+    if config.networking.domain != null
+    then "${config.networking.hostName}.${config.networking.domain}"
+    else "localhost";
 
   defaultClusterName = config.networking.hostName;
 

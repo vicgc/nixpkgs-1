@@ -1,8 +1,9 @@
 { config, lib, pkgs, ... }:
 with lib;
 
-# NOTE: This is mostly duplicate of upstream service. Once we get upstream
-# updated this can probably go away.
+# NOTE: This is mostly duplicate of
+# nixos/modules/services/search/elasticsearch.nix. Once we get upstream updated
+# this can probably go away.
 
 let
   cfg = config.services.elasticsearch;

@@ -1,4 +1,4 @@
-import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
+import ../../../tests/make-test.nix ({ ... }:
 {
   name = "elasticsearch";
 
@@ -6,8 +6,6 @@ import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
     master =
       { pkgs, config, ... }:
       {
-
-        virtualisation.memorySize = 2048;
 
         imports = [
           ./setup.nix
@@ -17,6 +15,7 @@ import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
           ../platform/default.nix
         ];
 
+        virtualisation.memorySize = 2048;
         flyingcircus.roles.elasticsearch.enable = true;
 
       };
@@ -27,5 +26,22 @@ import ../../../tests/make-test.nix ({ pkgs, lib, ... }:
 
     $master->waitForUnit("elasticsearch");
 
+    # cluster healthy?
+    $master->succeed('curl -s "localhost:9200/_cat/health?v" | grep green');
+
+    # simple data round trip
+    $master->succeed(<<'__EOF__');
+      set -e
+      echo -e '\nCreating index'
+      curl -s -XPUT 'localhost:9200/customer'
+      curl -s 'localhost:9200/_cat/indices?v'
+
+      echo -e '\nSubmitting data'
+      curl -s -XPUT 'localhost:9200/customer/external/1' \
+        -d'{ "name": "John Doe" }'
+
+      echo -e '\nRetrieving data'
+      curl -s 'localhost:9200/customer/external/1' | grep 'John Doe'
+    __EOF__
   '';
 })
