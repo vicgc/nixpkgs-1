@@ -1,3 +1,4 @@
+#!python3
 """ Journal check.
 
 Takes a set of regular expression, tries to match them with the output of
@@ -5,40 +6,58 @@ journalctl and if positive prints them.
 """
 
 import argparse
-import json
+import functools
 import logging
 import nagiosplugin
+import os
 import re
+import shlex
 import subprocess
 import yaml
 
-from functools import reduce
-
+PATTERN_SECTIONS = [
+    'warningpatterns', 'warningexceptions',
+    'criticalpatterns', 'criticalexceptions',
+]
 _log = logging.getLogger('nagiosplugin')
 
 
 class Journal(nagiosplugin.Resource):
 
-    def __init__(self, params, src):
-        self.params = params
-        self.journalctl = self.params.journalctl
-        self.src = src
+    def __init__(self, journalctl, patterns):
+        self.journalctl = journalctl
+        self.pattern_yaml = patterns
 
         self.warnings = []
         self.criticals = []
 
-    def find_hits(self):
-        critical_hits = []
-        warning_hits = []
+    @staticmethod
+    def sanitize_environment():
         try:
-            log = subprocess.check_output(self.journalctl,
-                                          stderr=subprocess.STDOUT,
-                                          shell=True).\
-                decode().strip().split('\n')
+            del os.environ['LC_ALL']
+            del os.environ['LANGUAGE']
+        except KeyError:
+            pass
+        os.environ['LANG'] = 'en_US.utf8'
+
+    def load_patterns(self):
+        with open(self.pattern_yaml) as fobj:
+            patterns = yaml.safe_load(fobj)
+        _log.debug('patterns:\n%r', patterns)
+        compiled = {}
+        for section in PATTERN_SECTIONS:
+            compiled[section] = [re.compile(p) for p in patterns[section]]
+        return compiled
+
+    def read_log(self):
+        self.sanitize_environment()
+        try:
+            log = subprocess.check_output(shlex.split(self.journalctl)).\
+                decode('utf-8', errors='replace').strip().splitlines()
         except subprocess.CalledProcessError as e:
             ret = e.returncode
             # journalctl returns 256, if the the filtered output is empty
-            # we may exit the whole process
+            # we may exit early
             if ret == 256:
                 return([], [])
             # systemd < 223 returns stupid output in case of zero entries
@@ -47,59 +66,40 @@ class Journal(nagiosplugin.Resource):
                 return([], [])
             else:
                 raise
-        # convert the list of json objects to a list of python objects
-        log = [json.loads(entry) for entry in log]
+        _log.debug('complete log:\n%s', log)
+        return log
 
-        _log.debug('complete log:\n')
-        for entry in log:
-            _log.debug(entry['MESSAGE'])
-        with open(self.src) as fobj:
-            patterns = yaml.safe_load(fobj)
-        _log.debug('patterns:\n%r', patterns)
+    def filter(self, log, type_, matchpatterns, exceptionpatterns):
+        """Returns matching (include/except) log lines."""
+        if not log or not matchpatterns:
+            return []
 
         # create a list of match candidates by applying the rules
-        # xxx: unfortunately entry['MESSAGE'] contains not only strings
-        # all the time, needs further testing
-        warning_hits = [
-            entry['MESSAGE']
-            for rule in patterns['warningpatterns']
-            for entry in log
-            if re.search(rule, str(entry['MESSAGE']))
-        ]
-        _log.info('warning hits (w/o exceptions):\n%s',
-                  '\n'.join(warning_hits))
+        hits = [entry
+                for rule in matchpatterns
+                for entry in log
+                if rule.search(entry)]
+        if hits:
+            _log.info('%s hits (w/o exceptions):\n%s', type_, '\n'.join(hits))
 
-        # reducing them by exceptions of the rule
+        # reduce them by exceptions
+        if hits and exceptionpatterns:
+            hits = functools.reduce(
+                lambda hit, exc: [h for h in hit if not exc.search(h)],
+                exceptionpatterns, hits)
 
-        # Info: We need to carry the list of warning hits by applying the
-        # exception rules individually on the shrinking list!
+        return hits
 
-        if warning_hits and 'warningexceptions' in patterns:
-            warning_hits = \
-                reduce(lambda H, e:
-                       [h for h in H if not re.search(e, h)],
-                       patterns['warningexceptions'],
-                       warning_hits)
+    def find_hits(self):
+        patterns = self.load_patterns()
+        log = self.read_log()
 
-        # do that for critical as well
-        critical_hits = [
-            entry['MESSAGE']
-            for rule in patterns['criticalpatterns']
-            for entry in log
-            if re.search(rule, str(entry['MESSAGE']))
-        ]
-        _log.info('critical hits (w/o exceptions):\n%s',
-                  '\n'.join(critical_hits))
-
-        # reducing them by exceptions of the rule
-
-        if critical_hits and 'criticalexceptions' in patterns:
-            critical_hits = \
-                reduce(lambda H, e:
-                       [h for h in H if not re.search(e, h)],
-                       patterns['criticalexceptions'],
-                       critical_hits)
-
+        warning_hits = self.filter(
+            log, 'warning', patterns['warningpatterns'],
+            patterns['warningexceptions'])
+        critical_hits = self.filter(
+            log, 'critical', patterns['criticalpatterns'],
+            patterns['criticalexceptions'])
         return (warning_hits, critical_hits)
 
     def probe(self):
@@ -115,38 +115,38 @@ class JournalSummary(nagiosplugin.Summary):
         return 'no errors found'
 
     def problem(self, results):
-        return '{} {} line(s) found\n'.format(
-            results.most_significant[0].metric.value,
-            results.most_significant_state)
+        return '{} critical line(s) found, {} warning line(s) found'.format(
+            results['critical'].metric.value,
+            results['warning'].metric.value)
 
     def verbose(self, results):
-        res = ''
+        res = []
         if results['critical'].metric.value:
-            res += ('critical hits:\n' +
-                    '\n'.join(results['critical'].resource.criticals) + '\n')
+            res += (['*** critical hits ***'] +
+                    results['critical'].resource.criticals)
         if results['warning'].metric.value:
-            res += ('warning hits:\n' +
-                    '\n'.join(results['warning'].resource.warnings) + '\n')
-        return res
+            res += (['*** warning hits ***'] +
+                    results['warning'].resource.warnings)
+        return '\n'.join(res)
 
 
 @nagiosplugin.guarded
 def main():
     a = argparse.ArgumentParser()
     a.add_argument('-j', '--journalctl', dest='journalctl',
-                   default='journalctl --no-pager -o json ' +
+                   default='journalctl --no-pager --output=short '
                    '--since=-10minutes',
-                   help='journalctl invocation (default: %(default)s)')
-    a.add_argument('config')
+                   help='journalctl invocation (default: "%(default)s")')
+    a.add_argument('CONFIG', help='log check rules yaml')
     a.add_argument('-t', '--timeout', default=10,
                    help='about execution after TIMEOUT seconds')
     a.add_argument('-v', '--verbose', action='count', default=0)
 
     args = a.parse_args()
     check = nagiosplugin.Check(
-        Journal(params=args, src=args.config),
-        nagiosplugin.ScalarContext('warning', warning="0:0"),
-        nagiosplugin.ScalarContext('critical', critical="0:0"),
+        Journal(args.journalctl, args.CONFIG),
+        nagiosplugin.ScalarContext('warning', warning='0:0'),
+        nagiosplugin.ScalarContext('critical', critical='0:0'),
         JournalSummary())
     check.main(args.verbose, args.timeout)
 
