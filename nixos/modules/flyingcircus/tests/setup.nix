@@ -2,6 +2,7 @@
 { lib, ... }:
 {
   config = {
+    flyingcircus.agent.enable = false;
     flyingcircus.enc.parameters.resource_group = "test";
     flyingcircus.ssl.generate_dhparams = false;
     networking.useDHCP = lib.mkForce false;
