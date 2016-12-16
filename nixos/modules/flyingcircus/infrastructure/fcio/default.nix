@@ -78,6 +78,8 @@ in
     then config.flyingcircus.enc.name
     else "default";
 
+  networking.domain = "gocept.net";
+
   services.openssh.permitRootLogin = "without-password";
 
   fileSystems."/".device = "/dev/disk/by-label/root";

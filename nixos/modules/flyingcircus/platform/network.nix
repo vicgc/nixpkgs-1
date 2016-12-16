@@ -127,8 +127,6 @@ in
         KERNEL=="eth*", ATTR{address}=="02:00:00:03:??:??", NAME="ethsrv"
       '';
 
-    networking.domain = "gocept.net";
-
     networking.nameservers =
       if (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc) &&
          (hasAttr cfg.enc.parameters.location cfg.static.nameservers)
@@ -136,12 +134,12 @@ in
       else [];
     networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
 
-    networking.search =
-      if lib.hasAttrByPath [ "parameters" "location" ] cfg.enc then
-        [ "${cfg.enc.parameters.location}.${networking.domain}"
-          networking.domain
-        ]
-      else [];
+    networking.search = lib.optionals
+      (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc &&
+        config.networking.domain != null)
+      [ "${cfg.enc.parameters.location}.${config.networking.domain}"
+        config.networking.domain
+      ];
 
     # data structure for all configured interfaces with their IP addresses:
     # { ethfe = { ... }; ethsrv = { }; ... }

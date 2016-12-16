@@ -11,6 +11,7 @@ rec {
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
+  elasticsearch = pkgs.callPackage ./elasticsearch { };
 
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };

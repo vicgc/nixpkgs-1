@@ -112,6 +112,10 @@ in rec {
         simple;
 
       flyingcircus = {
+        elasticsearch = hydraJob
+        (import modules/flyingcircus/tests/elasticsearch.nix {
+          inherit system;
+        });
         percona_5_7 = hydraJob
           (import modules/flyingcircus/tests/percona.nix {
             inherit system;
