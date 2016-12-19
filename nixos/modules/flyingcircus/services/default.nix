@@ -3,6 +3,7 @@
 {
   imports =
     [
+     ./elasticsearch.nix
      ./fcmanage.nix
      ./influxdb011.nix
      ./percona.nix

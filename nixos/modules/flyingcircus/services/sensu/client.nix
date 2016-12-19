@@ -203,10 +203,11 @@ in {
       };
       environment = {
         EMBEDDED_RUBY = "true";
-        LANG = "en_US.iso88591";
+        LANG = "en_US.utf8";
       };
       preStart = ''
-        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient -d /var/cache/vulnix
+        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient \
+          -d /var/cache/vulnix
       '';
     };
 

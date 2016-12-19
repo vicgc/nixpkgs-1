@@ -18,6 +18,7 @@ in
      ./compat.nix
      ./datadog.nix
      ./dovecot.nix
+     ./elasticsearch.nix
      ./external_net
      ./generic.nix
      ./haproxy.nix
