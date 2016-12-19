@@ -45,6 +45,7 @@
         openldap
         openssl
         php
+        postgresql
         protobuf
         psmisc
         pv
