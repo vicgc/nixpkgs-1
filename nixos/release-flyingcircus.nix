@@ -106,7 +106,6 @@ in rec {
         nat
         nfs4
 
-        postgresql
         openssh
         proxy
         simple;
@@ -130,6 +129,18 @@ in rec {
           (import modules/flyingcircus/tests/percona.nix {
             inherit system;
             percona = pkgs.mysql55;
+          });
+        postgresql_9_3 = hydraJob
+          (import modules/flyingcircus/tests/postgresql.nix {
+            rolename = "postgresql93";
+          });
+        postgresql_9_4 = hydraJob
+          (import modules/flyingcircus/tests/postgresql.nix {
+            rolename = "postgresql94";
+          });
+        postgresql_9_5 = hydraJob
+          (import modules/flyingcircus/tests/postgresql.nix {
+            rolename = "postgresql95";
           });
         sensuserver = hydraJob
           (import modules/flyingcircus/tests/sensu.nix { inherit system; });
