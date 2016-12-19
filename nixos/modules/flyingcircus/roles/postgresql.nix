@@ -50,18 +50,12 @@ let
     fclib.listenAddresses config "lo" ++
     fclib.listenAddresses config "ethsrv";
 
-  # I hate you nix. /a/path in nix is obviously different from the string
-  # "/a/path". Like the former puts the path into the store. But how do I get
-  # from string to path? builtins.toPath does *not* do the trick.
-  local_config_path =
-    if version == "9.4"
-    then /etc/local/postgresql/9.4
-    else if version == "9.3"
-    then /etc/local/postgresql/9.3
-    else null;
+  # using this ugly expression is the only way to get a dynamic path into the
+  # Nix store
+  local_config_path = /etc/local/postgresql + "/${version}";
 
   local_config =
-    if local_config_path != null && pathExists local_config_path
+    if postgres_enabled && pathExists local_config_path
     then "include_dir '${local_config_path}'"
     else "";
 
@@ -111,7 +105,8 @@ in
     };
     system.activationScripts.flyingcircus_postgresql = ''
       install -d -o ${toString config.ids.uids.postgres} /srv/postgresql
-      install -d -o ${toString config.ids.uids.postgres} -g service  -m 02775 /etc/local/postgresql/${version}
+      install -d -o ${toString config.ids.uids.postgres} -g service -m 02775 \
+        /etc/local/postgresql/${version}
     '';
     security.sudo.extraConfig = ''
       # Service users may switch to the postgres system user
