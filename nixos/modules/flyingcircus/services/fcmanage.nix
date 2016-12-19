@@ -48,6 +48,7 @@ in {
           inherit (config.environment.sessionVariables) NIX_PATH SSL_CERT_FILE;
           HOME = "/root";
           PATH = "/run/current-system/sw/sbin:/run/current-system/sw/bin";
+          LANG = "en_US.utf8";
         };
         script = ''
           failed=0
@@ -77,7 +78,6 @@ in {
         description = "Timer for fc-manage";
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          Unit = "fc-manage.service";
           OnStartupSec = "10s";
           OnUnitActiveSec = "10m";
           # Not yet supported by our systemd version.
