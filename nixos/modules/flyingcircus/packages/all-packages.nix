@@ -6,8 +6,12 @@ rec {
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
   cron = pkgs.callPackage ./cron.nix { };
-  collectd = pkgs.callPackage ./collectd.nix { };
-
+  collectd = pkgs.callPackage ./collectd { 
+    libsigrok = null;
+    libvirt = null;
+    lm_sensors = null;  # probably not seen on VMs
+    lvm2 = null;        # dito
+  };
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
