@@ -39,14 +39,14 @@ let
         (user: {
           name = user.uid;
           value = {
-            createHome = true;
             description = user.name;
             group = get_primary_group user;
             hashedPassword = lib.removePrefix "{CRYPT}" user.password;
             home = user.home_directory;
-            shell = "/run/current-system/sw" + user.login_shell;
-            uid = user.id;
+            isNormalUser = true;
             openssh.authorizedKeys.keys = user.ssh_pubkey;
+            shell = "/run/current-system/sw${user.login_shell}";
+            uid = user.id;
           };
         })
       users);
