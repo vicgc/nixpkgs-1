@@ -43,6 +43,7 @@ rec {
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
+  pcre = pkgs.callPackage ./pcre.nix { };
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
