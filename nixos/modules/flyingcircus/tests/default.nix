@@ -11,6 +11,11 @@
       percona = pkgs.mysql55;
     });
 
+  nodejs6 = hydraJob
+    (import ./nodejs6.nix {
+      inherit system;
+    });
+
   percona_5_7 = hydraJob
     (import ./percona.nix {
       inherit system;
