@@ -12391,5 +12391,9 @@ let self = _self // overrides; _self = with self; {
       sha256 = "14qajsfbi2syjz38iynj8c6qf0rv1zmy71kydzvvg9kcq1ib3h86";
     };
   };
+} //
+(import ../../nixos/modules/flyingcircus/packages/perl-packages.nix {
+  inherit pkgs;
+});
 
-}; in self
+in self
