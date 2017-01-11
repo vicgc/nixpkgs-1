@@ -181,6 +181,7 @@ in
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_4;
+    boot.supportedFilesystems = [ "nfs4" ];
 
     environment.etc = (
       lib.optionalAttrs

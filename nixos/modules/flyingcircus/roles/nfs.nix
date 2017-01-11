@@ -66,7 +66,6 @@ in
 
   config = mkMerge [
     (mkIf (cfg.roles.nfs_rg_client.enable && service ? address) {
-      boot.supportedFilesystems = [ "nfs4" ];
       fileSystems = {
         "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
@@ -101,7 +100,6 @@ in
           config.users.users);
       in
       {
-        boot.supportedFilesystems = [ "nfs4" ];
         fileSystems = (listToAttrs
           (map
             (user: nameValuePair
