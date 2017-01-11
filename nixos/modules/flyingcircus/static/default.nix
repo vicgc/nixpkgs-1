@@ -104,6 +104,7 @@ with lib;
     };
 
     ids.gids = {
+      users = 100;
       # The generic 'service' GID is different from Gentoo.
       # But 101 is already used in NixOS.
       service = 900;

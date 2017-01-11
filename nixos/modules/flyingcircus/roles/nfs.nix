@@ -8,21 +8,21 @@
 with lib;
 
 let
-  cfg = config.flyingcircus.roles;
+  cfg = config.flyingcircus;
   fclib = import ../lib;
 
   service = findFirst
     (s: s.service == "nfs_rg_share-server")
     {}
-    config.flyingcircus.enc_services;
+    cfg.enc_services;
 
   export = "/srv/nfs/shared";
   mountpoint = "/mnt/nfs";
-  mountopts = "rw,soft,intr,rsize=8192,wsize=8192";
+  mountopts = "rw,soft,intr,rsize=8192,wsize=8192,noauto,x-systemd.automount";
 
   service_clients = filter
     (s: s.service == "nfs_rg_share-server")
-    config.flyingcircus.enc_service_clients;
+    cfg.enc_service_clients;
 
   # This is a bit different than on Gentoo. We allow export to all nodes in the
   # RG, regardles of the node actually being a client.
@@ -32,6 +32,9 @@ let
       clientWithFlags = c: "${c.node}(${flags})";
     in
       concatMapStringsSep " " clientWithFlags service_clients;
+
+  boxServer = findFirst (s: s.service == "box-server") {} cfg.enc_services;
+  boxMount = "/mnt/auto/box";
 
 in
 {
@@ -62,13 +65,12 @@ in
   };
 
   config = mkMerge [
-    (mkIf (cfg.nfs_rg_client.enable && service ? address) {
-      boot.supportedFilesystems = [ "nfs4" ];
+    (mkIf (cfg.roles.nfs_rg_client.enable && service ? address) {
       fileSystems = {
         "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
           fsType = "nfs4";
-          options = "x-systemd.automount,x-systemd.idle-timeout=20,${mountopts}";
+          options = mountopts;
         };
       };
       systemd.tmpfiles.rules = [
@@ -80,7 +82,7 @@ in
       '';
     })
 
-    (mkIf (cfg.nfs_rg_share.enable && service_clients != []) {
+    (mkIf (cfg.roles.nfs_rg_share.enable && service_clients != []) {
       services.nfs.server.enable = true;
       services.nfs.server.exports = ''
         ${export}  ${export_to_clients}
@@ -90,5 +92,29 @@ in
         ${pkgs.nfs-utils}/bin/exportfs -ra
       '';
     })
+
+    (mkIf (boxServer ? address) (
+      let
+        humanUsers =
+          (filterAttrs (n: v: v.isNormalUser && v.group == "users")
+          config.users.users);
+      in
+      {
+        fileSystems = (listToAttrs
+          (map
+            (user: nameValuePair
+              "${boxMount}/${user}"
+              {
+                device = "${boxServer.address}:/srv/nfs/box/${user}";
+                fsType = "nfs4";
+                options = mountopts;
+              })
+            (attrNames humanUsers)));
+        systemd.tmpfiles.rules =
+          [ "d ${boxMount}" ] ++
+          mapAttrsToList
+            (user: v: "L ${v.home}/box - - - - ${boxMount}/${user}")
+            humanUsers;
+      }))
   ];
 }

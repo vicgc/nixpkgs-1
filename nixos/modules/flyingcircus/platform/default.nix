@@ -20,9 +20,7 @@ let
     then builtins.fromJSON (builtins.readFile path)
     else default;
 
-  enc =
-    get_json cfg.enc_path
-    (get_json /etc/nixos/enc.json {});
+  enc = get_json cfg.enc_path (get_json /etc/nixos/enc.json {});
 
   enc_addresses.srv = get_json cfg.enc_addresses_path.srv [];
 
@@ -183,6 +181,7 @@ in
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_4;
+    boot.supportedFilesystems = [ "nfs4" ];
 
     environment.etc = (
       lib.optionalAttrs
