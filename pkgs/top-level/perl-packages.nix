@@ -12392,6 +12392,8 @@ let self = _self // overrides; _self = with self; {
     };
   };
 } //
+# Augment this list with custom FC packages.
+# This addition should be kept across NixOS upgrades.
 (import ../../nixos/modules/flyingcircus/packages/perl-packages.nix {
   inherit pkgs;
 });

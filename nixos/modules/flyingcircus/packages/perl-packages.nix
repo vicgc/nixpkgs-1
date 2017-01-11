@@ -1,6 +1,6 @@
-{pkgs, ... }:
-with pkgs;
+{ pkgs }:
 
+with pkgs;
 {
 
   WWWCurl = buildPerlPackage rec {
