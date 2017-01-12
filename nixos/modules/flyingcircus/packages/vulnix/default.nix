@@ -4,11 +4,11 @@ let
   python = import ./requirements.nix { inherit pkgs; };
 in
 python.mkDerivation rec {
-  name = "vulnix-1.1.5";
+  name = "vulnix-1.2";
 
   src = pkgs.fetchurl {
-    url = "https://pypi.python.org/packages/de/1e/66ce22166bfcf60853511ba2d0b663ece96dd5df34a5077d176391db927d/${name}.tar.gz";
-    sha256 = "0h9jraga7gd9gbkndb41ilm7chkdp5xvjf2vfg1c5alsl95rswlv";
+    url = "https://pypi.python.org/packages/06/4a/2e599efe40ca43e38bbef31be38fcc0469ffee00ebd06507e59fbd90f39e/vulnix-1.2.tar.gz";
+    sha256 = "0gjsr0hmcpmmvmbbawa5zibc4dhzrsaw9srlwzipvnimiq8sy755";
   };
 
   propagatedBuildInputs = [
@@ -17,6 +17,8 @@ python.mkDerivation rec {
     python.packages."colorama"
     python.packages."PyYAML"
     python.packages."requests"
+    python.packages."lxml"
+    python.packages."ZODB"
   ];
 
   dontStrip = true;

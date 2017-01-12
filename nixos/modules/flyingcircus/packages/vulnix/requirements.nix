@@ -2,7 +2,7 @@
 # See more at: https://github.com/garbas/pypi2nix
 #
 # COMMAND:
-#   pypi2nix -V 3.4 -e vulnix==1.1.5
+#   pypi2nix -V 3.4 -b buildout.cfg -E libxml2 libxslt -e pytest-runner -e setuptools-scm -v
 #
 
 { pkgs ? import <nixpkgs> {}
@@ -20,7 +20,7 @@ let
     self = pythonPackages;
   };
 
-  commonBuildInputs = [];
+  commonBuildInputs = with pkgs; [ libxml2 libxslt ];
   commonDoCheck = false;
 
   withPackages = pkgs':
