@@ -24,11 +24,16 @@ rec {
 
   easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
   elasticsearch = pkgs.callPackage ./elasticsearch { };
+  elasticsearchPlugins = pkgs.recurseIntoAttrs (
+    pkgs.callPackage ./elasticsearch/plugins.nix { }
+  );
   expat = pkgs.callPackage ./expat.nix { };
 
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
+
+  graylog = pkgs.callPackage ./graylog.nix { };
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 

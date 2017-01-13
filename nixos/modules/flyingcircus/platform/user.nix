@@ -168,8 +168,6 @@ in
     - : ALL : ALL
     '';
 
-
-
     users = {
       mutableUsers = false;
       users = map_userdata userdata;
