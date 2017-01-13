@@ -14,7 +14,7 @@ rec {
     lvm2 = null;        # dito
   };
 
-  curl = pkgs.callPackage ./curl {
+  curl = pkgs.callPackage ./curl rec {
     fetchurl = pkgs.stdenv.fetchurlBoot;
     zlibSupport = true;
     sslSupport = zlibSupport;
