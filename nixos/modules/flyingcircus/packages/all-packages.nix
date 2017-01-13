@@ -6,7 +6,7 @@ rec {
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
   cron = pkgs.callPackage ./cron.nix { };
-  collectd = pkgs.callPackage ./collectd { 
+  collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
     libvirt = null;
     lm_sensors = null;  # probably not seen on VMs
@@ -34,7 +34,10 @@ rec {
 
   mc = pkgs.callPackage ./mc.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
-  mongodb = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+  mongodb = pkgs.callPackage ./mongodb {
+    pcre = pcre-cpp;
+    sasl = pkgs.cyrus_sasl;
+  };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
   nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
@@ -45,6 +48,7 @@ rec {
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
   pcre = pkgs.callPackage ./pcre.nix { };
+  pcre-cpp = pcre.override { variant = "cpp"; };
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };

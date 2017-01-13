@@ -110,43 +110,9 @@ in rec {
         proxy
         simple;
 
-      flyingcircus = {
-        elasticsearch = hydraJob
-        (import modules/flyingcircus/tests/elasticsearch.nix {
-          inherit system;
-        });
-        percona_5_7 = hydraJob
-          (import modules/flyingcircus/tests/percona.nix {
-            inherit system;
-            percona = pkgs.percona56;
-          });
-        percona_5_6 = hydraJob
-          (import modules/flyingcircus/tests/percona.nix {
-            inherit system;
-            percona = pkgs.percona57;
-          });
-        mysql_5_5 = hydraJob
-          (import modules/flyingcircus/tests/percona.nix {
-            inherit system;
-            percona = pkgs.mysql55;
-          });
-        postgresql_9_3 = hydraJob
-          (import modules/flyingcircus/tests/postgresql.nix {
-            rolename = "postgresql93";
-          });
-        postgresql_9_4 = hydraJob
-          (import modules/flyingcircus/tests/postgresql.nix {
-            rolename = "postgresql94";
-          });
-        postgresql_9_5 = hydraJob
-          (import modules/flyingcircus/tests/postgresql.nix {
-            rolename = "postgresql95";
-          });
-        sensuserver = hydraJob
-          (import modules/flyingcircus/tests/sensu.nix { inherit system; });
-        users = hydraJob
-          (import modules/flyingcircus/tests/users { inherit system; });
-      };
+      flyingcircus = (import modules/flyingcircus/tests {
+        inherit pkgs lib system hydraJob;
+      });
 
       networking.scripted = {
         inherit (nixos'.tests.networking.scripted)

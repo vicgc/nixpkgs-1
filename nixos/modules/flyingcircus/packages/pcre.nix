@@ -1,5 +1,6 @@
 { stdenv, fetchurl
 , windows ? null, variant ? null, pcre
+, unicodeSupport ? true  # left there for compatibility
 }:
 
 with stdenv.lib;
