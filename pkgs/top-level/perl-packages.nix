@@ -12391,5 +12391,11 @@ let self = _self // overrides; _self = with self; {
       sha256 = "14qajsfbi2syjz38iynj8c6qf0rv1zmy71kydzvvg9kcq1ib3h86";
     };
   };
+} //
+# Augment this list with custom FC packages.
+# This addition should be kept across NixOS upgrades.
+(import ../../nixos/modules/flyingcircus/packages/perl-packages.nix {
+  inherit pkgs;
+});
 
-}; in self
+in self
