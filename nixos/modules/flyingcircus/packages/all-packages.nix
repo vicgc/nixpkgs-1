@@ -5,15 +5,14 @@ rec {
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
-  cron = pkgs.callPackage ./cron.nix { };
-
+  cacert = pkgs.callPackage ./cacert.nix { };
   collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
     libvirt = null;
     lm_sensors = null;  # probably not seen on VMs
     lvm2 = null;        # dito
   };
-
+  cron = pkgs.callPackage ./cron.nix { };
   curl = pkgs.callPackage ./curl rec {
     fetchurl = pkgs.stdenv.fetchurlBoot;
     zlibSupport = true;
