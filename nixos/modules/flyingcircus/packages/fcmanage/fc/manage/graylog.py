@@ -1,4 +1,4 @@
-#! /run/current-system/sw/bin/env nix-shell
+#! /usr/bin/env nix-shell
 #! nix-shell -i python3 -p python34Packages.python -p python34Packages.requests2 -p python34Packages.click -I nixpkgs=/root/nixpkgs
 #
 # input sample
@@ -60,4 +60,4 @@ def main(user, password, api, input_conf, sso_conf):
 
 
 if __name__ == '__main__':
-    cli()
+    main()

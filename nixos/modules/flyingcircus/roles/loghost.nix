@@ -1,4 +1,6 @@
-{ config, fclib, lib, pkgs, ... }: with lib;
+{ config, fclib, lib, pkgs, ... }:
+
+with lib;
 
 let
   cfg = config.flyingcircus.roles.loghost;

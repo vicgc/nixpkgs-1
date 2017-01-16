@@ -3,13 +3,13 @@
 with pkgs.lib;
 
 let
-  esPlugin = a@{
-    pluginName,
-    installPhase ? ''
+  esPlugin = a @
+  { pluginName
+  , installPhase ? ''
       mkdir -p $out/bin
       ES_HOME=$out ${elasticsearch}/bin/elasticsearch-plugin --install ${pluginName} --url file://$src
-    '',
-    ...
+    ''
+  , ...
   }:
     stdenv.mkDerivation (a // {
       inherit installPhase;
