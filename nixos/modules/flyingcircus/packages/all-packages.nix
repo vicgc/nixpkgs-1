@@ -48,6 +48,10 @@ rec {
   };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
+  nginx = pkgs.callPackage ./nginx/stable.nix {
+    modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
+  };
+  nginxModules = pkgs.callPackage ./nginx/modules.nix {};
   nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
     libuv = pkgs.libuvVersions.v1_9_1;
     openssl = pkgs.openssl_1_0_2;
