@@ -5,17 +5,26 @@ rec {
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
-  cron = pkgs.callPackage ./cron.nix { };
-  collectd = pkgs.callPackage ./collectd { 
+  cacert = pkgs.callPackage ./cacert.nix { };
+  collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
     libvirt = null;
     lm_sensors = null;  # probably not seen on VMs
     lvm2 = null;        # dito
   };
+  cron = pkgs.callPackage ./cron.nix { };
+  curl = pkgs.callPackage ./curl rec {
+    fetchurl = pkgs.stdenv.fetchurlBoot;
+    zlibSupport = true;
+    sslSupport = zlibSupport;
+    scpSupport = zlibSupport;
+  };
+
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { openssl = pkgs.openssl_1_0_2; };
   elasticsearch = pkgs.callPackage ./elasticsearch { };
+  expat = pkgs.callPackage ./expat.nix { };
 
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
@@ -33,7 +42,10 @@ rec {
 
   mc = pkgs.callPackage ./mc.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
-  mongodb = pkgs.callPackage ./mongodb { sasl = pkgs.cyrus_sasl; };
+  mongodb = pkgs.callPackage ./mongodb {
+    pcre = pcre-cpp;
+    sasl = pkgs.cyrus_sasl;
+  };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
   nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
@@ -43,6 +55,8 @@ rec {
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
+  pcre = pkgs.callPackage ./pcre.nix { };
+  pcre-cpp = pcre.override { variant = "cpp"; };
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
