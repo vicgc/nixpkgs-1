@@ -84,7 +84,7 @@ in
       host = thisNode;
       dataDir = cfg.dataDir;
       cluster_name = clusterName;
-      extraCmdLineOptions = "-Des.path.scripts=${cfg_service.dataDir}/scripts";
+      extraCmdLineOptions = [ "-Des.path.scripts=${cfg_service.dataDir}/scripts -Des.security.manager.enabled=false" ];
       extraConf = ''
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
