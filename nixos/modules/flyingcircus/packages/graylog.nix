@@ -35,6 +35,5 @@ stdenv.mkDerivation rec {
     homepage    = https://www.graylog.org/;
     license     = licenses.gpl3;
     platforms   = platforms.unix;
-    maintainers = [ maintainers.fadenb ];
   };
 }
