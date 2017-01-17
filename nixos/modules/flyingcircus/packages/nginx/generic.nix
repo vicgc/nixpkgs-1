@@ -16,7 +16,6 @@ stdenv.mkDerivation {
     inherit sha256;
   };
 
-
   buildInputs =
     [ openssl zlib pcre libxml2 libxslt gd geoip ]
     ++ concatMap (mod: mod.inputs or []) modules;
@@ -62,6 +61,5 @@ stdenv.mkDerivation {
     homepage    = http://nginx.org;
     license     = licenses.bsd2;
     platforms   = platforms.all;
-    maintainers = with maintainers; [ thoughtpolice raskin ];
   };
 }
