@@ -43,11 +43,9 @@ let
       users);
 
   admins_group =
-    if cfg.admins_group_data == {}
-    then {}
-    else {
-      ${cfg.admins_group_data.name}.gid = cfg.admins_group_data.gid;
-    };
+    lib.optionalAttrs
+      (cfg.admins_group_data != {})
+      { ${cfg.admins_group_data.name}.gid = cfg.admins_group_data.gid; };
 
   current_rg =
     if lib.hasAttrByPath ["parameters" "resource_group"] cfg.enc
