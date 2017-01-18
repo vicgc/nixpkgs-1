@@ -52,7 +52,12 @@ let
   hostsFromEncAddresses = enc_addresses:
     let
       recordToEtcHostsLine = r:
-        "${fclib.stripNetmask r.ip} ${r.name}.${config.networking.domain} ${r.name}";
+      let hostName =
+        if config.networking.domain != null
+        then "${r.name}.${config.networking.domain} {r.name}"
+        else "${r.name}";
+      in
+        "${fclib.stripNetmask r.ip} ${hostName}";
     in
       # always mention IPv6 addresses first to get predictable behaviour
       lib.concatMapStringsSep "\n" recordToEtcHostsLine

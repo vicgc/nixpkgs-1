@@ -43,7 +43,7 @@ nix-channel --remove next
 """
 
 ACTIVATE_MESSAGE = """\
-System update to {channel}. The following services will be affected in this\
+System update to {channel}. The following services will be affected in this \
 order:
 
 {changes}
