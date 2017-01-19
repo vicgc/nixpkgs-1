@@ -50,10 +50,16 @@ rec {
   };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
-  nginx = pkgs.callPackage ./nginx/stable.nix {
-    modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
-  };
-  nginxModules = pkgs.callPackage ./nginx/modules.nix {};
+
+  nginx =
+    let
+      nginxModules = import ./nginx/modules.nix { inherit pkgs; };
+    in
+    pkgs.callPackage ./nginx/stable.nix {
+      openssl = pkgs.openssl_1_0_2;
+      modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
+    };
+
   nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
     libuv = pkgs.libuvVersions.v1_9_1;
     openssl = pkgs.openssl_1_0_2;

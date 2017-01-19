@@ -69,11 +69,6 @@ let
           ln -s $image/image.qcow2.bz2 $out/
         '');
 
-  flyingcircus_vm_image_build =
-    if buildImage
-    then { flyingcircus_vm_image = flyingcircus_vm_image; }
-    else {};
-
   # List of package names for Python packages defined in modules/flyingcircus
   ownPythonPackages = builtins.attrNames
     (import modules/flyingcircus/packages/python-packages.nix {
@@ -93,9 +88,7 @@ let
 
 in rec {
   nixos = {
-    inherit (nixos')
-      channel
-      dummy;
+    inherit (nixos') channel;
     tests = {
       inherit (nixos'.tests)
         containers
@@ -149,4 +142,3 @@ in rec {
   });
 
 }
-// flyingcircus_vm_image_build
