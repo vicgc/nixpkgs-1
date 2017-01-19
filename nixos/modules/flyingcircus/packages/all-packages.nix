@@ -32,6 +32,10 @@ rec {
 
   graylog = pkgs.callPackage ./graylog.nix { };
 
+  http-parser = pkgs.callPackage ./http-parser {
+    gyp = pkgs.pythonPackages.gyp;
+  };
+
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   linux = linux_4_4;
@@ -59,6 +63,11 @@ rec {
       openssl = pkgs.openssl_1_0_2;
       modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
     };
+
+  nodejs4 = pkgs.callPackage ./nodejs4/default.nix {
+    libuv = pkgs.libuvVersions.v1_9_1;
+    openssl = pkgs.openssl_1_0_2;
+  };
 
   nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
     libuv = pkgs.libuvVersions.v1_9_1;
