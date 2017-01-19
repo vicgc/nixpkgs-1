@@ -6,7 +6,7 @@
 , stableBranch ? false
 , supportedSystems ? [ "x86_64-linux" ] # no i686-linux
 , buildImage ? true
-, buildInstaller ? true
+, buildInstaller ? false  # unused here
 }:
 
 with import ../lib;
@@ -141,4 +141,5 @@ in rec {
       ++ (if buildImage then [flyingcircus_vm_image] else []);
   });
 
-}
+} //
+lib.optionalAttrs buildImage { inherit flyingcircus_vm_image; }
