@@ -2,13 +2,17 @@
 
 let
   cfg = config.flyingcircus.roles.elasticsearch;
+  cfg_service = config.services.elasticsearch;
   fclib = import ../lib;
 
-  esNodes = map
-    (service: service.address)
-    (filter
-      (s: s.service == "elasticsearch-node")
-      config.flyingcircus.enc_services);
+  esNodes =
+    if cfg.esNodes == null
+    then map
+      (service: service.address)
+      (filter
+        (s: s.service == "elasticsearch-node")
+        config.flyingcircus.enc_services)
+    else cfg.esNodes;
 
   thisNode =
     if config.networking.domain != null
@@ -20,12 +24,13 @@ let
   clusterName =
     if cfg.clusterName == null
     then (fclib.configFromFile /etc/local/elasticsearch/clusterName defaultClusterName)
-    else cfg.password;
+    else cfg.clusterName;
 
   currentMemory = fclib.current_memory config 1024;
+
   esHeap =
     fclib.min [
-      (currentMemory / 2)
+      (currentMemory / cfg.heapDivisor)
       (31 * 1024)];
 
 in
@@ -47,6 +52,28 @@ in
           The clusterName elasticsearch will use.
         '';
       };
+
+      dataDir = mkOption {
+        type = types.path;
+        default = "/srv/elasticsearch";
+        description = ''
+          Data directory for elasticsearch.
+        '';
+      };
+
+      heapDivisor = mkOption {
+        type = types.int;
+        default = 2;
+        description = ''
+          Tweak amount of memory to use for ES heap
+          (systemMemory / heapDivisor)
+        '';
+      };
+
+      esNodes = mkOption {
+        type = types.nullOr (types.listOf types.string);
+        default = null;
+      };
     };
   };
 
@@ -55,20 +82,28 @@ in
     services.elasticsearch = {
       enable = true;
       host = thisNode;
-      dataDir = "/srv/elasticsearch";
+      dataDir = cfg.dataDir;
       cluster_name = clusterName;
+      extraCmdLineOptions = [ "-Des.path.scripts=${cfg_service.dataDir}/scripts -Des.security.manager.enabled=false" ];
       extraConf = ''
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
         bootstrap.memory_lock: true
       '';
     };
+
     systemd.services.elasticsearch = {
       environment = {
         ES_HEAP_SIZE = "${toString esHeap}m";
       };
-      serviceConfig.LimitNOFILE = 65536;
-      serviceConfig.LimitMEMLOCK = "infinity";
+      serviceConfig = fclib.mkPlatform {
+        LimitNOFILE = 65536;
+        LimitMEMLOCK = "infinity";
+      };
+      preStart = mkAfter ''
+        # Install scripts
+        mkdir -p ${cfg_service.dataDir}/scripts
+      '';
     };
 
     # System tweaks
