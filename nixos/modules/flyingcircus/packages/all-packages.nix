@@ -34,6 +34,8 @@ rec {
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
+  libidn = pkgs.callPackage ./libidn.nix { };
+
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
     kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
