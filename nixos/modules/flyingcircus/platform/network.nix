@@ -54,7 +54,7 @@ let
       recordToEtcHostsLine = r:
       let hostName =
         if config.networking.domain != null
-        then "${r.name}.${config.networking.domain} {r.name}"
+        then "${r.name}.${config.networking.domain} ${r.name}"
         else "${r.name}";
       in
         "${fclib.stripNetmask r.ip} ${hostName}";
