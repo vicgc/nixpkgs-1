@@ -1,4 +1,6 @@
-{ fetchFromGitHub, pkgs }:
+{ pkgs }:
+
+with pkgs;
 
 {
 
@@ -9,7 +11,7 @@
       rev = "788615eab7c5e0a984278113c55248305620df14";
       sha256 = "02514bbjdhm9m38vljdh626d3c1783jxsxawv5c6bzblwmb8xgvf";
     };
-    inputs = [ pkgs.libbrotli ];
+    inputs = [ libbrotli ];
   };
 
   rtmp = {
@@ -28,7 +30,7 @@
       rev = "v0.0.3";
       sha256 = "1qck8jclxddncjad8yv911s9z7lrd58bp96jf13m0iqk54xghx91";
     };
-    inputs = [ pkgs.expat ];
+    inputs = [ expat ];
   };
 
   syslog = rec {
@@ -77,10 +79,10 @@
       rev = "v0.10.5";
       sha256 = "0wz5j4kqa6hk7ar42bkxp0hd74psjy6sfsldh1a6p93z349iz4v5";
     };
-    inputs = [ pkgs.luajit ];
+    inputs = [ luajit ];
     preConfigure = ''
-      export LUAJIT_LIB="${pkgs.luajit}/lib"
-      export LUAJIT_INC="${pkgs.luajit}/include/luajit-2.0"
+      export LUAJIT_LIB="${luajit}/lib"
+      export LUAJIT_INC="${luajit}/include/luajit-2.0"
     '';
   };
 
@@ -109,7 +111,7 @@
       rev = "v1.4";
       sha256 = "068zwyrc1dji55rlaj2kx6n0v2n5rpj7nz26ipvz26ida712md35";
     };
-    inputs = [ pkgs.pam ];
+    inputs = [ pam ];
   };
 
   statsd = {
