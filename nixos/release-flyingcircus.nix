@@ -94,7 +94,6 @@ in rec {
         containers
         firewall
         ipv6
-        login
         misc
         nat
         nfs4

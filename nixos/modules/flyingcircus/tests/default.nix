@@ -3,6 +3,8 @@
 {
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
+  login = hydraJob (import ./login.nix { inherit system; }) ;
+
   mongodb = hydraJob (import ./mongodb { inherit system; }) ;
 
   mysql_5_5 = hydraJob
