@@ -8,8 +8,10 @@ criticalpatterns:
       - 'kvm: .* cpu.* unhandled (rd|wr)msr'
 
 criticalexceptions:
+      - '0 failures 0 errors'
       - 'ACPI Error: Method parse/execution failed'
       - '"timestamp":".*","level":"error"'
+      - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
@@ -20,3 +22,4 @@ warningexceptions:
       - '0 failures 0 errors'
       - 'Cannot add dependency job for unit.*quota'
       - '"timestamp":".*","level":"warn"'
+      - 'warning: not applying GID change of group'

@@ -203,10 +203,11 @@ in {
       };
       environment = {
         EMBEDDED_RUBY = "true";
-        LANG = "en_US.iso88591";
+        LANG = "en_US.utf8";
       };
       preStart = ''
-        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient -d /var/cache/vulnix
+        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient \
+          -d /var/cache/vulnix
       '';
     };
 
@@ -268,14 +269,19 @@ in {
         '';
         interval = 600;
       };
+
       vulnix = {
         notification = "Security vulnerabilities in the last 6h";
-        command = "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
+        command =
+        let
+          whitelist = https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml;
+        in
+          "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
           "${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
-          "-w " +
-          "https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml";
-        interval = 21600;
+          "-w ${whitelist}";
+        interval = 6 * 3600;
       };
+
       manage = {
         notification = "The FC manage job is not enabled.";
         command = "${check_timer} fc-manage";

@@ -1,4 +1,6 @@
-{ config, lib, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }:
+
+with lib;
 
 let
   cfg = config.flyingcircus;
@@ -6,10 +8,12 @@ let
 
   # This looks clunky.
   version =
-      if cfg.roles.postgresql94.enable
-      then "9.4"
-      else if cfg.roles.postgresql93.enable
+      if cfg.roles.postgresql93.enable
       then "9.3"
+      else if cfg.roles.postgresql94.enable
+      then "9.4"
+      else if cfg.roles.postgresql95.enable
+      then "9.5"
       else null;
 
 
@@ -19,6 +23,7 @@ let
   package = {
     "9.3" = pkgs.postgresql93;
     "9.4" = pkgs.postgresql94;
+    "9.5" = pkgs.postgresql95;
   };
 
   current_memory = fclib.current_memory config 256;
@@ -45,18 +50,12 @@ let
     fclib.listenAddresses config "lo" ++
     fclib.listenAddresses config "ethsrv";
 
-  # I hate you nix. /a/path in nix is obviously different from the string
-  # "/a/path". Like the former puts the path into the store. But how do I get
-  # from string to path? builtins.toPath does *not* do the trick.
-  local_config_path =
-    if version == "9.4"
-    then /etc/local/postgresql/9.4
-    else if version == "9.3"
-    then /etc/local/postgresql/9.3
-    else null;
+  # using this ugly expression is the only way to get a dynamic path into the
+  # Nix store
+  local_config_path = /etc/local/postgresql + "/${version}";
 
   local_config =
-    if local_config_path != null && pathExists local_config_path
+    if postgres_enabled && pathExists local_config_path
     then "include_dir '${local_config_path}'"
     else "";
 
@@ -80,14 +79,25 @@ in
       };
     };
 
+    flyingcircus.roles.postgresql95 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus PostgreSQL 9.5 server role.";
+      };
+    };
+
   };
 
   config = mkIf postgres_enabled {
+
     services.postgresql.enable = true;
     services.postgresql.package = builtins.getAttr version package;
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
+
+    environment.systemPackages = [ (builtins.getAttr version package) ];
 
     users.users.postgres = {
       shell = "/run/current-system/sw/bin/bash";
@@ -95,7 +105,8 @@ in
     };
     system.activationScripts.flyingcircus_postgresql = ''
       install -d -o ${toString config.ids.uids.postgres} /srv/postgresql
-      install -d -o ${toString config.ids.uids.postgres} -g service  -m 02775 /etc/local/postgresql/${version}
+      install -d -o ${toString config.ids.uids.postgres} -g service -m 02775 \
+        /etc/local/postgresql/${version}
     '';
     security.sudo.extraConfig = ''
       # Service users may switch to the postgres system user
@@ -143,7 +154,9 @@ in
       #------------------------------------------------------------------------------
       wal_level = hot_standby
       wal_buffers = ${toString wal_buffers}MB
-      checkpoint_segments = 100
+      ${optionalString ((builtins.compareVersions "9.5" version) < 0)
+          "checkpoint_segments = 100"
+      }
       checkpoint_completion_target = 0.9
       archive_mode = off
 

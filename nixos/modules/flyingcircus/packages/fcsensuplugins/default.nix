@@ -1,7 +1,4 @@
-{ pkgs ? import <nixpkgs> { }
-, python34Packages ? pkgs.python34Packages
-, nagiosplugin ? import ../nagiosplugin.nix { pkgs = pkgs; }
-}:
+{ pkgs, libyaml, python34Packages }:
 
 let
   py = python34Packages;
@@ -14,9 +11,9 @@ in
     src = ./.;
     dontStrip = true;
     propagatedBuildInputs = [
-      nagiosplugin
+      libyaml
+      py.nagiosplugin
       py.psutil
       py.pyyaml
-      pkgs.libyaml
     ];
   }

@@ -1,0 +1,27 @@
+[
+ {
+  "description": "commit to VCS repository",
+  "id": 2029,
+  "name": "code"
+ },
+ {
+  "description": "perform interactive or web logins (e.g., ssh, monitoring)",
+  "id": 502,
+  "name": "login"
+ },
+ {
+  "description": "access web statistics",
+  "id": 2046,
+  "name": "stats"
+ },
+ {
+  "description": "sudo to service user",
+  "id": 2028,
+  "name": "sudo-srv"
+ },
+ {
+  "description": "sudo to root",
+  "id": 10,
+  "name": "wheel"
+ }
+]

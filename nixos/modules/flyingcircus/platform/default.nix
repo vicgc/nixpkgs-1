@@ -20,9 +20,7 @@ let
     then builtins.fromJSON (builtins.readFile path)
     else default;
 
-  enc =
-    get_json cfg.enc_path
-    (get_json /etc/nixos/enc.json {});
+  enc = get_json cfg.enc_path (get_json /etc/nixos/enc.json {});
 
   enc_addresses.srv = get_json cfg.enc_addresses_path.srv [];
 
@@ -183,12 +181,19 @@ in
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_4;
+    boot.supportedFilesystems = [ "nfs4" ];
 
     environment.etc = (
-      lib.optionalAttrs (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
-      { "directory.secret".text = cfg.enc.parameters.directory_secret;
-        "directory.secret".mode = "0600";}) //
-      { "nixos/configuration.nix".text = pkgs.lib.readFile ../files/etc_nixos_configuration.nix; };
+      lib.optionalAttrs
+        (lib.hasAttrByPath ["parameters" "directory_secret"] cfg.enc)
+        {
+          "directory.secret".text = cfg.enc.parameters.directory_secret;
+          "directory.secret".mode = "0600";
+        })
+      // {
+        "nixos/configuration.nix".text =
+          lib.readFile ../files/etc_nixos_configuration.nix;
+      };
 
     services.openssh = {
       enable = true;
