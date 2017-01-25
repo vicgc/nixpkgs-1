@@ -63,20 +63,11 @@ rec {
       nginxModules = import ./nginx/modules.nix { inherit pkgs; };
     in
     pkgs.callPackage ./nginx/stable.nix {
-      openssl = pkgs.openssl_1_0_2;
       modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
     };
 
-  nodejs4 = pkgs.callPackage ./nodejs4/default.nix {
-    libuv = pkgs.libuvVersions.v1_9_1;
-    openssl = pkgs.openssl_1_0_2;
-  };
-
-  nodejs6 = pkgs.callPackage ./nodejs6/default.nix {
-    libuv = pkgs.libuvVersions.v1_9_1;
-  };
-
-  openssl = openssl_1_0_2;
+  inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
+    nodejs4 nodejs6;
 
   inherit (pkgs.callPackages ./openssl {
       fetchurl = pkgs.fetchurlBoot;
@@ -85,9 +76,8 @@ rec {
         onlyHeaders = true;
       };
     })
-    openssl_1_0_1
-    openssl_1_0_2
-    openssl_1_1_0;
+    openssl_1_0_2 openssl_1_1_0;
+  openssl = openssl_1_0_2;
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
 
