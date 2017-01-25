@@ -15,20 +15,18 @@ let
 
   fclib = import ../lib;
 
-  get_json = path: default:
-    if builtins.pathExists path
-    then builtins.fromJSON (builtins.readFile path)
-    else default;
+  enc =
+    builtins.fromJSON (fclib.configFromFile
+      cfg.enc_path
+      (fclib.configFromFile "/etc/nixos/enc.json" "{}"));
 
-  enc = get_json cfg.enc_path (get_json /etc/nixos/enc.json {});
+  enc_addresses.srv = fclib.jsonFromFile cfg.enc_addresses_path.srv "[]";
 
-  enc_addresses.srv = get_json cfg.enc_addresses_path.srv [];
+  enc_services = fclib.jsonFromFile cfg.enc_services_path "[]";
 
-  enc_services = get_json cfg.enc_services_path [];
+  enc_service_clients = fclib.jsonFromFile cfg.enc_service_clients_path "[]";
 
-  enc_service_clients = get_json cfg.enc_service_clients_path [];
-
-  system_state = get_json cfg.system_state_path {};
+  system_state = fclib.jsonFromFile cfg.system_state_path "{}";
 
 in
 {
