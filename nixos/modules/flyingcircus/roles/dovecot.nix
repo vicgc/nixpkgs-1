@@ -1,34 +1,50 @@
-{ config, lib, pkgs, ... }: with lib;
-{
+{ config, lib, pkgs, ... }:
+with builtins;
 
+let
+  cfg = config.flyingcircus;
+  fclib = import ../lib;
+
+in
+{
   options = {
 
     flyingcircus.roles.dovecot = {
-
-      enable = mkOption {
-          type = types.bool;
+      enable = lib.mkOption {
+          type = lib.types.bool;
           default = false;
           description = "Enable the Flying Circus dovecot server role.";
       };
-
     };
 
   };
 
-  config = mkIf config.flyingcircus.roles.dovecot.enable {
+  config = lib.mkIf cfg.roles.dovecot.enable {
 
-  jobs.fcio-stubs-dovecot = mkIf config.flyingcircus.compat.gentoo.enable{
-    description = "Create FC IO stubs dovecot";
-    task = true;
+    services.dovecot2 =
+    let
+      localConfigs =
+        filter (lib.hasSuffix ".conf") (fclib.filesRel "/etc/local/dovecot");
 
-    startOn = "started networking";
+    in
+    {
+      enable = true;
+      extraConfig = lib.concatStrings
+        (map
+          (file: "!include ${/etc/local/dovecot + "/${file}"}\n")
+          localConfigs);
+    };
 
-    script =
-        ''
-            mkdir -p /etc/dovecot
-            touch /etc/dovecot/local.conf
-            chown -R vagrant: /etc/dovecot/local.conf
-          '';
+    environment.etc."local/dovecot/README".text = ''
+      Dovecot local configuration
+
+      Files matching *.conf will be included in Dovecot's configuration. Please
+      run fc-manage to update configs and restart dovecot.
+    '';
+
+    system.activationScripts.dovecot = ''
+      install -d -g service -m 0775 /etc/local/dovecot
+    '';
+
   };
-};
 }
