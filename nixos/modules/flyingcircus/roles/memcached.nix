@@ -4,25 +4,21 @@ let
   cfg = config.flyingcircus.roles.memcached;
   fclib = import ../lib;
 
-  listen_addresses =
-    fclib.listenAddresses config "ethsrv";
+  listen = head (fclib.listenAddresses config "ethsrv");
 
   defaultConfig = ''
-  {
-    "port": "11211",
-    "maxMemory": "64",
-    "maxConnections": "1024"
-  }
+    {
+      "port": "11211",
+      "maxMemory": "64",
+      "maxConnections": "1024"
+    }
   '';
 
   localConfig =
-    if pathExists /etc/local/memcached/memcached.json
-    then builtins.fromJSON (readFile /etc/local/memcached/memcached.json)
-    else builtins.fromJSON defaultConfig;
+    fclib.jsonFromFile "/etc/local/memcached/memcached.json" defaultConfig;
 
 in
 {
-
   options = {
 
     flyingcircus.roles.memcached = {
@@ -49,20 +45,17 @@ in
      ${defaultConfig}
     '';
 
-    services.memcached =
-      localConfig // {
-       listen = head listen_addresses;
-       enable = true;
-      };
+    services.memcached = {
+      inherit listen;
+      enable = true;
+    } // localConfig;
 
     flyingcircus.services.sensu-client.checks = {
       memcached = {
         notification = "memcached alive";
-        command = "check-memcached-stats.rb -h ${head listen_addresses}";
-	};
+        command = "check-memcached-stats.rb -h ${listen}";
+      };
     };
 
   };
-
 }
-

@@ -1,4 +1,4 @@
-{stdenv, fetchurl, cyrus_sasl, libevent}:
+{ stdenv, fetchurl, cyrus_sasl, libevent }:
 
 stdenv.mkDerivation rec {
   name = "memcached-1.4.33";
@@ -8,7 +8,7 @@ stdenv.mkDerivation rec {
     sha256 = "07bpd6xdhzw6q2ga6xc075bw4jd44nxjl1vk4dqmd315d26nqwl3";
   };
 
-  buildInputs = [cyrus_sasl libevent];
+  buildInputs = [ cyrus_sasl libevent ];
 
   hardeningEnable = [ "pie" ];
 
@@ -19,7 +19,6 @@ stdenv.mkDerivation rec {
     repositories.git = https://github.com/memcached/memcached.git;
     homepage = http://memcached.org/;
     license = licenses.bsd3;
-    maintainers = [ maintainers.coconnor ];
     platforms = platforms.linux ++ platforms.darwin;
   };
 }
