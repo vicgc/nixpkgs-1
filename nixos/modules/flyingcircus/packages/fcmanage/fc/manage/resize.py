@@ -321,7 +321,9 @@ def check_kernel_reboot():
         with fc.maintenance.ReqManager() as rm:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.reboot.RebootActivity('reboot'), 600,
-                comment='Reboot to activate changed kernel'))
+                comment='Reboot to activate changed kernel '
+                '({} to {})'.format(booted, current)
+            ))
 
 
 def main():
