@@ -101,6 +101,7 @@ with lib;
       uchiwa = 31003;
       sensuclient = 31004;
       powerdns = 31005;
+      graylog = 31006;
     };
 
     ids.gids = {

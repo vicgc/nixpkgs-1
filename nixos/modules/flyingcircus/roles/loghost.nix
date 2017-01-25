@@ -1,15 +1,15 @@
-{ config, fclib, lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.flyingcircus.roles.loghost;
-  fclib = import ../../lib;
+  fclib = import ../lib;
 
   listenOn = head (fclib.listenAddresses config "ethsrv");
   serviceUser = "graylog";
 
-  loghostService = lib.findFirst
+  loghostService = findFirst
     (s: s.service == "loghost-server")
     null
     config.flyingcircus.enc_services;
@@ -252,6 +252,7 @@ in
     };
 
     })
+    # This configuration part defines loghosts clients as loghosts which happen to be their own clients as well
     (mkIf (loghostService != null) {
       services.rsyslogd.extraConfig = ''
         *.* @${loghostService.address}:${toString syslogPort};RSYSLOG_SyslogProtocol23Format
