@@ -21,7 +21,10 @@
 #     {
 #       imports = [
 #         ./setup.nix
-#         ...
+#         ../static
+#         ../roles
+#         ../services
+#         ../platform
 #       ];
 #     };
 #   testScript = ''

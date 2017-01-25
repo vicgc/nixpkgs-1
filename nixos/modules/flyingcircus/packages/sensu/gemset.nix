@@ -68,34 +68,42 @@
     ];
   };
   "aws-sdk" = {
-    version = "2.6.3";
+    version = "2.6.44";
     source = {
       type = "gem";
-      sha256 = "0sy3c7rbf1xczab3hn5f04db7r6gm1l5gp96ajv2l1wmvh440avq";
+      sha256 = "0j53bpvdlq7ny3bmrdkqh19zh2ifj0g029sf50jyaf789nx5zl5v";
     };
     dependencies = [
       "aws-sdk-resources"
     ];
   };
   "aws-sdk-core" = {
-    version = "2.6.3";
+    version = "2.6.44";
     source = {
       type = "gem";
-      sha256 = "0mbkb47nkzdvhnj5x0aqx9gb57snqa1fylb2x3ji5p5y4nv6nn4f";
+      sha256 = "0gqcbhnd5k5ich2l7vyn2a6bz3yrmlc95hp0bvrf6i4cm1b8gvmz";
     };
     dependencies = [
+      "aws-sigv4"
       "jmespath"
     ];
   };
   "aws-sdk-resources" = {
-    version = "2.6.3";
+    version = "2.6.44";
     source = {
       type = "gem";
-      sha256 = "0f5sm0jcnc6av40z0dvhl8yqh79w59p5m5v75kfqdv3z42ikhmnl";
+      sha256 = "1mpily2565js9bhqsidf4202l3s4l6dq5akbk2aizkkfsjdfhl8j";
     };
     dependencies = [
       "aws-sdk-core"
     ];
+  };
+  "aws-sigv4" = {
+    version = "1.0.0";
+    source = {
+      type = "gem";
+      sha256 = "0cnrfxbaxn86qrxhfidg10f89ka1hddihakdhcvnri0dljaw7dsz";
+    };
   };
   "bson" = {
     version = "1.12.3";
@@ -153,10 +161,10 @@
     };
   };
   "domain_name" = {
-    version = "0.5.20160826";
+    version = "0.5.20161129";
     source = {
       type = "gem";
-      sha256 = "0rg7gvp45xmb5qz8ydp7ivw05hhplh6k7mbawrpvkysl2c77w5xx";
+      sha256 = "0gq8g2f4kk7hqcdis9gr3zc597cv3c3cr9za0a7k8h9ajj12byg8";
     };
     dependencies = [
       "unf"
@@ -239,20 +247,20 @@
     ];
   };
   "faraday_middleware" = {
-    version = "0.10.0";
+    version = "0.10.1";
     source = {
       type = "gem";
-      sha256 = "0nxia26xzy8i56qfyz1bg8dg9yb26swpgci8n5jry8mh4bnx5r5h";
+      sha256 = "18jndnpls6aih57rlkzdq94m5r7zlkjngyirv01jqlxll8jy643r";
     };
     dependencies = [
       "faraday"
     ];
   };
   "ffi" = {
-    version = "1.9.14";
+    version = "1.9.17";
     source = {
       type = "gem";
-      sha256 = "1nkcrmxqr0vb1y4rwliclwlj2ajsi4ddpdx2gvzjy0xbkk5iqzfp";
+      sha256 = "07hnyr47mndsjfanzh348wm3fxjx9nx68mdb3cpsdvfqrxnz97s7";
     };
   };
   "fileutils" = {
@@ -266,10 +274,10 @@
     ];
   };
   "http-cookie" = {
-    version = "1.0.2";
+    version = "1.0.3";
     source = {
       type = "gem";
-      sha256 = "0cz2fdkngs3jc5w32a6xcl511hy03a7zdiy988jk1sf3bf5v3hdw";
+      sha256 = "004cgs4xg5n6byjs7qld0xhsjq3n6ydfh897myr2mibvh6fjc49g";
     };
     dependencies = [
       "domain_name"
@@ -304,10 +312,10 @@
     };
   };
   "json" = {
-    version = "1.8.3";
+    version = "1.8.6";
     source = {
       type = "gem";
-      sha256 = "1nsby6ry8l9xg3yw4adlhk2pnc7i0h0rznvcss4vk3v74qg0k8lc";
+      sha256 = "0qmj7fypgb9vag723w1a49qihxrcf5shzars106ynw2zk352gbv5";
     };
   };
   "libxml-ruby" = {
@@ -348,6 +356,13 @@
       "rest-client"
     ];
   };
+  "memcached" = {
+    version = "1.8.0";
+    source = {
+      type = "gem";
+      sha256 = "0cbjisgc50s4scmp50zq7mrw4wdd9r69jhcbw3wwfr1zi2iv2xpj";
+    };
+  };
   "mime-types" = {
     version = "2.99.3";
     source = {
@@ -356,10 +371,10 @@
     };
   };
   "minitest" = {
-    version = "5.9.1";
+    version = "5.10.1";
     source = {
       type = "gem";
-      sha256 = "0300naf4ilpd9sf0k8si9h9sclkizaschn8bpnri5fqmvm9ybdbq";
+      sha256 = "1yk2m8sp0p5m1niawa3ncg157a4i0594cg7z91rzjxv963rzrwab";
     };
   };
   "mixlib-cli" = {
@@ -429,10 +444,10 @@
     };
   };
   "rack" = {
-    version = "1.6.4";
+    version = "1.6.5";
     source = {
       type = "gem";
-      sha256 = "09bs295yq6csjnkzj7ncj50i6chfxrhmzg1pk6p0vd2lb9ac8pj5";
+      sha256 = "1374xyh8nnqb8sy6g9gcvchw8gifckn5v3bhl6dzbwwsx34qz7gz";
     };
   };
   "rack-protection" = {
@@ -623,6 +638,17 @@
       "sensu-plugin"
     ];
   };
+  "sensu-plugins-memcached" = {
+    version = "0.0.3";
+    source = {
+      type = "gem";
+      sha256 = "1n355hycsva61fvcc9vs1bi4qr23pbyl3gmpkxgic4hz4nm2lhny";
+    };
+    dependencies = [
+      "memcached"
+      "sensu-plugin"
+    ];
+  };
   "sensu-plugins-mongodb" = {
     version = "0.0.8";
     source = {
@@ -714,7 +740,7 @@
     version = "0.0.1";
     source = {
       type = "git";
-      url = "https://github.com/nyxcharon/sensu-plugins-systemd.git";
+      url = "git://github.com/nyxcharon/sensu-plugins-systemd.git";
       rev = "be972959c5f6cdc989b1122db72a4b10a1ecce77";
       sha256 = "123fnj9yiwbzxax9c14zy5iwc3qaldn5nqibs9k0nysr9zwkygpa";
       fetchSubmodules = false;

@@ -3,12 +3,21 @@
 {
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
+  memcached = hydraJob (import ./memcached.nix { inherit system; }) ;
+
+  login = hydraJob (import ./login.nix { inherit system; }) ;
+
   mongodb = hydraJob (import ./mongodb { inherit system; }) ;
 
   mysql_5_5 = hydraJob
     (import ./percona.nix {
       inherit system;
       percona = pkgs.mysql55;
+    });
+
+  nodejs6 = hydraJob
+    (import ./nodejs6.nix {
+      inherit system;
     });
 
   percona_5_7 = hydraJob
