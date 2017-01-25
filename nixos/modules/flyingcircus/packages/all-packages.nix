@@ -46,6 +46,7 @@ rec {
 
   mc = pkgs.callPackage ./mc.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
+  memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = pkgs.callPackage ./mongodb {
     pcre = pcre-cpp;
     sasl = pkgs.cyrus_sasl;
