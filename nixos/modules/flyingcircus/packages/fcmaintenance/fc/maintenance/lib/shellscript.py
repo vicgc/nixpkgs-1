@@ -6,7 +6,7 @@ file, it is executed with /bin/sh.
 """
 
 from fc.maintenance.activity import Activity
-from fc.maintenance.reqmanager import ReqManager, DEFAULT_DIR
+from fc.maintenance.reqmanager import ReqManager, DEFAULT_DIR, setup_logging
 from fc.maintenance.request import Request
 
 import argparse
@@ -48,6 +48,7 @@ stdin.
                    help='request spool dir (default: %(default)s)')
     a.add_argument('estimate', metavar='ESTIMATE',
                    help='estimate activity duration (suffixes: s, m, h)')
+    a.add_argument('-v', '--verbose', action='store_true', default=False)
     g = a.add_mutually_exclusive_group()
     g.add_argument('-e', '--exec', metavar='SHELLCMD', default=False,
                    help='execute shell command as maintenance activity')
@@ -55,6 +56,7 @@ stdin.
                    type=argparse.FileType('r'),
                    help='execute FILE as maintenance activity')
     args = a.parse_args()
+    setup_logging(args.verbose)
     if args.file:
         act = args.file
     elif args.exec:
@@ -62,6 +64,7 @@ stdin.
     else:
         act = sys.stdin
 
-    rm = ReqManager(spooldir=args.spooldir)
-    rm.add(Request(ShellScriptActivity(act), args.estimate,
-                   comment=args.comment))
+    with ReqManager(spooldir=args.spooldir) as rm:
+        rm.scan()
+        rm.add(Request(
+            ShellScriptActivity(act), args.estimate, comment=args.comment))
