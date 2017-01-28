@@ -1,31 +1,21 @@
-{ pkgs }:
+{ pkgs, stdenv, unzip, fetchurl }:
 
 let
-  python = import ./requirements.nix { inherit pkgs; };
+  vulnixSrc = stdenv.mkDerivation rec {
+    name = "vulnix-src-${version}";
+    version = "1.2.2";
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/90/c9/ebef9243334a99edb8598061efae0f00d7a199b01bea574a84e31e06236d/vulnix-${version}.tar.gz";
+      sha256 = "1ia9plziwach0bxnlcd33q30kcsf8sv0nf2jc78gsmrqnxjabr12";
+    };
+    buildInputs = [ unzip ];
+    dontBuild = true;
+    preferLocalBuild = true;
+    installPhase = "mkdir $out; cp -r * $out";
+    dontStrip = true;
+    dontPatchELF = true;
+  };
+
 in
-python.mkDerivation rec {
-  name = "vulnix-1.2";
-
-  src = pkgs.fetchurl {
-    url = "https://pypi.python.org/packages/06/4a/2e599efe40ca43e38bbef31be38fcc0469ffee00ebd06507e59fbd90f39e/vulnix-1.2.tar.gz";
-    sha256 = "0gjsr0hmcpmmvmbbawa5zibc4dhzrsaw9srlwzipvnimiq8sy755";
-  };
-
-  propagatedBuildInputs = [
-    pkgs.nix
-    python.packages."click"
-    python.packages."colorama"
-    python.packages."PyYAML"
-    python.packages."requests"
-    python.packages."lxml"
-    python.packages."ZODB"
-  ];
-
-  dontStrip = true;
-
-  meta = {
-    description = "NixOS vulnerability scanner";
-    homepage = https://github.com/flyingcircusio/vulnix;
-    license = pkgs.lib.licenses.bsd2;
-  };
-}
+# the archive contains a usable default.nix - so why not use it?
+import "${vulnixSrc}" { inherit pkgs; }
