@@ -9,6 +9,7 @@
      ./kibana.nix
      ./percona.nix
      ./powerdns.nix
+     ./rabbitmq.nix
      ./rsyslog.nix
      ./sensu/api.nix
      ./sensu/client.nix

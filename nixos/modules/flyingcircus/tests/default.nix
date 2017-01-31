@@ -38,6 +38,8 @@
   postgresql_9_5 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql95"; });
 
+  rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
+
   sensuserver = hydraJob (import ./sensu.nix { inherit system; });
 
   users = hydraJob (import ./users { inherit system; });
