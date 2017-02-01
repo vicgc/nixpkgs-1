@@ -95,6 +95,9 @@ with lib;
       vagrant = true;
     };
     ids.uids = {
+      # Sames as upstream/master, but not yet merged
+      kibana = 211;
+
       # Our custom services
       sensuserver = 31001;
       sensuapi = 31002;
