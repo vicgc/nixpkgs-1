@@ -38,6 +38,8 @@ rec {
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
+  kibana = pkgs.callPackage ./kibana.nix { };
+
   libidn = pkgs.callPackage ./libidn.nix { };
 
   linux = linux_4_4;
