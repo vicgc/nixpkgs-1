@@ -294,10 +294,9 @@ in {
     sha256 = "144m8xzpqv3pimxh2pjhbk4fy1kch9afkzclcinzv2dnfjspmvdl";
   };
 
-  php70 = lib.lowPrio (generic {
-    version = "7.0.0beta1";
-    url = "https://downloads.php.net/~ab/php-7.0.0beta1.tar.bz2";
-    sha256 = "1pj3ysfhswg2r370ivp33fv9zbcl3yvhmxgnc731k08hv6hmd984";
-  });
+  php70 = generic {
+    version = "7.0.15";
+    sha256 = "1nbxwj4yx30k77qibhmnx0rvqhia1zbkwi5ps5nzm0sn6d3zkj58";
+  };
 
 }
