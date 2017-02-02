@@ -4,7 +4,7 @@ let
   cfg = config.flyingcircus.roles.memcached;
   fclib = import ../lib;
 
-  listen = head (fclib.listenAddresses config "ethsrv");
+  listen = concatStringsSep "," (fclib.listenAddresses config "ethsrv");
 
   defaultConfig = ''
     {
