@@ -5,7 +5,7 @@ the time between creation and execution.
 """
 
 from fc.maintenance.activity import Activity
-from fc.maintenance.reqmanager import ReqManager, DEFAULT_DIR
+from fc.maintenance.reqmanager import ReqManager, DEFAULT_DIR, setup_logging
 from fc.maintenance.request import Request
 
 import argparse
@@ -93,12 +93,15 @@ def main():
                    help='power off instead of reboot')
     a.add_argument('-d', '--spooldir', metavar='DIR', default=DEFAULT_DIR,
                    help='request spool dir (default: %(default)s)')
+    a.add_argument('-v', '--verbose', action='store_true', default=False)
     args = a.parse_args()
+    setup_logging(args.verbose)
 
     action = 'poweroff' if args.poweroff else 'reboot'
     defaultcomment = 'Scheduled {}'.format(
         'cold boot' if args.poweroff else 'reboot')
     with ReqManager(spooldir=args.spooldir) as rm:
+        rm.scan()
         rm.add(Request(RebootActivity(action),
                        900 if args.poweroff else 600,
                        args.comment if args.comment else defaultcomment))

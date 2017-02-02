@@ -38,6 +38,8 @@ rec {
 
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
+  kibana = pkgs.callPackage ./kibana.nix { };
+
   libidn = pkgs.callPackage ./libidn.nix { };
 
   linux = linux_4_4;
@@ -86,6 +88,12 @@ rec {
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
+
+  inherit (pkgs.callPackages ./php { })
+    php55
+    php56
+    php70;
+
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
@@ -95,6 +103,7 @@ rec {
   };
   qpress = pkgs.callPackage ./percona/qpress.nix { };
 
+  rabbitmq_server = pkgs.callPackage ./rabbitmq-server.nix { };
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
