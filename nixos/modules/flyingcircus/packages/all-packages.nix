@@ -88,11 +88,9 @@ rec {
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
 
   inherit (pkgs.callPackages ./php { })
-    php54
     php55
     php56
     php70;
-
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
