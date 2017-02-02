@@ -16,19 +16,23 @@
 # import ../../../tests/make-test.nix ({ ... }:
 # {
 #   name = "...";
-#   machine =
-#     { pkgs, config, ... }:
-#     {
-#       imports = [
-#         ./setup.nix
-#         ../static
-#         ../roles
-#         ../services
-#         ../platform
-#       ];
-#     };
+#   nodes = {
+#     vm =
+#       { pkgs, config, ... }:
+#       {
+#         imports = [
+#           ./setup.nix
+#           ../platform
+#           ../roles
+#           ../services
+#           ../static
+#         ];
+#         config.option = ...;
+#       };
+#   };
 #   testScript = ''
 #     $machine->waitForUnit("...")
+#     $vm->waitForUnit("...")
 #     ...
 #   '';
 # })
