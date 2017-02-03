@@ -26,6 +26,9 @@ let
     then (fclib.configFromFile /etc/local/elasticsearch/clusterName defaultClusterName)
     else cfg.clusterName;
 
+  additionalConfig =
+    fclib.configFromFile /etc/local/elasticsearch/elasticsearch.yml "";
+
   currentMemory = fclib.current_memory config 1024;
 
   esHeap =
@@ -89,6 +92,7 @@ in
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
         bootstrap.memory_lock: true
+        ${additionalConfig}
       '';
     };
 
@@ -119,9 +123,12 @@ in
     environment.etc."local/elasticsearch/README.txt".text = ''
       Elasticsearch is running on this VM.
 
-      It is forming the cluster "${clusterName}". To change the cluster name,
-      add a file named "clusterName" here, with the cluster name as its sole
-      contents.
+      It is forming the cluster named ${clusterName}
+      To change the cluster name, add a file named "clusterName" here, with the
+      cluster name as its sole contents.
+
+      To add additional configuration options, create a file "elasticsearch.yml"
+      here. Its contents will be appended to the base configuration.
     '';
 
     flyingcircus.services.sensu-client.checks = {
