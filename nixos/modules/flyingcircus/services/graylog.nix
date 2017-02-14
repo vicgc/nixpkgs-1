@@ -20,6 +20,7 @@ let
     message_journal_dir = ${cfg.messageJournalDir}
     mongodb_uri = ${cfg.mongodbUri}
     web_listen_uri = ${cfg.webListenUri}
+    timezone=${config.time.timeZone}
     rest_listen_uri = ${cfg.restListenUri}
 
     ${cfg.extraConfig}
