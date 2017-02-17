@@ -69,34 +69,34 @@ let
         "echo -n $text | sha256sum | cut -f1 -d \" \" > $out")
       );
 
-  logstashSSLHelper = pkgs.writeScriptBin "logstash_ssl_import" ''
-    #!${pkgs.bash}/bin/bash
-    set -e
+  logstashSSLHelper = with pkgs; writeScriptBin "logstash_ssl_import" ''
+    #!${stdenv.shell}
+    set -eu
 
     puppet="puppet.$FCIO_LOCATION.gocept.net"
-    hostname="$(hostname)"
-    pw=$(pwgen -1 18)
+    pw=$(${pwgen}/bin/pwgen -1 18)
 
-    scp -q $puppet:/var/lib/puppet/lumberjack/keys/$hostname.{crt,key} /var/lib/graylog/
-    (cd /var/lib/graylog/
-     openssl pkcs12 -export -in $hostname.crt \
-                 -inkey $hostname.key \
-                 -out $hostname.p12 \
-                 -name $hostname \
+    scp $puppet:/var/lib/puppet/lumberjack/keys/$FCIO_HOSTNAME.{crt,key} /var/lib/graylog/
+    (cd /var/lib/graylog
+     ${openssl}/bin/openssl pkcs12 -export -in $FCIO_HOSTNAME.crt \
+                 -inkey $FCIO_HOSTNAME.key \
+                 -out $FCIO_HOSTNAME.p12 \
+                 -name $FCIO_HOSTNAME \
                  -passin pass:$pw \
                  -passout pass:$pw
-     rm -f $hostname.jks
-     keytool -importkeystore -srckeystore $hostname.p12 \
+     rm -f $FCIO_HOSTNAME.jks
+     ${openjdk}/bin/keytool -importkeystore \
+                 -srckeystore $FCIO_HOSTNAME.p12 \
                  -srcstoretype PKCS12\
                  -srcstorepass $pw \
-                 -alias $hostname \
+                 -alias $FCIO_HOSTNAME \
                  -deststorepass $pw \
                  -destkeypass $pw \
-                 -destkeystore $hostname.jks
+                 -destkeystore $FCIO_HOSTNAME.jks
                  )
-    echo "keystore: /var/lib/graylog/$hostname.jks"
+    echo "keystore: /var/lib/graylog/$FCIO_HOSTNAME.jks"
     echo "password: $pw"
-    '';
+  '';
 
   syslogPort = 5140;
 
@@ -217,7 +217,7 @@ in
       systemd.services.graylog-update-geolite = {
         description = "Update geolite db for graylog";
         restartIfChanged = false;
-        after = [ "network.target" ];
+        after = [ "graylog.service" ];
         serviceConfig = {
           User = config.services.graylog.user;
           Type = "oneshot";
