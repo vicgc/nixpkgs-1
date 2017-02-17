@@ -69,6 +69,35 @@ let
         "echo -n $text | sha256sum | cut -f1 -d \" \" > $out")
       );
 
+  logstashSSLHelper = pkgs.writeScriptBin "logstash_ssl_import" ''
+    #!${pkgs.bash}/bin/bash
+    set -e
+
+    puppet="puppet.$FCIO_LOCATION.gocept.net"
+    hostname="$(hostname)"
+    pw=$(pwgen -1 18)
+
+    scp -q $puppet:/var/lib/puppet/lumberjack/keys/$hostname.{crt,key} /var/lib/graylog/
+    (cd /var/lib/graylog/
+     openssl pkcs12 -export -in $hostname.crt \
+                 -inkey $hostname.key \
+                 -out $hostname.p12 \
+                 -name $hostname \
+                 -passin pass:$pw \
+                 -passout pass:$pw
+     rm -f $hostname.jks
+     keytool -importkeystore -srckeystore $hostname.p12 \
+                 -srcstoretype PKCS12\
+                 -srcstorepass $pw \
+                 -alias $hostname \
+                 -deststorepass $pw \
+                 -destkeypass $pw \
+                 -destkeystore $hostname.jks
+                 )
+    echo "keystore: /var/lib/graylog/$hostname.jks"
+    echo "password: $pw"
+    '';
+
   syslogPort = 5140;
 
 in
@@ -106,6 +135,8 @@ in
 
   config = mkMerge [
     (mkIf cfg.enable {
+
+      environment.systemPackages = [ logstashSSLHelper ];
 
       # XXX Access should *only* be allowed from directory and same-rg.
       networking.firewall.allowedTCPPorts = [ port ];
