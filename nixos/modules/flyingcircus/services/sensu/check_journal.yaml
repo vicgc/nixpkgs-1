@@ -12,6 +12,7 @@ criticalexceptions:
       - 'ACPI Error: Method parse/execution failed'
       - '"timestamp":".*","level":"error"'
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
+      - 'sshd\[.*\]: error: Received disconnect'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
@@ -23,3 +24,4 @@ warningexceptions:
       - 'Cannot add dependency job for unit.*quota'
       - '"timestamp":".*","level":"warn"'
       - 'warning: not applying GID change of group'
+      - 'sshd\[.*\]: error: Received disconnect'
