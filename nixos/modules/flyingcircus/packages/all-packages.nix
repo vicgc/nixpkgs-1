@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs ? (import <nixpkgs> {})}:
 
 rec {
 
@@ -88,6 +88,17 @@ rec {
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
+
+  inherit (pkgs.callPackages ./postgresql { })
+    postgresql90
+    postgresql91
+    postgresql92
+    postgresql93
+    postgresql94
+    postgresql95
+    postgresql96;
+
+  rum = pkgs.callPackage ./postgresql/rum { postgresql = postgresql96; };
 
   inherit (pkgs.callPackages ./php { })
     php55

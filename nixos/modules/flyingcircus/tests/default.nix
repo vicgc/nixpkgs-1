@@ -37,6 +37,8 @@
     (import ./postgresql.nix { rolename = "postgresql94"; });
   postgresql_9_5 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql95"; });
+  postgresql_9_6 = hydraJob
+    (import ./postgresql.nix { rolename = "postgresql96"; });
 
   rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
 
