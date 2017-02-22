@@ -69,6 +69,35 @@ let
         "echo -n $text | sha256sum | cut -f1 -d \" \" > $out")
       );
 
+  logstashSSLHelper = with pkgs; writeScriptBin "logstash_ssl_import" ''
+    #!${stdenv.shell}
+    set -eu
+
+    puppet="puppet.$FCIO_LOCATION.gocept.net"
+    pw=$(${pwgen}/bin/pwgen -1 18)
+
+    scp $puppet:/var/lib/puppet/lumberjack/keys/$FCIO_HOSTNAME.{crt,key} /var/lib/graylog/
+    (cd /var/lib/graylog
+     ${openssl}/bin/openssl pkcs12 -export -in $FCIO_HOSTNAME.crt \
+                 -inkey $FCIO_HOSTNAME.key \
+                 -out $FCIO_HOSTNAME.p12 \
+                 -name $FCIO_HOSTNAME \
+                 -passin pass:$pw \
+                 -passout pass:$pw
+     rm -f $FCIO_HOSTNAME.jks
+     ${openjdk}/bin/keytool -importkeystore \
+                 -srckeystore $FCIO_HOSTNAME.p12 \
+                 -srcstoretype PKCS12\
+                 -srcstorepass $pw \
+                 -alias $FCIO_HOSTNAME \
+                 -deststorepass $pw \
+                 -destkeypass $pw \
+                 -destkeystore $FCIO_HOSTNAME.jks
+                 )
+    echo "keystore: /var/lib/graylog/$FCIO_HOSTNAME.jks"
+    echo "password: $pw"
+  '';
+
   syslogPort = 5140;
 
 in
@@ -106,6 +135,8 @@ in
 
   config = mkMerge [
     (mkIf cfg.enable {
+
+      environment.systemPackages = [ logstashSSLHelper ];
 
       # XXX Access should *only* be allowed from directory and same-rg.
       networking.firewall.allowedTCPPorts = [ port ];
@@ -186,7 +217,7 @@ in
       systemd.services.graylog-update-geolite = {
         description = "Update geolite db for graylog";
         restartIfChanged = false;
-        after = [ "network.target" ];
+        after = [ "graylog.service" ];
         serviceConfig = {
           User = config.services.graylog.user;
           Type = "oneshot";
