@@ -150,7 +150,7 @@ in
         }
       '';
 
-    networking.firewall.allowedTCPPorts = [ 80 443 2003 8083 8086 ];
+    networking.firewall.allowedTCPPorts = [ 80 443 2003 ];
     networking.firewall.allowedUDPPorts = [ 2003 ];
   };
 }
