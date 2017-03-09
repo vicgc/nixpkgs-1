@@ -51,6 +51,7 @@ rec {
     (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
 
   mc = pkgs.callPackage ./mc.nix { };
+  mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = pkgs.callPackage ./mongodb {
