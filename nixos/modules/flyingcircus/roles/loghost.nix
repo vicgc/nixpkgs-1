@@ -6,7 +6,7 @@ let
   cfg = config.flyingcircus.roles.loghost;
   fclib = import ../lib;
 
-  listenOn = head (fclib.listenAddresses config "ethsrv");
+  listenOn = "127.0.0.1";
   serviceUser = "graylog";
 
   loghostService = findFirst
@@ -38,9 +38,9 @@ let
     else cfg.passwordSecret;
 
 
-  port = 9000;
+  port = 9001;
   webListenUri = "http://${listenOn}:${toString port}/tools/${config.flyingcircus.enc.name}/graylog";
-  restListenUri = "http://${listenOn}:${toString port}/tools/${config.flyingcircus.enc.name}/graylog/api";
+  restListenUri = "${webListenUri}/api";
 
   # -- helper functions --
   passwordActivation = file: password: user:
@@ -139,7 +139,34 @@ in
       environment.systemPackages = [ logstashSSLHelper ];
 
       # XXX Access should *only* be allowed from directory and same-rg.
-      networking.firewall.allowedTCPPorts = [ port ];
+      networking.firewall.allowedTCPPorts = [ 9000 ];
+
+      flyingcircus.roles.nginx.enable = true;
+      flyingcircus.roles.nginx.httpConfig =
+      let
+          listenOn = lib.concatMapStringsSep "\n    "
+              (addr: "listen ${addr}:9000;")
+              (fclib.listenAddressesQuotedV6 config "ethsrv");
+
+          allow = lib.concatMapStringsSep "\n    "
+              (addr: "allow ${addr};")
+              (config.flyingcircus.static.directory.proxy_ips);
+
+
+      in
+      ''
+        server {
+            ${listenOn}
+
+            ${allow}
+            deny all;
+
+            location /tools/${config.flyingcircus.enc.name}/graylog {
+                proxy_pass http://127.0.0.1:9001;
+                root /tools/${config.flyingcircus.enc.name}/graylog ;
+            }
+          }
+      '';
 
       system.activationScripts.fcio-loghost =
         stringAfter
@@ -155,7 +182,7 @@ in
           "${config.networking.hostName}.${config.networking.domain}:9300";
         # ipv6 would be nice too
         extraConfig = ''
-          trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
+          trusted_proxies 127.0.0.1/8
         '';
       };
 
@@ -202,7 +229,7 @@ in
             auto_create_user = true;
             username_header = "Remote-User";
             require_trusted_proxies = true;
-            trusted_proxies = "95.62.125.11/32, 195.62.125.243/32, 172.22.49.56/32";
+            trusted_proxies = "127.0.0.1/8";
           };
         in
           ''${pkgs.fcmanage}/bin/fc-graylog \

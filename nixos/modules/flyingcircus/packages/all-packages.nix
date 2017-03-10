@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs ? (import <nixpkgs> {})}:
 
 rec {
 
@@ -51,6 +51,7 @@ rec {
     (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
 
   mc = pkgs.callPackage ./mc.nix { };
+  mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = pkgs.callPackage ./mongodb {
@@ -88,6 +89,14 @@ rec {
   percona = percona57;
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
+
+  inherit (pkgs.callPackages ./postgresql { })
+    postgresql93
+    postgresql94
+    postgresql95
+    postgresql96;
+
+  rum = pkgs.callPackage ./postgresql/rum { postgresql = postgresql96; };
 
   inherit (pkgs.callPackages ./php { })
     php55
