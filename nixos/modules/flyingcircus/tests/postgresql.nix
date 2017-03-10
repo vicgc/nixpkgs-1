@@ -2,7 +2,7 @@ import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
 {
   name = rolename;
   machine =
-    { pkgs, config, ... }:
+    { config, ... }:
     {
       imports = [
         ./setup.nix
@@ -35,7 +35,7 @@ import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
         psql --echo-all -d employees < ${selectSql} | grep -5 "John Doe"
       '';
 
-      createExtensions = pkgs.writeScript "rim-tests" ''
+      createExtensions = pkgs.writeScript "rum-tests" ''
         psql employees -c "CREATE EXTENSION rum;"
       '';
     in

@@ -99,12 +99,16 @@ in
 
   };
 
-  config = mkIf postgres_enabled {
-
+  config = mkIf postgres_enabled (
+  let
+    postgresqlPkg = builtins.getAttr version package;
+  in
+  {
     services.postgresql.enable = true;
-    services.postgresql.package = builtins.getAttr version package;
-    services.postgresql.extraPlugins = lib.optionals (lib.versionAtLeast version "9.6")
-                                       [ (pkgs.rum.override { postgresql = (builtins.getAttr version package); }) ];
+    services.postgresql.package = postgresqlPkg;
+    services.postgresql.extraPlugins = lib.optionals
+      (lib.versionAtLeast version "9.6")
+      [ (pkgs.rum.override { postgresql = postgresqlPkg; }) ];
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
@@ -213,6 +217,6 @@ in
       };
     };
 
-  };
+  });
 
 }
