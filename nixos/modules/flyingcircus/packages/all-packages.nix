@@ -91,9 +91,6 @@ rec {
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
 
   inherit (pkgs.callPackages ./postgresql { })
-    postgresql90
-    postgresql91
-    postgresql92
     postgresql93
     postgresql94
     postgresql95
