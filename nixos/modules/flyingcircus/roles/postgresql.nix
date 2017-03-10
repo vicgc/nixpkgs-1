@@ -14,6 +14,8 @@ let
       then "9.4"
       else if cfg.roles.postgresql95.enable
       then "9.5"
+      else if cfg.roles.postgresql96.enable
+      then "9.6"
       else null;
 
 
@@ -24,6 +26,7 @@ let
     "9.3" = pkgs.postgresql93;
     "9.4" = pkgs.postgresql94;
     "9.5" = pkgs.postgresql95;
+    "9.6" = pkgs.postgresql96;
   };
 
   current_memory = fclib.current_memory config 256;
@@ -86,18 +89,29 @@ in
         description = "Enable the Flying Circus PostgreSQL 9.5 server role.";
       };
     };
+    flyingcircus.roles.postgresql96 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus PostgreSQL 9.6 server role.";
+      };
+    };
 
   };
 
-  config = mkIf postgres_enabled {
-
+  config = mkIf postgres_enabled (
+  let
+    postgresqlPkg = builtins.getAttr version package;
+  in
+  {
     services.postgresql.enable = true;
-    services.postgresql.package = builtins.getAttr version package;
+    services.postgresql.package = postgresqlPkg;
+    services.postgresql.extraPlugins = lib.optionals
+      (lib.versionAtLeast version "9.6")
+      [ (pkgs.rum.override { postgresql = postgresqlPkg; }) ];
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
-
-    environment.systemPackages = [ (builtins.getAttr version package) ];
 
     users.users.postgres = {
       shell = "/run/current-system/sw/bin/bash";
@@ -154,7 +168,7 @@ in
       #------------------------------------------------------------------------------
       wal_level = hot_standby
       wal_buffers = ${toString wal_buffers}MB
-      ${optionalString ((builtins.compareVersions "9.5" version) < 0)
+      ${optionalString (lib.versionOlder version "9.5")
           "checkpoint_segments = 100"
       }
       checkpoint_completion_target = 0.9
@@ -203,6 +217,6 @@ in
       };
     };
 
-  };
+  });
 
 }
