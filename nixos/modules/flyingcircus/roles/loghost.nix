@@ -131,7 +131,7 @@ in
             deny all;
 
             location /tools/${config.flyingcircus.enc.name}/graylog {
-                proxy_pass http://localhost:9001;
+                proxy_pass http://127.0.0.1:9001;
                 root /tools/${config.flyingcircus.enc.name}/graylog ;
             }
           }
