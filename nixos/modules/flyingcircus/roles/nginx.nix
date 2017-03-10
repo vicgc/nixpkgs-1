@@ -189,7 +189,14 @@ in
         Put your site configuration into this directory as `*.conf`. You may
         add other files, like SSL keys, as well.
 
-        There is an `example-configuration` here.
+        If you want to authenticate against the Flying Circus users with login permission,
+        use the following snippet, and *USE SSL*:
+
+          auth_basic "FCIO user".
+          auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
+
+        There is also an `example-configuration` here.
+
       '';
 
       "local/nginx/fastcgi_params".text = ''
@@ -288,6 +295,20 @@ in
             }
         }
         '';
+
+      "local/nginx/htpasswd_fcio_users" = {
+        text = builtins.concatStringsSep "\n"
+          (map
+           (user: "${user.name}:${user.hashedPassword}")
+           (builtins.filter
+            (user: (builtins.stringLength user.hashedPassword) > 0)
+            (map
+             (username: config.users.users.${username})
+             (config.users.groups.login.members))));
+        uid = config.ids.uids.nginx;
+        mode = "0440";
+      };
+
       "nginx/local" = {
         source = "/etc/local/nginx";
         enable = cfg.compat.gentoo.enable;
