@@ -60,6 +60,8 @@ let
 
     instances:
       - use_mount: no
+        excluded_filesystems:
+          - autofs
   '';
 
   networkConfig = pkgs.writeText "network.yaml" ''
