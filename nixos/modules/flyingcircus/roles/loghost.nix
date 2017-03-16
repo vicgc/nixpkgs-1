@@ -159,7 +159,7 @@ in
         '';
       };
 
-      flyingcircus.roles.mongodb.enable = true;
+      flyingcircus.roles.mongodb32.enable = true;
       flyingcircus.roles.elasticsearch = {
         enable = true;
         dataDir = "/var/lib/elasticsearch";

@@ -57,6 +57,9 @@ rec {
     pcre = pcre-cpp;
     sasl = pkgs.cyrus_sasl;
   };
+  mongodb_3_2 = mongodb;
+  mongodb_3_0 = pkgs.mongodb;
+
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
 
