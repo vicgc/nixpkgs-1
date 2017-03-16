@@ -75,7 +75,7 @@ with lib;
     };
 
     flyingcircus.static.directory = {
-      proxy_ips = ["195.62.125.6" "195.62.125.11" "2a02:248:101:62::108c" "2a02:248:101:62::dd"];
+      proxy_ips = ["195.62.125.6" "195.62.125.11" "2a02:248:101:62::108c" "2a02:248:101:62::dd" "2a02:248:101:63::d4"];
     };
 
     flyingcircus.static.ntpservers = {
