@@ -15,7 +15,7 @@ import ../../../../tests/make-test.nix ({ ... }:
         ];
 
         virtualisation.memorySize = 2048;
-        flyingcircus.roles.mongodb.enable = true;
+        flyingcircus.roles.mongodb32.enable = true;
       };
     };
 
