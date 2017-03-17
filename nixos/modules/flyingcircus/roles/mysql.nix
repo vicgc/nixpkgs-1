@@ -42,6 +42,16 @@ in
 
     flyingcircus.roles.mysql = {
 
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Safe guard to make sure a specific mysql role is enabled.
+
+          This options must be false.
+        '';
+      };
+
       rootPassword = mkOption {
         type = types.nullOr types.string;
         default = null;
@@ -91,7 +101,7 @@ in
 
   };
 
-  config = mkIf enabled {
+  config = mkIf (assert !cfg.enable; enabled) {
 
     services.percona = {
       enable = true;
