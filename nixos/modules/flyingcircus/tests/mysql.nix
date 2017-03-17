@@ -1,6 +1,11 @@
-import ../../../tests/make-test.nix ({ pkgs, lib, percona, ... }:
+import ../../../tests/make-test.nix ({ pkgs
+, lib
+, mysql55 ? false
+, mysql56 ? false
+, mysql57 ? false
+, ... }:
 {
-  name = "percona";
+  name = "mysql";
 
   nodes = {
     master =
@@ -17,8 +22,9 @@ import ../../../tests/make-test.nix ({ pkgs, lib, percona, ... }:
         ];
 
         flyingcircus.ssl.generate_dhparams = false;
-        flyingcircus.roles.mysql.enable = true;
-        flyingcircus.roles.mysql.package = percona;
+        flyingcircus.roles.mysql55.enable = mysql55;
+        flyingcircus.roles.mysql56.enable = mysql56;
+        flyingcircus.roles.mysql57.enable = mysql57;
 
         # Tune those arguments as we'd like to run this on Hydra
         # in a rather small VM.
