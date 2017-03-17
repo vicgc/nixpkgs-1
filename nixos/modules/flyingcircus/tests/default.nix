@@ -14,10 +14,8 @@
       inherit system;
     });
 
-  inherit (import ./mysql.nix)
-    mysql_5_5
-    mysql_5_6
-    mysql_5_7;
+  inherit (import ./mysql.nix { inherit system hydraJob; })
+    mysql_5_5 mysql_5_6 mysql_5_7;
 
   postgresql_9_3 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql93"; });
