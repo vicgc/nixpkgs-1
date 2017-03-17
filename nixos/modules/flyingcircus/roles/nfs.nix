@@ -71,6 +71,7 @@ in
           device = "${service.address}:${export}";
           fsType = "nfs4";
           options = mountopts;
+          noCheck = true;
         };
       };
       systemd.tmpfiles.rules = [
@@ -108,6 +109,7 @@ in
                 device = "${boxServer.address}:/srv/nfs/box/${user}";
                 fsType = "nfs4";
                 options = mountopts;
+                noCheck = true;
               })
             (attrNames humanUsers)));
         systemd.tmpfiles.rules =
