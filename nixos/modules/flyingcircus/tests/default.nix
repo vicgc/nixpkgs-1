@@ -11,26 +11,25 @@
 
   mongodb = hydraJob (import ./mongodb { inherit system; }) ;
 
-  mysql_5_5 = hydraJob
-    (import ./percona.nix {
-      inherit system;
-      percona = pkgs.mysql55;
-    });
-
   nodejs6 = hydraJob
     (import ./nodejs6.nix {
       inherit system;
     });
 
-  percona_5_7 = hydraJob
-    (import ./percona.nix {
+   mysql_5_5 = hydraJob
+    (import ./mysql.nix {
       inherit system;
-      percona = pkgs.percona56;
+      mysql55 = true;
     });
-  percona_5_6 = hydraJob
-    (import ./percona.nix {
+  mysql_5_6 = hydraJob
+    (import ./mysql.nix {
       inherit system;
-      percona = pkgs.percona57;
+      mysql56 = true;
+    });
+  mysql_5_7 = hydraJob
+    (import ./mysql.nix {
+      inherit system;
+      mysql57 = true;
     });
 
   postgresql_9_3 = hydraJob
