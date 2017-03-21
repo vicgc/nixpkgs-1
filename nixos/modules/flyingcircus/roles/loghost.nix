@@ -180,9 +180,22 @@ in
         inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
         elasticsearchDiscoveryZenPingUnicastHosts =
           "${config.networking.hostName}.${config.networking.domain}:9300";
+        javaHeap = ''${toString
+          (fclib.max [
+            ((fclib.current_memory config 1024) / 5)
+            1024
+            ])}m'';
         # ipv6 would be nice too
         extraConfig = ''
           trusted_proxies 127.0.0.1/8
+          processbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) - 2)
+              5])}
+          outputbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) / 2)
+              3])}
         '';
       };
 
