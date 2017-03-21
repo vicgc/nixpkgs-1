@@ -106,7 +106,7 @@ in {
           chown ${cfg.user} ${cfg.pidFile}
         fi
       '';
-    }; 
+    };
 
     users.extraUsers = optional (cfg.user == "collectd") {
       name = "collectd";
