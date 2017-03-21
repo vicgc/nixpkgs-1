@@ -8,7 +8,6 @@ let
   cfg = config.services.graylog;
   configBool = b: if b then "true" else "false";
 
-
   confFile = pkgs.writeText "graylog.conf" ''
     is_master = ${configBool cfg.isMaster}
     node_id_file = ${cfg.nodeIdFile}
