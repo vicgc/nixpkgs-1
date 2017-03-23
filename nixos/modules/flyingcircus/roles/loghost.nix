@@ -138,32 +138,43 @@ in
 
       environment.systemPackages = [ logstashSSLHelper ];
 
-      # XXX Access should *only* be allowed from directory and same-rg.
-      networking.firewall.allowedTCPPorts = [ 9000 ];
+      networking.firewall.allowedTCPPorts = [ 9000 9002 ];
 
       flyingcircus.roles.nginx.enable = true;
       flyingcircus.roles.nginx.httpConfig =
       let
-          listenOn = lib.concatMapStringsSep "\n    "
-              (addr: "listen ${addr}:9000;")
+          listenOn = port: lib.concatMapStringsSep "\n    "
+              (addr: "listen ${addr}:${port};")
               (fclib.listenAddressesQuotedV6 config "ethsrv");
 
-          allow = lib.concatMapStringsSep "\n    "
+          allow = ips: lib.concatMapStringsSep "\n    "
               (addr: "allow ${addr};")
-              (config.flyingcircus.static.directory.proxy_ips);
-
+              (ips);
 
       in
       ''
         server {
-            ${listenOn}
+            ${listenOn "9000"}
 
-            ${allow}
+            ${allow config.flyingcircus.static.directory.proxy_ips}
             deny all;
 
             location /tools/${config.flyingcircus.enc.name}/graylog {
                 proxy_pass http://127.0.0.1:9001;
-                root /tools/${config.flyingcircus.enc.name}/graylog ;
+            }
+          }
+
+        server {
+            ${listenOn "9002"}
+
+            location /tools/${config.flyingcircus.enc.name}/graylog {
+                proxy_pass http://127.0.0.1:9001;
+                proxy_set_header REMOTE_USER "";
+                proxy_set_header X-Graylog-Server-URL http://${config.networking.hostName}.${config.networking.domain}:9002/tools/${config.flyingcircus.enc.name}/graylog/api;
+            }
+
+            location = / {
+              rewrite ^ /tools/${config.flyingcircus.enc.name}/graylog;
             }
           }
       '';
@@ -185,7 +196,6 @@ in
             ((fclib.current_memory config 1024) / 5)
             1024
             ])}m'';
-        # ipv6 would be nice too
         extraConfig = ''
           trusted_proxies 127.0.0.1/8
           processbuffer_processors = ${toString
