@@ -28,11 +28,11 @@ let
 
   system_state = fclib.jsonFromFile cfg.system_state_path "{}";
 
-  userdata = fclib.jsonFromFile cfg.userdata_path [];
+  userdata = fclib.jsonFromFile cfg.userdata_path "[]";
 
-  permissionsdata = fclib.jsonFromFile cfg.permissions_path [];
+  permissionsdata = fclib.jsonFromFile cfg.permissions_path "[]";
 
-  admins_group_data = fclib.jsonFromFile cfg.admins_group_path {};
+  admins_group_data = fclib.jsonFromFile cfg.admins_group_path "{}";
 
 in
 {
