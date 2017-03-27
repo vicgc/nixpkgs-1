@@ -24,6 +24,17 @@ let
     then "!includedir ${/etc/local/mysql}"
     else "";
 
+  package =
+    if config.flyingcircus.roles.mysql55.enable
+    then pkgs.mysql55
+    else if config.flyingcircus.roles.mysql56.enable
+    then pkgs.percona56
+    else if config.flyingcircus.roles.mysql57.enable
+    then pkgs.percona57
+    else null;
+
+  enabled = package != null;
+
 in
 
 {
@@ -34,7 +45,11 @@ in
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable the Flying Circus MySQL server role.";
+        description = ''
+          Safe guard to make sure a specific mysql role is enabled.
+
+          This options must be false.
+        '';
       };
 
       rootPassword = mkOption {
@@ -57,22 +72,40 @@ in
         '';
       };
 
-      package = mkOption {
-        type = types.package;
-        example = literalExample "pkgs.percona";
-        description = "Which MySQL derivation to use.";
-        default = pkgs.percona;
-      };
-
     };
+
+    flyingcircus.roles.mysql55 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus MySQL 5.5 server role.";
+      };
+    };
+
+    flyingcircus.roles.mysql56 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus MySQL 5.6 server role.";
+      };
+    };
+
+    flyingcircus.roles.mysql57 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus MySQL 5.7 server role.";
+      };
+    };
+
 
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf (assert !cfg.enable; enabled) {
 
     services.percona = {
       enable = true;
-      package = cfg.package;
+      package = package;
       rootPassword = root_password_file;
       dataDir = "/srv/mysql";
       extraOptions = ''
@@ -124,7 +157,7 @@ in
         innodb_write_io_threads         = ${toString (cores * 4)}
         # Percentage. Probably needs local tuning depending on the workload.
         ${lib.optionalString
-          (lib.versionAtLeast cfg.package.mysqlVersion "5.6")
+          (lib.versionAtLeast package.mysqlVersion "5.6")
           "innodb_change_buffer_max_size   = 50"}
         innodb_doublewrite              = 1
         innodb_log_file_size            = 512M

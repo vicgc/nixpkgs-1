@@ -100,7 +100,7 @@ in
       environment = {
         ES_HEAP_SIZE = "${toString esHeap}m";
       };
-      serviceConfig = fclib.mkPlatform {
+      serviceConfig = {
         LimitNOFILE = 65536;
         LimitMEMLOCK = "infinity";
       };
