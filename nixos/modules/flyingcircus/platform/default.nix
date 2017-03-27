@@ -28,6 +28,12 @@ let
 
   system_state = fclib.jsonFromFile cfg.system_state_path "{}";
 
+  userdata = fclib.jsonFromFile cfg.userdata_path "[]";
+
+  permissionsdata = fclib.jsonFromFile cfg.permissions_path "[]";
+
+  admins_group_data = fclib.jsonFromFile cfg.admins_group_path "{}";
+
 in
 {
 
@@ -44,29 +50,30 @@ in
     ../services/vxlan-client.nix
   ];
 
-  options = {
+  options = with lib.types;
+  {
 
     flyingcircus.enc = mkOption {
       default = null;
-      type = types.nullOr types.attrs;
+      type = nullOr attrs;
       description = "Data from the external node classifier.";
     };
 
     flyingcircus.load_enc = mkOption {
       default = true;
-      type = types.bool;
+      type = bool;
       description = "Automatically load ENC data?";
     };
 
     flyingcircus.enc_path = mkOption {
       default = "/etc/nixos/enc.json";
-      type = types.string;
+      type = string;
       description = "Where to find the ENC json file.";
     };
 
     flyingcircus.enc_addresses.srv = mkOption {
       default = enc_addresses.srv;
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "List of addresses of machines in the neighbourhood.";
       example = [ {
         ip = "2a02:238:f030:1c3::104c/64";
@@ -81,44 +88,92 @@ in
 
     flyingcircus.enc_addresses_path.srv = mkOption {
       default = /etc/nixos/addresses_srv.json;
-      type = types.path;
+      type = path;
       description = "Where to find the address list json file.";
     };
 
     flyingcircus.system_state = mkOption {
       default = {};
-      type = types.attrs;
+      type = attrs;
       description = "The current system state as put out by fc-manage";
     };
 
     flyingcircus.system_state_path = mkOption {
       default = /etc/nixos/system_state.json;
-      type = types.path;
+      type = path;
       description = "Where to find the system state json file.";
     };
 
     flyingcircus.enc_services = mkOption {
       default = [];
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "Services in the environment as provided by the ENC.";
     };
 
     flyingcircus.enc_services_path = mkOption {
       default = /etc/nixos/services.json;
-      type = types.path;
+      type = path;
       description = "Where to find the ENC services json file.";
     };
 
     flyingcircus.enc_service_clients = mkOption {
       default = [];
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "Service clients in the environment as provided by the ENC.";
     };
 
     flyingcircus.enc_service_clients_path = mkOption {
       default = /etc/nixos/service_clients.json;
-      type = types.path;
+      type = path;
       description = "Where to find the ENC service clients json file.";
+    };
+
+    flyingcircus.userdata_path = lib.mkOption {
+      default = /etc/nixos/users.json;
+      type = path;
+      description = ''
+        Where to find the user json file.
+
+        directory.list_users();
+      '';
+    };
+
+    flyingcircus.userdata = lib.mkOption {
+      default = userdata;
+      type = listOf attrs;
+      description = "All users local to this system.";
+    };
+
+    flyingcircus.permissions_path = lib.mkOption {
+      default = /etc/nixos/permissions.json;
+      type = path;
+      description = ''
+        Where to find the permissions json file.
+
+        directory.list_permissions()
+      '';
+    };
+
+    flyingcircus.permissionsdata = lib.mkOption {
+      default = permissionsdata;
+      type = listOf attrs;
+      description = "All permissions known on this system.";
+    };
+
+    flyingcircus.admins_group_path = lib.mkOption {
+      default = /etc/nixos/admins.json;
+      type = path;
+      description = ''
+        Where to find the admins group json file.
+
+        directory.lookup_resourcegroup('admins')
+      '';
+    };
+
+    flyingcircus.admins_group_data = lib.mkOption {
+      default = admins_group_data;
+      type = attrs;
+      description = "Members of ths admins group.";
     };
 
   };

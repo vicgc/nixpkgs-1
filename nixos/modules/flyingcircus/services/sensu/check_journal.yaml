@@ -25,3 +25,5 @@ warningexceptions:
       - '"timestamp":".*","level":"warn"'
       - 'warning: not applying GID change of group'
       - 'sshd\[.*\]: error: Received disconnect'
+      - 'proftpd.*crypt\(3\) failed: Invalid argument'
+      - 'proftpd.*USER.*\(Login failed\)'
