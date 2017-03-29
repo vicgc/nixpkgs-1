@@ -12,6 +12,8 @@ rec {
     lm_sensors = null;  # probably not seen on VMs
     lvm2 = null;        # dito
   };
+  collectdproxy = pkgs.callPackage ./collectdproxy { };
+
   cron = pkgs.callPackage ./cron.nix { };
   curl = pkgs.callPackage ./curl rec {
     fetchurl = pkgs.stdenv.fetchurlBoot;
