@@ -173,6 +173,7 @@ in {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         Unit = "prepare-rabbitmq-for-sensu.service";
+        OnStartupSec = "10m";
         OnUnitActiveSec = "10m";
       };
     };

@@ -5,12 +5,18 @@
 with lib;
 
 let
-  cfg = config.flyingcircus;
+  cfg = config.flyingcircus.roles.statshost;
+  cfg_proxy = config.flyingcircus.roles.statshostproxy;
 
   # can be replaced with pkgs.influxdb once InfluxDB 0.11 is present in upstream
   # nixpkgs.
   influxdb = (pkgs.callPackage ../packages/influxdb.nix { }).bin //
     { outputs = [ "bin" ]; };
+
+  statshost_service = lib.findFirst
+    (s: s.service == "statshost-collector")
+    null
+    config.flyingcircus.enc_services;
 
 in
 {
@@ -31,26 +37,33 @@ in
 
       hostName = mkOption {
         type = types.str;
-        default = "";
+        default = "stats.flyingcircus.io";
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
       };
     };
+
+    flyingcircus.roles.statshostproxy = {
+      enable = mkEnableOption "Enable stats proxy.";
+    };
+
   };
 
-  config = mkIf cfg.roles.statshost.enable {
+  config = mkMerge [
+    (mkIf cfg.enable {
 
-    # make the 'influx' command line tool accessible
-    environment.systemPackages = [ influxdb ];
+      # make the 'influx' command line tool accessible
+      environment.systemPackages = [ influxdb ];
 
-    services.influxdb011.enable = true;
-    services.influxdb011.dataDir = "/srv/influxdb";
-    services.influxdb011.package = influxdb;
-    services.influxdb011.extraConfig = {
-         http.enabled = true;
-         http.auth-enabled = false;
+      services.influxdb011.enable = true;
+      services.influxdb011.dataDir = "/srv/influxdb";
+      services.influxdb011.package = influxdb;
 
-         graphite = [
+      services.influxdb011.extraConfig = {
+        http.enabled = true;
+        http.auth-enabled = false;
+
+        graphite = [
           { enabled = true;
             protocol = "udp";
             udp-read-buffer = 8388608;
@@ -91,68 +104,80 @@ in
             ];
           }
         ];
-    };
+      };
 
-    boot.kernel.sysctl."net.core.rmem_max" = 8388608;
+      boot.kernel.sysctl."net.core.rmem_max" = 8388608;
 
-    services.grafana = {
-      enable = true;
-      port = 3001;
-      addr = "127.0.0.1";
-      rootUrl = "http://${cfg.roles.statshost.hostName}/grafana";
-    };
+      services.grafana = {
+        enable = true;
+        port = 3001;
+        addr = "127.0.0.1";
+        rootUrl = "http://${cfg.hostName}/grafana";
+      };
 
-    flyingcircus.roles.nginx.enable = true;
+      services.collectdproxy.statshost.enable = true;
+      services.collectdproxy.statshost.send_to = "${cfg.hostName}:2003";
 
-    flyingcircus.roles.nginx.httpConfig =
-      let
-        httpHost = cfg.roles.statshost.hostName;
-        common = ''
-          server_name ${httpHost};
+      flyingcircus.roles.nginx.enable = true;
 
-          location / {
-              rewrite . /grafana/ redirect;
+      flyingcircus.roles.nginx.httpConfig =
+        let
+          httpHost = cfg.hostName;
+          common = ''
+            server_name ${httpHost};
+
+            location / {
+                rewrite . /grafana/ redirect;
+            }
+
+            location /grafana/ {
+                proxy_pass http://localhost:3001/;
+            }
+
+            location /grafana/public {
+                alias ${config.services.grafana.staticRootPath};
+            }
+          '';
+        in
+        if cfg.useSSL then ''
+          server {
+              listen *:80;
+              listen [::]:80;
+              server_name ${httpHost};
+              rewrite . https://$server_name$request_uri redirect;
           }
 
-          location /grafana/ {
-              proxy_pass http://localhost:3001/;
-          }
+          server {
+              listen *:443 ssl;
+              listen [::]:443 ssl;
+              ${common}
 
-          location /grafana/public {
-              alias ${config.services.grafana.staticRootPath};
+              ssl_certificate ${/etc/local/nginx/stats.crt};
+              ssl_certificate_key ${/etc/local/nginx/stats.key};
+              # add_header Strict-Transport-Security "max-age=31536000";
+          }
+        ''
+        else
+        ''
+          server {
+              listen *:80;
+              listen [::]:80;
+              ${common}
           }
         '';
-      in
-      if cfg.roles.statshost.useSSL then ''
-        server {
-            listen *:80;
-            listen [::]:80;
-            server_name ${httpHost};
-            rewrite . https://$server_name$request_uri redirect;
-        }
 
-        server {
-            listen *:443 ssl;
-            listen [::]:443 ssl;
-            ${common}
+      networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
+      networking.firewall.allowedUDPPorts = [ 2003 ];
+    })
 
-            ssl_certificate ${/etc/local/nginx/stats.crt};
-            ssl_certificate_key ${/etc/local/nginx/stats.key};
-            # add_header Strict-Transport-Security "max-age=31536000";
-        }
-      ''
-      else
-      ''
-        server {
-            listen *:80;
-            listen [::]:80;
-            ${common}
-        }
-      '';
+    (mkIf (cfg_proxy.enable && statshost_service != null) {
+      services.collectdproxy.location.enable = true;
+      services.collectdproxy.location.statshost = cfg.hostName;
+      services.collectdproxy.location.listen_addr = config.networking.hostName;
+      networking.firewall.allowedUDPPorts = [ 2003 ];
 
-    networking.firewall.allowedTCPPorts = [ 80 443 2003 ];
-    networking.firewall.allowedUDPPorts = [ 2003 ];
-  };
+    })
+  ];
 }
 
 # vim: set sw=2 et:
