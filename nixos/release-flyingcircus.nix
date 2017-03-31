@@ -91,7 +91,6 @@ in rec {
     inherit (nixos') channel;
     tests = {
       inherit (nixos'.tests)
-        containers
         firewall
         ipv6
         misc
