@@ -8,9 +8,9 @@ let
 
   defaultConfig = ''
     {
-      "port": "11211",
-      "maxMemory": "64",
-      "maxConnections": "1024"
+      "port": 11211,
+      "maxMemory": 64,
+      "maxConnections": 1024
     }
   '';
 
@@ -59,7 +59,7 @@ in
         port = localConfig.port;
       in {
         notification = "memcached alive";
-        command = "check-memcached-stats.rb -h ${addr} -p ${port}";
+        command = "check-memcached-stats.rb -h ${addr} -p ${toString port}";
       };
 
   };
