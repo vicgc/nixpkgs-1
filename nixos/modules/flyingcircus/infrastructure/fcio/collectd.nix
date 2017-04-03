@@ -11,14 +11,12 @@ let
     null
     config.flyingcircus.enc_services;
 
-  # NOTE: We don't use the "service" for statsohst, because it returns the
+  # NOTE: We don't use the "service" for statshost, because it returns the
   # SRV address. We need FE as we push data in from all over the place.
-  # XXX: Testing-Mode: Fix to stats, but also send to proxy_service (see config
-  # below)
-  graphite_server = "stats.flyingcircus.io";
-    # if proxy_service != null
-    # then proxy_service.address
-    # else "stats.flyingcircus.io";
+  graphite_server =
+    if proxy_service != null
+    then proxy_service.address
+    else "stats.flyingcircus.io";
 
 in
 mkIf (params ? location && params ? resource_group) {
@@ -67,16 +65,6 @@ mkIf (params ? location && params ? resource_group) {
         EscapeCharacter "_"
         SeparateInstances true
       </Node>
-      ${optionalString (proxy_service != null) ''
-        <Node "${proxy_service.address}">
-          Host "${proxy_service.address}";
-          Port "2003"
-          Prefix "fcio.${params.location}.${params.resource_group}.virtual.generic."
-          Protocol "udp"
-          EscapeCharacter "_"
-          SeparateInstances true
-        </Node>
-      ''}
     </Plugin>
   '' +
   concatMapStringsSep "\n"
