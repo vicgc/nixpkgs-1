@@ -11,6 +11,11 @@
 
   mongodb = hydraJob (import ./mongodb { inherit system; }) ;
 
+  nodejs4 = hydraJob
+    (import ./nodejs4.nix {
+      inherit system;
+    });
+
   nodejs6 = hydraJob
     (import ./nodejs6.nix {
       inherit system;
