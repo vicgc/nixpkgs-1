@@ -13,6 +13,7 @@ criticalexceptions:
       - '"timestamp":".*","level":"error"'
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
       - 'sshd\[.*\]: error: Received disconnect'
+      - 'sshd\[.*\]:.*no matching cipher found'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
