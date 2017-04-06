@@ -143,7 +143,7 @@ in
       flyingcircus.roles.nginx.enable = true;
       flyingcircus.roles.nginx.httpConfig =
       let
-          listenOn = port: lib.concatMapStringsSep "\n    "
+          listenOnPort = port: lib.concatMapStringsSep "\n    "
               (addr: "listen ${addr}:${port};")
               (fclib.listenAddressesQuotedV6 config "ethsrv");
 
@@ -154,7 +154,7 @@ in
       in
       ''
         server {
-            ${listenOn "9000"}
+            ${listenOnPort "9000"}
 
             ${allow config.flyingcircus.static.directory.proxy_ips}
             deny all;
@@ -165,7 +165,7 @@ in
           }
 
         server {
-            ${listenOn "9002"}
+            ${listenOnPort "9002"}
 
             location /tools/${config.flyingcircus.enc.name}/graylog {
                 proxy_pass http://127.0.0.1:9001;
@@ -221,7 +221,7 @@ in
       systemd.services.configure-inputs-for-graylog = {
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
-         after = [ "graylog.service" ];
+         after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
          serviceConfig = {
            Type = "oneshot";
            User = "graylog";
