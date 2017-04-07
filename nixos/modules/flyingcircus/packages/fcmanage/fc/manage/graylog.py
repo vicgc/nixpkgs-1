@@ -38,10 +38,15 @@ def main(user, password, api, input_conf, sso_conf):
     s.auth = (user, password)
     r = s.get(api + '/system/cluster/node')
     r.raise_for_status()
-    data = json.loads(input_conf)
-    data['node'] = r.json()['node_id']
+
+    # autoconfigure sso-plugin
+    data = json.loads(sso_conf)
+    r = s.put(api + '/plugins/org.graylog.plugins.auth.sso/config', json=data)
+    r.raise_for_status()
 
     # check if there is input with this name currently configured, if so return
+    data = json.loads(input_conf)
+    data['node'] = r.json()['node_id']
     r = s.get(api + '/system/inputstates')
     r.raise_for_status()
     for _input in r.json()['states']:
@@ -52,11 +57,6 @@ def main(user, password, api, input_conf, sso_conf):
     r = s.post(api + '/system/inputs', json=data)
     r.raise_for_status()
     # return r.json()['id']
-
-    # autoconfigure sso-plugin
-    data = json.loads(sso_conf)
-    r = s.post(api + '/plugins/org.graylog.plugins.auth.sso/config', json=data)
-    r.raise_for_status()
 
 
 if __name__ == '__main__':

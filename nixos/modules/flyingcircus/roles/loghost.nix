@@ -218,7 +218,7 @@ in
         esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
       };
 
-      systemd.services.configure-inputs-for-graylog = {
+      systemd.services.graylog-config = {
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
          after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
@@ -251,6 +251,8 @@ in
             default_group = "Admin";
             auto_create_user = true;
             username_header = "Remote-User";
+            fullname_header = "X-Graylog-Fullname";
+            email_header = "X-Graylog-Email";
             require_trusted_proxies = true;
             trusted_proxies = "127.0.0.1/8";
           };
