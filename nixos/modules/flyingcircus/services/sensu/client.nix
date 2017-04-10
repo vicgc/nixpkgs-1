@@ -23,6 +23,9 @@ let
 
   client_json = writeText "client.json" ''
     {
+      "_comment":
+        ["This is a comment to help restarting sensu when necessary.",
+         "Active Groups: ${toString config.users.extraUsers.sensuclient.extraGroups}"],
       "client": {
         "name": "${config.networking.hostName}",
         "address": "${config.networking.hostName}.gocept.net",
@@ -119,14 +122,14 @@ in {
           description = ''
             Set the warning limit for connections on this host.
           '';
-          default = 500;
+          default = 1500;
         };
         critical = mkOption {
           type = types.int;
           description = ''
             Set the critical limit for connections on this host.
           '';
-          default = 1000;
+          default = 2000;
         };
       };
     };
@@ -168,9 +171,10 @@ in {
       description = "sensu client daemon user";
       uid = config.ids.uids.sensuclient;
       group = "sensuclient";
-      # Allow sensuclient to interact with services. This especially helps to
-      # check supervisor with a group-writable socket:
-      extraGroups = [ "service" ];
+      # Allow sensuclient to interact with services, adm stuff and the journal.
+      # This especially helps to check supervisor with a group-writable
+      # socket:
+      extraGroups = [ "service" "adm" "systemd-journal" ];
     };
 
     # needs to be adjusted, when we fix issue https://github.com/flyingcircusio/vulnix/issues/13
