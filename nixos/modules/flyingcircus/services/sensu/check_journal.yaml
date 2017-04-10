@@ -12,6 +12,7 @@ criticalexceptions:
       - 'ACPI Error: Method parse/execution failed'
       - '"timestamp":".*","level":"error"'
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
+      - 'Disconnecting: Too many authentication failures [preauth]'
       - 'sshd\[.*\]: error: Received disconnect'
       - 'ERROR: org.graylog2.shared.buffers.processors.DecodingProcessor - Error processing message'
       - 'multi_json/adapters/json_common.rb:19:in `encode'
