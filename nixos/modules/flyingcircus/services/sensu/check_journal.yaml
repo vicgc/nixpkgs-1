@@ -13,6 +13,12 @@ criticalexceptions:
       - '"timestamp":".*","level":"error"'
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
       - 'sshd\[.*\]: error: Received disconnect'
+      - 'ERROR: org.graylog2.shared.buffers.processors.DecodingProcessor - Error processing message'
+      - 'multi_json/adapters/json_common.rb:19:in `encode'
+      - 'user-logrotate.sh\[.*]: rotating pattern: .*'
+      - 'user-logrotate.sh\[.*]: considering log '
+      - 'sftpfix.py\[.*\]: .*workflowerror.log'
+      - 'sftpfix.py\[.*\]: errors.xlsx'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
@@ -26,3 +32,8 @@ warningexceptions:
       - 'warning: not applying GID change of group'
       - 'sshd\[.*\]: Disconnecting: Too many authentication failures \[preauth\]'
       - 'sshd\[.*\]: error: Received disconnect'
+      - 'proftpd.*crypt\(3\) failed: Invalid argument'
+      - 'proftpd.*USER.*\(Login failed\)'
+      - 'sensu-client.service: main process exited, code=exited, status=1/FAILURE'
+      - 'Unit sensu-client.service entered failed state'
+      - 'sensu-client.service failed'
