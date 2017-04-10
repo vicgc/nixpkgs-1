@@ -201,13 +201,29 @@ in
     fonts.fontconfig.enable = true;
 
     environment.pathsToLink = [ "/include" ];
-    environment.shellInit = ''
-      # help pip to find libz.so when building lxml
-      export LIBRARY_PATH=/var/run/current-system/sw/lib
-      # help dynamic loading like python-magic to find it's libraries
-      export LD_LIBRARY_PATH=$LIBRARY_PATH
-      # ditto for header files, e.g. sqlite
-      export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
+    environment.shellInit =
+     # FCIO_* only exported if ENC data is present.
+     (lib.optionalString
+      (enc ? name &&
+        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "environment" ] enc))
+       ''
+         # Grant easy access to the machine's ENC data for some variables to
+         # shell scripts.
+         export FCIO_LOCATION="${enc.parameters.location}"
+         export FCIO_ENVIRONMENT="${enc.parameters.environment}"
+         export FCIO_HOSTNAME="${enc.name}"
+       '') +
+       ''
+         # help pip to find libz.so when building lxml
+         export LIBRARY_PATH=/var/run/current-system/sw/lib
+         # help dynamic loading like python-magic to find it's libraries
+         export LD_LIBRARY_PATH=$LIBRARY_PATH
+         # ditto for header files, e.g. sqlite
+         export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
+       '';
+    environment.interactiveShellInit = ''
+      TMOUT=43200
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_4;

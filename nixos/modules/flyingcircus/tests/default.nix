@@ -31,4 +31,7 @@
   sensuserver = hydraJob (import ./sensu.nix { inherit system; });
 
   users = hydraJob (import ./users { inherit system; });
+
+  influxdb = hydraJob (import ./influxdb.nix { inherit system; });
+
 }

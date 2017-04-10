@@ -17,7 +17,7 @@ let
     (x: x.node == "${config.networking.hostName}.gocept.net")
     { password = ""; } { password = ""; } sensu_clients).password;
 
-  sensu_api_json = pkgs.writeText "sensu-server.json"
+  sensu_api_json = pkgs.writeText "sensu-api.json"
     ''
     {
       "rabbitmq": {

@@ -1,5 +1,14 @@
-{ pkgs ? (import <nixpkgs> {})}:
+{ pkgs ? (import <nixpkgs> {}) }:
 
+let
+  lib = pkgs.lib;
+  pkgs_17_03 = (import ((import <nixpkgs> {}).fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = "645137cdc9ba4e3e30bc3fd897b7d4c0b53685e5";
+      sha256 = "1jsckl6v3hl8nfp5wr3x2g9ga5d0rabfkyjhaj6aq60a7jz2gxwa";
+  }) {});
+in
 rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
@@ -36,18 +45,21 @@ rec {
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
 
+  grafana = pkgs_17_03.grafana;
+
   graylog = pkgs.callPackage ./graylog.nix { };
 
   http-parser = pkgs.callPackage ./http-parser {
     gyp = pkgs.pythonPackages.gyp;
   };
 
+  influxdb1_2 = pkgs_17_03.influxdb ;
+
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   kibana = pkgs.callPackage ./kibana.nix { };
 
   libidn = pkgs.callPackage ./libidn.nix { };
-
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
     kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
@@ -71,6 +83,8 @@ rec {
   };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
+
+  nix = pkgs_17_03.nix;
 
   nginx =
     let
@@ -128,9 +142,9 @@ rec {
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
-  sensu = pkgs.callPackage ./sensu { };
+  sensu = pkgs_17_03.sensu;
 
-  uchiwa = pkgs.callPackage ./uchiwa { };
+  uchiwa = pkgs_17_03.uchiwa;
 
   varnish =
     (pkgs.callPackage ../../../../pkgs/servers/varnish { }).overrideDerivation

@@ -33,6 +33,12 @@ let
             "pass": "${api_server.password}"
            }'')
       api_servers);
+    users = (lib.concatMapStringsSep ",\n" (
+       user:
+         ''
+
+           "password": "{crypt}${user.hashedPassword}"
+    ));
     in pkgs.writeText "uchiwa.json" ''
     {
       "sensu": [
