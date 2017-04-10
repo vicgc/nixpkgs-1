@@ -13728,7 +13728,7 @@ let
       homepage = "https://www.github.com/statsmodels/statsmodels";
       license = licenses.bsd3;
     };
-    
+
     # Many tests fail when using latest numpy and pandas.
     # See also https://github.com/statsmodels/statsmodels/issues/2602
     doCheck = false;

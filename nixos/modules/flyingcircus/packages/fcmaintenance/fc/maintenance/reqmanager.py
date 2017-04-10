@@ -110,13 +110,17 @@ class ReqManager:
 
         Returns modified Request object or None if nothing was added.
         """
-        if (skip_same_comment and request.comment and
-                self.find_by_comment(request.comment)):
-            return None
+        if skip_same_comment and request.comment:
+            duplicate = self.find_by_comment(request.comment)
+            if duplicate:
+                LOG.info('(req %s) found identical request %s, skipping',
+                         request.id, duplicate.id)
+                return None
         self.requests[request.id] = request
         request.dir = self.dir(request)
         request._reqmanager = self
         request.save()
+        LOG.info('(req %s) created: %s', request.id, request.comment)
         return request
 
     def find_by_comment(self, comment):
@@ -204,7 +208,6 @@ class ReqManager:
         After that, select the oldest due request as next active request.
         """
         LOG.debug('executing maintenance requests')
-        set_maintenance = False
         try:
             for req in self.runnable():
                 LOG.info('(req %s) starting execution', req.id)
@@ -273,6 +276,13 @@ def transaction(spooldir=DEFAULT_DIR, enc_path=None, do_scheduling=True):
         rm.archive()
 
 
+def setup_logging(verbose=False):
+    logging.basicConfig(format='MAINT:%(levelname)s: %(message)s',
+                        level=logging.DEBUG if verbose else logging.INFO)
+    # this is really annoying
+    logging.getLogger('iso8601').setLevel(logging.INFO)
+
+
 def main(verbose=False):
     a = argparse.ArgumentParser(description="""\
 Schedules, runs, and archives maintenance requests.
@@ -287,10 +297,7 @@ Schedules, runs, and archives maintenance requests.
                    'local modifications in the request json (default: '
                    '%(default)s)')
     args = a.parse_args()
-    logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=logging.DEBUG if args.verbose else logging.INFO)
-    # this is really annoying
-    logging.getLogger('iso8601').setLevel(logging.INFO)
+    setup_logging(args.verbose)
     transaction(args.spooldir, args.enc_path, not args.no_scheduling)
 
 

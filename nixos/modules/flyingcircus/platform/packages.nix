@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   config = {
@@ -43,9 +43,8 @@
         nmap
         nodejs
         openldap
-        openssl
+        openssl_1_0_2
         php
-        postgresql
         protobuf
         psmisc
         pv
@@ -66,7 +65,8 @@
         wget
         xfsprogs
         zlib
-    ];
+    ] ++
+    lib.optional (!config.services.postgresql.enable) pkgs.postgresql;
 
   };
 }

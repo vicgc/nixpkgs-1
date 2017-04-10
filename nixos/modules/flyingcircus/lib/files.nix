@@ -20,4 +20,8 @@ rec {
   # Reads the config file if it exists, else returns predefined default
   configFromFile = file: default:
     if builtins.pathExists file then builtins.readFile file else default;
+
+  jsonFromFile = file: default:
+    builtins.fromJSON (configFromFile file default);
+
 }

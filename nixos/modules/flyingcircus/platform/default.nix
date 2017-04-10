@@ -15,20 +15,24 @@ let
 
   fclib = import ../lib;
 
-  get_json = path: default:
-    if builtins.pathExists path
-    then builtins.fromJSON (builtins.readFile path)
-    else default;
+  enc =
+    builtins.fromJSON (fclib.configFromFile
+      cfg.enc_path
+      (fclib.configFromFile "/etc/nixos/enc.json" "{}"));
 
-  enc = get_json cfg.enc_path (get_json /etc/nixos/enc.json {});
+  enc_addresses.srv = fclib.jsonFromFile cfg.enc_addresses_path.srv "[]";
 
-  enc_addresses.srv = get_json cfg.enc_addresses_path.srv [];
+  enc_services = fclib.jsonFromFile cfg.enc_services_path "[]";
 
-  enc_services = get_json cfg.enc_services_path [];
+  enc_service_clients = fclib.jsonFromFile cfg.enc_service_clients_path "[]";
 
-  enc_service_clients = get_json cfg.enc_service_clients_path [];
+  system_state = fclib.jsonFromFile cfg.system_state_path "{}";
 
-  system_state = get_json cfg.system_state_path {};
+  userdata = fclib.jsonFromFile cfg.userdata_path "[]";
+
+  permissionsdata = fclib.jsonFromFile cfg.permissions_path "[]";
+
+  admins_group_data = fclib.jsonFromFile cfg.admins_group_path "{}";
 
 in
 {
@@ -46,29 +50,30 @@ in
     ../services/vxlan-client.nix
   ];
 
-  options = {
+  options = with lib.types;
+  {
 
     flyingcircus.enc = mkOption {
       default = null;
-      type = types.nullOr types.attrs;
+      type = nullOr attrs;
       description = "Data from the external node classifier.";
     };
 
     flyingcircus.load_enc = mkOption {
       default = true;
-      type = types.bool;
+      type = bool;
       description = "Automatically load ENC data?";
     };
 
     flyingcircus.enc_path = mkOption {
       default = "/etc/nixos/enc.json";
-      type = types.string;
+      type = string;
       description = "Where to find the ENC json file.";
     };
 
     flyingcircus.enc_addresses.srv = mkOption {
       default = enc_addresses.srv;
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "List of addresses of machines in the neighbourhood.";
       example = [ {
         ip = "2a02:238:f030:1c3::104c/64";
@@ -83,44 +88,92 @@ in
 
     flyingcircus.enc_addresses_path.srv = mkOption {
       default = /etc/nixos/addresses_srv.json;
-      type = types.path;
+      type = path;
       description = "Where to find the address list json file.";
     };
 
     flyingcircus.system_state = mkOption {
       default = {};
-      type = types.attrs;
+      type = attrs;
       description = "The current system state as put out by fc-manage";
     };
 
     flyingcircus.system_state_path = mkOption {
       default = /etc/nixos/system_state.json;
-      type = types.path;
+      type = path;
       description = "Where to find the system state json file.";
     };
 
     flyingcircus.enc_services = mkOption {
       default = [];
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "Services in the environment as provided by the ENC.";
     };
 
     flyingcircus.enc_services_path = mkOption {
       default = /etc/nixos/services.json;
-      type = types.path;
+      type = path;
       description = "Where to find the ENC services json file.";
     };
 
     flyingcircus.enc_service_clients = mkOption {
       default = [];
-      type = types.listOf types.attrs;
+      type = listOf attrs;
       description = "Service clients in the environment as provided by the ENC.";
     };
 
     flyingcircus.enc_service_clients_path = mkOption {
       default = /etc/nixos/service_clients.json;
-      type = types.path;
+      type = path;
       description = "Where to find the ENC service clients json file.";
+    };
+
+    flyingcircus.userdata_path = lib.mkOption {
+      default = /etc/nixos/users.json;
+      type = path;
+      description = ''
+        Where to find the user json file.
+
+        directory.list_users();
+      '';
+    };
+
+    flyingcircus.userdata = lib.mkOption {
+      default = userdata;
+      type = listOf attrs;
+      description = "All users local to this system.";
+    };
+
+    flyingcircus.permissions_path = lib.mkOption {
+      default = /etc/nixos/permissions.json;
+      type = path;
+      description = ''
+        Where to find the permissions json file.
+
+        directory.list_permissions()
+      '';
+    };
+
+    flyingcircus.permissionsdata = lib.mkOption {
+      default = permissionsdata;
+      type = listOf attrs;
+      description = "All permissions known on this system.";
+    };
+
+    flyingcircus.admins_group_path = lib.mkOption {
+      default = /etc/nixos/admins.json;
+      type = path;
+      description = ''
+        Where to find the admins group json file.
+
+        directory.lookup_resourcegroup('admins')
+      '';
+    };
+
+    flyingcircus.admins_group_data = lib.mkOption {
+      default = admins_group_data;
+      type = attrs;
+      description = "Members of ths admins group.";
     };
 
   };
@@ -168,14 +221,27 @@ in
     programs.zsh.enable = true;
 
     environment.pathsToLink = [ "/include" ];
-    environment.shellInit = ''
-     # help pip to find libz.so when building lxml
-     export LIBRARY_PATH=/var/run/current-system/sw/lib
-     # help dynamic loading like python-magic to find it's libraries
-     export LD_LIBRARY_PATH=$LIBRARY_PATH
-     # ditto for header files, e.g. sqlite
-     export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
-    '';
+    environment.shellInit =
+     # FCIO_* only exported if ENC data is present.
+     (lib.optionalString
+      (enc ? name &&
+        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
+        (lib.hasAttrByPath [ "parameters" "environment" ] enc))
+       ''
+         # Grant easy access to the machine's ENC data for some variables to
+         # shell scripts.
+         export FCIO_LOCATION="${enc.parameters.location}"
+         export FCIO_ENVIRONMENT="${enc.parameters.environment}"
+         export FCIO_HOSTNAME="${enc.name}"
+       '') +
+       ''
+         # help pip to find libz.so when building lxml
+         export LIBRARY_PATH=/var/run/current-system/sw/lib
+         # help dynamic loading like python-magic to fi  nd it's libraries
+         export LD_LIBRARY_PATH=$LIBRARY_PATH
+         # ditto for header files, e.g. sqlite
+         export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
+       '';
     environment.interactiveShellInit = ''
       TMOUT=43200
     '';

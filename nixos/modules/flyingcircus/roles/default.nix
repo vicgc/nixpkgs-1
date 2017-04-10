@@ -23,7 +23,9 @@ in
      ./generic.nix
      ./haproxy.nix
      ./java.nix
+     ./loghost.nix
      ./mailserver.nix
+     ./memcached.nix
      ./mongodb
      ./mysql.nix
      ./nfs.nix

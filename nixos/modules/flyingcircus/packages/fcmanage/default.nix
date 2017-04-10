@@ -7,10 +7,12 @@
 , nix
 , python34Packages
 , utillinux
-, xfsprogs }:
+, xfsprogs
+}:
 
 let
   py = python34Packages;
+
 in
 py.buildPythonPackage rec {
   name = "fc-manage-${version}";
@@ -31,9 +33,11 @@ py.buildPythonPackage rec {
     lvm2
     multipath_tools
     nix
+    py.click
     py.fcutil
     py.requests2
     utillinux
     xfsprogs
   ];
+
 }

@@ -71,6 +71,7 @@ in
           device = "${service.address}:${export}";
           fsType = "nfs4";
           options = mountopts;
+          noCheck = true;
         };
       };
       systemd.tmpfiles.rules = [
@@ -95,12 +96,14 @@ in
 
     (mkIf (boxServer ? address) (
       let
-        humanUsers =
-          (filterAttrs (n: v: v.isNormalUser && v.group == "users")
-          config.users.users);
+        humans = filter
+          (u: u.class == "human" && u ? "home_directory")
+          cfg.userdata;
+        userHomes = listToAttrs
+          (map (u: nameValuePair u.uid u.home_directory) humans);
       in
       {
-        fileSystems = (listToAttrs
+        fileSystems = listToAttrs
           (map
             (user: nameValuePair
               "${boxMount}/${user}"
@@ -108,13 +111,14 @@ in
                 device = "${boxServer.address}:/srv/nfs/box/${user}";
                 fsType = "nfs4";
                 options = mountopts;
+                noCheck = true;
               })
-            (attrNames humanUsers)));
-        systemd.tmpfiles.rules =
-          [ "d ${boxMount}" ] ++
-          mapAttrsToList
-            (user: v: "L ${v.home}/box - - - - ${boxMount}/${user}")
-            humanUsers;
+            (attrNames userHomes));
+          systemd.tmpfiles.rules =
+            [ "d ${boxMount}" ] ++
+            mapAttrsToList
+              (user: home: "L ${home}/box - - - - ${boxMount}/${user}")
+              userHomes;
       }))
   ];
 }

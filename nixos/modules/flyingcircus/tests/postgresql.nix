@@ -1,8 +1,8 @@
-import ../../../tests/make-test.nix ({ rolename, pkgs, ... }:
+import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
 {
   name = rolename;
   machine =
-    { pkgs, config, ... }:
+    { config, ... }:
     {
       imports = [
         ./setup.nix
@@ -34,6 +34,10 @@ import ../../../tests/make-test.nix ({ rolename, pkgs, ... }:
         psql --echo-all -d employees < ${insertSql}
         psql --echo-all -d employees < ${selectSql} | grep -5 "John Doe"
       '';
+
+      createExtensions = pkgs.writeScript "rum-tests" ''
+        psql employees -c "CREATE EXTENSION rum;"
+      '';
     in
     ''
       $machine->waitForUnit("postgresql.service");
@@ -43,5 +47,9 @@ import ../../../tests/make-test.nix ({ rolename, pkgs, ... }:
 
       # should not trust connections via TCP
       $machine->fail('psql --no-password -h localhost -l');
+    '' +
+      lib.optionalString  (lib.strings.versionAtLeast rolename "postgresql96")
+    ''# do the rum extension test
+      $machine->succeed('sudo -u postgres -- sh ${createExtensions}');
     '';
 })

@@ -10,10 +10,15 @@ import fc.maintenance.lib.reboot
 import fc.manage.dmi_memory
 import json
 import os
-import os.path
+import os.path as p
 import re
 import shutil
 import subprocess
+
+def verbose(msg):
+    # may be overriden in main()
+    pass
+
 
 class QuotaError(RuntimeError):
     """Failed to parse XFS quota report."""
@@ -134,8 +139,8 @@ class Disk(object):
             # disk grow pending
             return False
         used_gb, bhard_limit_gb = self.xfs_quota_report()
-        print('resize: blk={} GiB, enc={} GiB, q_used={} GiB, q_limit={} GiB'
-              .format(blk_size_gb, enc_disk_gb, used_gb, bhard_limit_gb))
+        verbose('resize: blk={} GiB, enc={} GiB, q_used={} GiB, q_limit={} GiB'
+                .format(blk_size_gb, enc_disk_gb, used_gb, bhard_limit_gb))
         if enc_disk_gb == blk_size_gb and bhard_limit_gb == 0:
             # no action necessary; quota not active
             return False
@@ -246,14 +251,14 @@ def check_qemu_reboot():
     # of the virtual machine. However, if we got rebooted with a fresh
     # Qemu instance, we need to update it from the marker on the tmp
     # partition.
-    if not os.path.isdir('/var/lib/qemu'):
+    if not p.isdir('/var/lib/qemu'):
         os.makedirs('/var/lib/qemu')
-    if os.path.exists('/tmp/fc-data/qemu-binary-generation-booted'):
+    if p.exists('/tmp/fc-data/qemu-binary-generation-booted'):
         shutil.move('/tmp/fc-data/qemu-binary-generation-booted',
                     '/var/lib/qemu/qemu-binary-generation-booted')
     # Schedule maintenance if the current marker differs from booted
     # marker.
-    if not os.path.exists('/run/qemu-binary-generation-current'):
+    if not p.exists('/run/qemu-binary-generation-current'):
         return
 
     try:
@@ -286,21 +291,51 @@ def check_qemu_reboot():
             comment=msg))
 
 
+def kernel_version(kernel):
+    """Guesses kernel version from /run/*-system/kernel.
+
+    Theory of operation: A link like `/run/current-system/kernel` points
+    to a bzImage like `/nix/store/abc...-linux-4.4.27/bzImage`. The
+    directory also contains a `lib/modules` dir which should have the
+    kernel version as sole subdir, e.g.
+    `/nix/store/abc...-linux-4.4.27/lib/modules/4.4.27`. This function
+    returns that version number or bails out if the assumptions laid down here
+    do not hold.
+    """
+    bzImage = os.readlink(kernel)
+    moddir = os.listdir(p.join(p.dirname(bzImage), 'lib', 'modules'))
+    if len(moddir) != 1:
+        raise RuntimeError('modules subdir does not contain exactly '
+                           'one item', moddir)
+    return moddir[0]
+
+
 def check_kernel_reboot():
     """Schedules a reboot if the kernel has changed."""
-    if (os.stat('/run/current-system/kernel').st_ino !=
-            os.stat('/run/booted-system/kernel').st_ino):
+    booted, current = map(kernel_version, [
+        '/run/booted-system/kernel',
+        '/run/current-system/kernel'])
+    verbose('check_kernel: booted={}, current={}'.format(booted, current))
+    if booted != current:
+        print('kernel changed: scheduling reboot')
         with fc.maintenance.ReqManager() as rm:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.reboot.RebootActivity('reboot'), 600,
-                comment='Reboot to activate changed kernel'))
+                comment='Reboot to activate changed kernel '
+                '({} to {})'.format(booted, current)
+            ))
 
 
 def main():
     a = argparse.ArgumentParser(description=__doc__)
     a.add_argument('-E', '--enc-path', default='/etc/nixos/enc.json',
                    help='path to enc.json (default: %(default)s)')
+    a.add_argument('-v', '--verbose', default=0, action='count',
+                   help='increase output verbosity')
     args = a.parse_args()
+
+    if args.verbose > 0:
+        globals()['verbose'] = lambda msg: print(msg)
 
     check_qemu_reboot()
     check_kernel_reboot()

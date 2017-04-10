@@ -74,6 +74,10 @@ with lib;
       standalone = [ "8.8.8.8" "8.8.4.4" ];
     };
 
+    flyingcircus.static.directory = {
+      proxy_ips = ["195.62.125.6" "195.62.125.11" "2a02:248:101:62::108c" "2a02:248:101:62::dd" "2a02:248:101:63::d4"];
+    };
+
     flyingcircus.static.ntpservers = {
       # Those are the routers and ceph mons. This needs to move to the
       # directory service discovery.
@@ -95,12 +99,16 @@ with lib;
       vagrant = true;
     };
     ids.uids = {
+      # Sames as upstream/master, but not yet merged
+      kibana = 211;
+
       # Our custom services
       sensuserver = 31001;
       sensuapi = 31002;
       uchiwa = 31003;
       sensuclient = 31004;
       powerdns = 31005;
+      graylog = 31006;
     };
 
     ids.gids = {

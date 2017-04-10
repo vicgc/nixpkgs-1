@@ -18,7 +18,7 @@ then
     echo "$0: please perform release in a clean checkout with proper origin" >&2
     exit 64
 fi
-git fetch --all --tags --prune
+git fetch origin --tags --prune
 git checkout $dev
 git merge --ff-only  # expected to fail on unclean/unpushed workdirs
 
@@ -38,7 +38,7 @@ git merge --no-ff -m "$msg" $prod
 echo "$0: committed changes:"
 PAGER= git log --graph --decorate --format=short -n3
 
-cmd="git push --tags origin $dev $stag $prod"
+cmd="git push origin $dev $stag $prod fc/r$releaseid"
 echo "$0: If this looks correct, press Enter to push (or use ^C to abort)."
 echo "$0: This will issue: $cmd"
 read
