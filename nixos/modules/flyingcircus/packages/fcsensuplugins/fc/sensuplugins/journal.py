@@ -45,9 +45,6 @@ class Journal(nagiosplugin.Resource):
             # zero entries == ok
             elif ret == 1 and 'timestamp' in e.output.decode():
                 return([], [])
-            # This is another variation of no entries, I could provoke.
-            elif ret == 1 and 'Logs begin at' in e.output.decode():
-                return([], [])
             else:
                 raise
         # convert the list of json objects to a list of python objects
