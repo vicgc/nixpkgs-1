@@ -122,14 +122,14 @@ in {
           description = ''
             Set the warning limit for connections on this host.
           '';
-          default = 1500;
+          default = 5000;
         };
         critical = mkOption {
           type = types.int;
           description = ''
             Set the critical limit for connections on this host.
           '';
-          default = 2000;
+          default = 6000;
         };
       };
     };
