@@ -165,6 +165,89 @@ in
 
     };
 
-  };
+    services.collectd.extraConfig = ''
+      LoadPlugin curl_json
+      <Plugin curl_json>
+        <URL "http://${thisNode}:9200/_cluster/health">
+          Header "Accept: application/json"
+          Instance "elasticsearch"
+          <Key "number_of_data_nodes">
+            Type "gauge"
+          </Key>
+          <Key "active_shards">
+            Type "gauge"
+          </Key>
+          <Key "active_primary_shards">
+            Type "gauge"
+          </Key>
+          <Key "unassigned_shards">
+            Type "gauge"
+          </Key>
+          <Key "initializing_shards">
+            Type "gauge"
+          </Key>
+          <Key "number_of_pending_tasks">
+            Type "gauge"
+          </Key>
+          <Key "relocating_shards">
+            Type "gauge"
+          </Key>
+        </URL>
 
+        <URL "http://${thisNode}:9200/_nodes/${config.networking.hostName}/stats">
+          Header "Accept: application/json"
+          Instance "elasticsearch"
+          <Key "nodes/*/jvm/mem/heap_used_in_bytes">
+            Type "gauge"
+          </Key>
+          <Key "nodes/*/jvm/mem/heap_committed_in_bytes">
+            Type "gauge"
+          </Key>
+          <Key "nodes/*/jvm/threads/count">
+            Type "gauge"
+            Instance "thread_count"
+          </Key>
+          <Key "nodes/*/http/total_opened">
+            Type "derive"
+            Instance "http_requests"
+          </Key>
+          <Key "nodes/*/indices/docs/count">
+            Type "gauge"
+            Instance "indexed_docs"
+          </Key>
+
+          <Key "nodes/*/indices/search/query_total">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/search/query_time_in_millis">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/search/fetch_total">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/search/fetch_time_in_millis">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/indexing/index_total">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/indexing/index_time_in_millis">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/refresh/total">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/refresh/total_time_in_millis">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/flush/total">
+            Type "derive"
+          </Key>
+          <Key "nodes/*/indices/flush/total_time_in_millis">
+            Type "derive"
+          </Key>
+        </URL>
+      </Plugin>'';
+
+  };
 }
