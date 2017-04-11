@@ -3,12 +3,12 @@
 let
   kernel = import ../../../../../pkgs/os-specific/linux/kernel/generic.nix
     (args // rec {
-      version = "4.4.27";
+      version = "4.4.59";
       extraMeta.branch = "4.4";
 
       src = fetchurl {
         url = "mirror://kernel/linux/kernel/v4.x/linux-${version}.tar.xz";
-        sha256 = "1zbahhbwxdhl7v0l2ch1ybllywj2df3rmy8w451whr79z7c7shvc";
+        sha256 = "1jlnm6msxdhm7l6all91rd1rkqsqpd0rblbdl68z7nkz9hy55sb4";
       };
 
       kernelPatches = args.kernelPatches;

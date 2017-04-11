@@ -113,7 +113,7 @@ rec {
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
-  qemu = pkgs.callPackage ./qemu-2.5.nix {
+  qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
     x86Only = true;
   };
