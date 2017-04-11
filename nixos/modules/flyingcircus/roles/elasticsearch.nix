@@ -150,7 +150,7 @@ in
 
       es_heap = {
         notification = "ES: Heap too full";
-        command = "check-es-heap.rb -h ${thisNode} -w 75 -c 90 -P";
+        command = "check-es-heap.rb -h ${thisNode} -w 80 -c 90 -P";
       };
 
       es_node_status = {
