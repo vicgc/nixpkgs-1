@@ -320,7 +320,7 @@ in
             <Key "throughput">
               Type "gauge"
             </Key>
-        </URL>
+          </URL>
         </Plugin>
       '';
 
