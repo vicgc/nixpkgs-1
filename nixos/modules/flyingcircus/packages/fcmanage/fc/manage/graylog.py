@@ -36,8 +36,6 @@ def main(user, password, api, input_conf, sso_conf):
     """Configure a Graylog input node."""
     s = requests.Session()
     s.auth = (user, password)
-    r = s.get(api + '/system/cluster/node')
-    r.raise_for_status()
 
     # autoconfigure sso-plugin
     data = json.loads(sso_conf)
@@ -46,6 +44,8 @@ def main(user, password, api, input_conf, sso_conf):
 
     # check if there is input with this name currently configured, if so return
     data = json.loads(input_conf)
+    r = s.get(api + '/system/cluster/node')
+    r.raise_for_status()
     data['node'] = r.json()['node_id']
     r = s.get(api + '/system/inputstates')
     r.raise_for_status()
