@@ -7,6 +7,10 @@ let
 
   cfg = config.flyingcircus.services.sensu-client;
 
+  fclib = import ../../lib;
+
+  cores = fclib.current_cores config 1;
+
   check_timer = writeScript "check-timer.sh" ''
     #!${pkgs.bash}/bin/bash
     timer=$1
@@ -132,6 +136,18 @@ in {
           default = 6000;
         };
       };
+      expectedLoad = {
+        warning = mkOption {
+          type = types.str;
+          default = "${toString (cores * 8)},${toString (cores * 5)},${toString (cores * 2)}";
+          description = ''Limit of load thresholds before warning.'';
+        };
+        critical = mkOption {
+          type = types.str;
+          default = "${toString (cores * 10)},${toString (cores * 8)},${toString (cores * 3)}";
+          description = ''Limit of load thresholds before reaching critical.'';
+        };
+      };
     };
   };
 
@@ -218,7 +234,7 @@ in {
     flyingcircus.services.sensu-client.checks = {
       load = {
         notification = "Load is too high";
-        command =  "check_load -r -w 5,4,4 -c 8,6,6";
+        command =  "check_load -r -w ${cfg.expectedLoad.warning} -c ${cfg.expectedLoad.critical}";
         interval = 10;
       };
       swap = {
