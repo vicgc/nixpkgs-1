@@ -286,7 +286,7 @@ in {
       };
       systemd_units = {
         notification = "SystemD has failed units";
-        command = "check-failed-units.rb";
+        command = "check-failed-units.rb -m logrotate.service";
       };
       disk = {
         notification = "Disk usage too high";
