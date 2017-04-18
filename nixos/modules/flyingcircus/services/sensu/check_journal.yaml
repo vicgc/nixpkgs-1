@@ -11,6 +11,7 @@ criticalexceptions:
       - '0 failures 0 errors'
       - 'ACPI Error: Method parse/execution failed'
       - '"timestamp":".*","level":"error"'
+      - '"timestamp":".*","level":"warn"'
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
       - 'Disconnecting: Too many authentication failures \[preauth\]'
       - 'sshd\[.*\]: error: Received disconnect'
