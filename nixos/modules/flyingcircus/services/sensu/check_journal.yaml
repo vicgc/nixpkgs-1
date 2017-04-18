@@ -20,6 +20,9 @@ criticalexceptions:
       - 'user-logrotate.sh\[.*]: considering log '
       - 'sftpfix.py\[.*\]: .*workflowerror.log'
       - 'sftpfix.py\[.*\]: errors.xlsx'
+      - 'nginx.*\[error\].*connect\(\) failed \(111: Connection refused\) while connecting to upstream'
+      - 'rabbitmq-server\[\d+\]: Channel error on connection'
+      - 'rabbitmq-server.*ERROR REPORT'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
@@ -33,8 +36,10 @@ warningexceptions:
       - 'warning: not applying GID change of group'
       - 'sshd\[.*\]: Disconnecting: Too many authentication failures \[preauth\]'
       - 'sshd\[.*\]: error: Received disconnect'
-      - 'proftpd.*crypt\(3\) failed: Invalid argument'
+      - 'proftpd.*crypt\(3\) 11: Invalid argument'
       - 'proftpd.*USER.*\(Login failed\)'
       - 'sensu-client.service: main process exited, code=exited, status=1/FAILURE'
       - 'Unit sensu-client.service entered failed state'
       - 'sensu-client.service failed'
+      - 'nginx.*\[error\].*connect\(\) failed \(111: Connection refused\) while connecting to upstream'
+      - 'rabbitmq-server.*WARNING REPORT'
