@@ -18,19 +18,18 @@ let
     else address;
 
   mainCf = [
-    (if lib.pathExists "/etc/local/postfix/main.cf" then
-      lib.readFile /etc/local/postfix/main.cf
-     else "")
-
-    (if lib.pathExists "/etc/local/postfix/canonical.pcre" then
-      "canonical_maps = pcre:${/etc/local/postfix/canonical.pcre}\n"
-     else "")
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/main.cf")
+      (lib.readFile /etc/local/postfix/main.cf))
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/canonical.pcre")
+      "canonical_maps = pcre:${/etc/local/postfix/canonical.pcre}\n")
   ];
 
   masterCf = [
-    (if lib.pathExists "/etc/local/postfix/master.cf" then
-      lib.readFile /etc/local/postfix/master.cf
-     else "")
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/master.cf")
+      (lib.readFile /etc/local/postfix/master.cf))
   ];
 
 in
