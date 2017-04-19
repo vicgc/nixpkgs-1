@@ -24,6 +24,7 @@ criticalexceptions:
       - 'nginx.*\[error\].*connect\(\) failed \(111: Connection refused\) while connecting to upstream'
       - 'rabbitmq-server\[\d+\]: Channel error on connection'
       - 'rabbitmq-server.*ERROR REPORT'
+      - 'kibana\[\d+\]:'
 
 warningpatterns:
       - '[Ff]ail|FAIL'
