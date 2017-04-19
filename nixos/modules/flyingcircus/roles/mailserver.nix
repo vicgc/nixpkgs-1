@@ -18,13 +18,18 @@ let
     else address;
 
   mainCf = [
-    (if lib.pathExists "/etc/local/postfix/main.cf" then
-      lib.readFile /etc/local/postfix/main.cf
-     else "")
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/main.cf")
+      (lib.readFile /etc/local/postfix/main.cf))
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/canonical.pcre")
+      "canonical_maps = pcre:${/etc/local/postfix/canonical.pcre}\n")
+  ];
 
-    (if lib.pathExists "/etc/local/postfix/canonical.pcre" then
-      "canonical_maps = pcre:${/etc/local/postfix/canonical.pcre}\n"
-     else "")
+  masterCf = [
+    (lib.optionalString
+      (lib.pathExists "/etc/local/postfix/master.cf")
+      (lib.readFile /etc/local/postfix/master.cf))
   ];
 
 in
@@ -65,6 +70,7 @@ in
       services.postfix.hostname = myHostname;
 
       services.postfix.extraConfig = lib.concatStringsSep "\n" mainCf;
+      services.postfix.extraMasterConf = lib.concatStringsSep "\n" masterCf;
 
       system.activationScripts.fcio-postfix = ''
           install -d -o root -g service  -m 02775 /etc/local/postfix/
@@ -83,6 +89,9 @@ in
 
         If you need to reference to some map, these are currently available:
         * canonical_maps - /etc/local/postfix/canonical.pcre
+
+        The file `master.cf` may contain everything you want to add to
+        postfix' master.cf-file e.g. to enable the submission port.
 
         In case you need to extend this list, get in contact with our
         support.
