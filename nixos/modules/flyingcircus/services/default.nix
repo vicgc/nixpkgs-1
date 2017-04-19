@@ -16,5 +16,6 @@
      ./sensu/client.nix
      ./sensu/server.nix
      ./sensu/uchiwa.nix
+     ./sysstat.nix
     ];
 }
