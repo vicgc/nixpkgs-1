@@ -7,21 +7,14 @@ in {
     services.sysstat = {
       enable = mkOption {
         type = types.bool;
-        default = false;
+        default = true;
         description = ''
           Whether to enable sar system activity collection.
         '';
       };
 
-      collect-frequency = mkOption {
-        default = "*:00/10";
-        description = ''
-          OnCalendar specification for sysstat-collect
-        '';
-      };
-
       collect-args = mkOption {
-        default = "1 1";
+        default = "15 240";
         description = ''
           Arguments to pass sa1 when collecting statistics
         '';
@@ -57,11 +50,15 @@ in {
     systemd.timers.sysstat-collect = {
       description = "Run system activity accounting tool on a regular basis";
       wantedBy = [ "timers.target" ];
-      timerConfig.OnCalendar = cfg.collect-frequency;
+      timerConfig = {
+        OnStartupSec = "10s";
+        OnUnitActiveSec = "1h";
+      };
     };
 
     systemd.services.sysstat-summary = {
       description = "Generate a daily summary of process accounting";
+      after = [ "sysstat.service" ];
       unitConfig.Documentation = "man:sa2(8)";
 
       serviceConfig = {
@@ -74,7 +71,7 @@ in {
     systemd.timers.sysstat-summary = {
       description = "Generate summary of yesterday's process accounting";
       wantedBy = [ "timers.target" ];
-      timerConfig.OnCalendar = "00:07:00";
+      timerConfig.OnCalendar = "00:00:00";
     };
   };
 }
