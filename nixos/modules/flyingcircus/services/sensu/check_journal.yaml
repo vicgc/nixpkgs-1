@@ -45,3 +45,4 @@ warningexceptions:
       - 'sensu-client.service failed'
       - 'nginx.*\[error\].*connect\(\) failed \(111: Connection refused\) while connecting to upstream'
       - 'rabbitmq-server.*WARNING REPORT'
+      - 'update-news\[.*\]'
