@@ -138,32 +138,43 @@ in
 
       environment.systemPackages = [ logstashSSLHelper ];
 
-      # XXX Access should *only* be allowed from directory and same-rg.
-      networking.firewall.allowedTCPPorts = [ 9000 ];
+      networking.firewall.allowedTCPPorts = [ 9000 9002 ];
 
       flyingcircus.roles.nginx.enable = true;
       flyingcircus.roles.nginx.httpConfig =
       let
-          listenOn = lib.concatMapStringsSep "\n    "
-              (addr: "listen ${addr}:9000;")
+          listenOnPort = port: lib.concatMapStringsSep "\n    "
+              (addr: "listen ${addr}:${port};")
               (fclib.listenAddressesQuotedV6 config "ethsrv");
 
-          allow = lib.concatMapStringsSep "\n    "
+          allow = ips: lib.concatMapStringsSep "\n    "
               (addr: "allow ${addr};")
-              (config.flyingcircus.static.directory.proxy_ips);
-
+              (ips);
 
       in
       ''
         server {
-            ${listenOn}
+            ${listenOnPort "9000"}
 
-            ${allow}
+            ${allow config.flyingcircus.static.directory.proxy_ips}
             deny all;
 
             location /tools/${config.flyingcircus.enc.name}/graylog {
                 proxy_pass http://127.0.0.1:9001;
-                root /tools/${config.flyingcircus.enc.name}/graylog ;
+            }
+          }
+
+        server {
+            ${listenOnPort "9002"}
+
+            location /tools/${config.flyingcircus.enc.name}/graylog {
+                proxy_pass http://127.0.0.1:9001;
+                proxy_set_header REMOTE_USER "";
+                proxy_set_header X-Graylog-Server-URL http://${config.networking.hostName}.${config.networking.domain}:9002/tools/${config.flyingcircus.enc.name}/graylog/api;
+            }
+
+            location = / {
+              rewrite ^ /tools/${config.flyingcircus.enc.name}/graylog;
             }
           }
       '';
@@ -180,13 +191,25 @@ in
         inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
         elasticsearchDiscoveryZenPingUnicastHosts =
           "${config.networking.hostName}.${config.networking.domain}:9300";
-        # ipv6 would be nice too
+        javaHeap = ''${toString
+          (fclib.max [
+            ((fclib.current_memory config 1024) / 5)
+            1024
+            ])}m'';
         extraConfig = ''
           trusted_proxies 127.0.0.1/8
+          processbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) - 2)
+              5])}
+          outputbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) / 2)
+              3])}
         '';
       };
 
-      flyingcircus.roles.mongodb.enable = true;
+      flyingcircus.roles.mongodb32.enable = true;
       flyingcircus.roles.elasticsearch = {
         enable = true;
         dataDir = "/var/lib/elasticsearch";
@@ -195,10 +218,10 @@ in
         esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
       };
 
-      systemd.services.configure-inputs-for-graylog = {
+      systemd.services.graylog-config = {
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
-         after = [ "graylog.service" ];
+         after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
          serviceConfig = {
            Type = "oneshot";
            User = "graylog";
@@ -228,6 +251,8 @@ in
             default_group = "Admin";
             auto_create_user = true;
             username_header = "Remote-User";
+            fullname_header = "X-Graylog-Fullname";
+            email_header = "X-Graylog-Email";
             require_trusted_proxies = true;
             trusted_proxies = "127.0.0.1/8";
           };

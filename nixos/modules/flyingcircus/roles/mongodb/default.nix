@@ -37,21 +37,38 @@ let
 
   mongo_check = pkgs.callPackage ./check.nix { };
 
+  package =
+    if cfg.roles.mongodb32.enable
+    then pkgs.mongodb_3_2
+    else if cfg.roles.mongodb30.enable
+    then pkgs.mongodb_3_0
+    else null;
+
+  enable = package != null;
+
 in
 {
   options = {
 
-    flyingcircus.roles.mongodb = {
+    flyingcircus.roles.mongodb30 = {
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable the Flying Circus MongoDB role.";
+        description = "Enable MongoDB 3.0.";
+      };
+    };
+
+    flyingcircus.roles.mongodb32 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable MongoDB 3.2.";
       };
     };
 
   };
 
-  config = mkIf cfg.roles.mongodb.enable {
+  config = mkIf enable {
 
     environment.systemPackages = [
       pkgs.mongodb-tools
@@ -61,6 +78,7 @@ in
     services.mongodb.dbpath = "/srv/mongodb";
     services.mongodb.bind_ip = concatStringsSep "," listen_addresses;
     services.mongodb.pidFile = "/run/mongodb.pid";
+    services.mongodb.package = package;
 
     systemd.services.mongodb = {
       preStart = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";

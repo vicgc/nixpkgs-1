@@ -17,15 +17,6 @@ let
 
   cfg = config.flyingcircus;
 
-  userdata =
-    if builtins.pathExists cfg.userdata_path
-    then builtins.fromJSON (builtins.readFile cfg.userdata_path)
-    else [];
-  permissionsdata =
-    if builtins.pathExists cfg.permissions_path
-    then builtins.fromJSON (builtins.readFile cfg.permissions_path)
-    else [];
-
   get_primary_group = user:
     builtins.getAttr user.class {
       human = "users";
@@ -51,17 +42,10 @@ let
         })
       users);
 
-  admins_group_data =
-    if builtins.pathExists cfg.admins_group_path
-    then builtins.fromJSON (builtins.readFile cfg.admins_group_path)
-    else null;
-
   admins_group =
-    if admins_group_data == null
-    then {}
-    else {
-      ${admins_group_data.name}.gid = admins_group_data.gid;
-    };
+    lib.optionalAttrs
+      (cfg.admins_group_data != {})
+      { ${cfg.admins_group_data.name}.gid = cfg.admins_group_data.gid; };
 
   current_rg =
     if lib.hasAttrByPath ["parameters" "resource_group"] cfg.enc
@@ -120,41 +104,6 @@ let
 in
 
 {
-
-  options = {
-
-    flyingcircus.userdata_path = lib.mkOption {
-      default = /etc/nixos/users.json;
-      type = lib.types.path;
-      description = ''
-        Where to find the user json file.
-
-        directory.list_users();
-      '';
-    };
-
-    flyingcircus.admins_group_path = lib.mkOption {
-      default = /etc/nixos/admins.json;
-      type = lib.types.path;
-      description = ''
-        Where to find the admins group json file.
-
-        directory.lookup_resourcegroup('admins')
-      '';
-    };
-
-    flyingcircus.permissions_path = lib.mkOption {
-      default = /etc/nixos/permissions.json;
-      type = lib.types.path;
-      description = ''
-        Where to find the permissions json file.
-
-        directory.list_permissions()
-      '';
-    };
-
-  };
-
   config = {
 
     security.pam.services.sshd.showMotd = true;
@@ -170,20 +119,13 @@ in
 
     users = {
       mutableUsers = false;
-      users = map_userdata userdata;
+      users = map_userdata cfg.userdata;
       groups = mergeSets [
         admins_group
         { service.gid = config.ids.gids.service; }
-        (get_group_memberships userdata)
-        (get_permission_groups permissionsdata)
+        (get_group_memberships cfg.userdata)
+        (get_permission_groups cfg.permissionsdata)
         ];
-
-      /*groups = listOfSets:
-
-        lib.recursiveUpdate
-          (lib.recursiveUpdate admins_group { service.gid = config.ids.gids.service; })
-          (lib.recursiveUpdate (get_group_memberships userdata) (get_permission_groups permissionsdata));
-          */
     };
 
     # needs to be first in sudoers because of the %admins rule
@@ -208,11 +150,10 @@ in
     '';
 
     system.activationScripts.fcio-homedirpermissions = lib.stringAfter [ "users" ]
-      (builtins.concatStringsSep "\n" (home_dir_permissions userdata));
+      (builtins.concatStringsSep "\n" (home_dir_permissions cfg.userdata));
 
     system.activationScripts.fcio-configure-lingering = lib.stringAfter [ "users" ]
-      (builtins.concatStringsSep "\n" (configure_lingering userdata));
+      (builtins.concatStringsSep "\n" (configure_lingering cfg.userdata));
 
   };
-
 }

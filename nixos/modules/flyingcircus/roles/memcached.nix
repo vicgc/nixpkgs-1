@@ -4,13 +4,13 @@ let
   cfg = config.flyingcircus.roles.memcached;
   fclib = import ../lib;
 
-  listen = concatStringsSep "," (fclib.listenAddresses config "ethsrv");
+  srv = fclib.listenAddresses config "ethsrv";
 
   defaultConfig = ''
     {
-      "port": "11211",
-      "maxMemory": "64",
-      "maxConnections": "1024"
+      "port": 11211,
+      "maxMemory": 64,
+      "maxConnections": 1024
     }
   '';
 
@@ -20,7 +20,6 @@ let
 in
 {
   options = {
-
     flyingcircus.roles.memcached = {
 
       enable = mkOption {
@@ -35,27 +34,33 @@ in
   config = mkIf cfg.enable {
 
     system.activationScripts.fcio-memcached = ''
-      install -d -o ${toString config.ids.uids.memcached} -g service  -m 02775 /etc/local/memcached/
+      install -d -o ${toString config.ids.uids.memcached} -g service -m 02775 \
+        /etc/local/memcached
     '';
 
-    environment.etc."local/memcached/README.txt".text = ''
-     Put your local memcached configuration as *JSON* into memcached.json.
+    environment.etc = {
+      "local/memcached/README.txt".text = ''
+        Put your local memcached configuration as JSON into `memcached.json`.
 
-     Example:
-     ${defaultConfig}
-    '';
+        Example:
+        ${defaultConfig}
+      '';
+      "local/memcached/memcached.json.example".text = defaultConfig;
+    };
 
     services.memcached = {
-      inherit listen;
       enable = true;
+      listen = concatStringsSep "," srv;
     } // localConfig;
 
-    flyingcircus.services.sensu-client.checks = {
-      memcached = {
+    flyingcircus.services.sensu-client.checks.memcached =
+      let
+        addr = head srv;
+        port = localConfig.port;
+      in {
         notification = "memcached alive";
-        command = "check-memcached-stats.rb -h ${listen}";
+        command = "check-memcached-stats.rb -h ${addr} -p ${toString port}";
       };
-    };
 
   };
 }
