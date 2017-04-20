@@ -311,7 +311,7 @@ in {
       };
       journal = {
         notification = "Journal errors in the last 10 minutes";
-        command = "${pkgs.fcsensuplugins}/bin/check_journal -v ${./check_journal.yaml}";
+        command = "${pkgs.fcsensuplugins}/bin/check_journal -v https://bitbucket.org/flyingcircus/fc-logcheck-config/raw/tip/nixos-journal.yaml";
         interval = 600;
       };
 

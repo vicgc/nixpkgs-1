@@ -15,5 +15,6 @@ in
       py.nagiosplugin
       py.psutil
       py.pyyaml
+      py.requests2
     ];
   }
