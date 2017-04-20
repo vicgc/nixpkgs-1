@@ -66,7 +66,6 @@ rec {
     sasl = pkgs.cyrus_sasl;
   };
 
-
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
 
   nginx =
