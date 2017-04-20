@@ -7,6 +7,10 @@ let
 
   cfg = config.flyingcircus.services.sensu-client;
 
+  fclib = import ../../lib;
+
+  cores = fclib.current_cores config 1;
+
   check_timer = writeScript "check-timer.sh" ''
     #!${pkgs.bash}/bin/bash
     timer=$1
@@ -59,10 +63,25 @@ let
         default = 60;
         description = "The interval (in seconds) how often this check should be performed.";
       };
+      timeout = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = "The timeout when the client should abort the check and consider it failed.";
+      };
+      ttl = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = "The time after which a check result should be considered stale and cause an event.";
+      };
       standalone = mkOption {
         type = types.bool;
         default = true;
         description = "Whether to schedule this check autonomously on the client.";
+      };
+      warnIsCritical = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether a warning of this check should be escalated to critical by our status page.";
       };
     };
   };
@@ -132,12 +151,29 @@ in {
           default = 6000;
         };
       };
+      expectedLoad = {
+        warning = mkOption {
+          type = types.str;
+          default = "${toString (cores * 8)},${toString (cores * 5)},${toString (cores * 2)}";
+          description = ''Limit of load thresholds before warning.'';
+        };
+        critical = mkOption {
+          type = types.str;
+          default = "${toString (cores * 10)},${toString (cores * 8)},${toString (cores * 3)}";
+          description = ''Limit of load thresholds before reaching critical.'';
+        };
+      };
     };
   };
 
   config = mkIf cfg.enable {
     system.activationScripts.sensu-client = ''
       install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
+      install -d -o sensuclient -g service -m 775 /var/tmp/sensu
+      install -d /run/current-config/sensu ${local_sensu_configuration}
+      rm -rf /run/current-config/sensu/*
+      (cat ${client_json} | ${pkgs.perlPackages.JSONPP}/bin/json_pp > /run/current-config/sensu/client.json) || ln -sf  ${client_json} /run/current-config/sensu/client.json
+      ln -fs ${local_sensu_configuration} /run/current-config/sensu/local.d
     '';
     environment.etc."local/sensu-client/README.txt".text = ''
       Put local sensu checks here.
@@ -218,7 +254,7 @@ in {
     flyingcircus.services.sensu-client.checks = {
       load = {
         notification = "Load is too high";
-        command =  "check_load -r -w 5,4,4 -c 8,6,6";
+        command =  "check_load -r -w ${cfg.expectedLoad.warning} -c ${cfg.expectedLoad.critical}";
         interval = 10;
       };
       swap = {
@@ -251,12 +287,19 @@ in {
       };
       systemd_units = {
         notification = "SystemD has failed units";
-        command = "check-failed-units.rb";
+        command = "check-failed-units.rb -m logrotate.service";
       };
       disk = {
         notification = "Disk usage too high";
         command = "${pkgs.fcsensuplugins}/bin/check_disk -v -w 90 -c 95";
         interval = 300;
+      };
+      writable = {
+        notification = "Disks are writable";
+        command = "${pkgs.fcsensuplugins}/bin/check_writable /tmp/.sensu_writable /var/tmp/sensu/.sensu_writable";
+        interval = 60;
+        ttl = 120;
+        warnIsCritical = true;
       };
       entropy = {
         notification = "Too little entropy available";
@@ -268,9 +311,7 @@ in {
       };
       journal = {
         notification = "Journal errors in the last 10 minutes";
-        command = ''
-          ${pkgs.fcsensuplugins}/bin/check_journal -v ${./check_journal.yaml}
-        '';
+        command = "${pkgs.fcsensuplugins}/bin/check_journal -v ${./check_journal.yaml}";
         interval = 600;
       };
 
