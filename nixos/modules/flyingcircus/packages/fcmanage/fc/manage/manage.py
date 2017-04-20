@@ -162,6 +162,8 @@ class Channel:
             channel=self,
             changes='\n'.join(notifications))
 
+        # XXX: We should use an fc-manage call (like --activate), instead of
+        # Dumping the script into the maintenance request.
         script = io.StringIO(ACTIVATE.format(url=self.resolved_url))
         with fc.maintenance.ReqManager() as rm:
             rm.add(fc.maintenance.Request(
@@ -282,7 +284,8 @@ def update_inventory():
 
 def build_channel_with_maintenance(build_options):
     current_channel = Channel.current('nixos')
-    if not Channel.current('next'):
+    next_channel = Channel.current('next')
+    if not next_channel:
         # If there is already a next channel, don't try another update.
         # We announced the previous update and should stick to that not
         # updating another one.
@@ -290,10 +293,10 @@ def build_channel_with_maintenance(build_options):
         # How do we cope for emergency updates where we need to update
         # *now*? How can we force this?
         next_channel = Channel(enc['parameters']['environment_url'])
-        if next_channel != current_channel:
-            print('Preparing switch form {} to to {}.'.format(
-                current_channel, next_channel))
-            next_channel.prepare_maintenance()
+    if next_channel != current_channel:
+        print('Preparing switch form {} to to {}.'.format(
+            current_channel, next_channel))
+        next_channel.prepare_maintenance()
     if current_channel is None:
         print('There is currently no channel active. Not building.')
     else:

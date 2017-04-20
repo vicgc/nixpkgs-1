@@ -6,7 +6,7 @@ let
   cfg = config.flyingcircus.roles.loghost;
   fclib = import ../lib;
 
-  listenOn = head (fclib.listenAddresses config "ethsrv");
+  listenOn = "127.0.0.1";
   serviceUser = "graylog";
 
   loghostService = findFirst
@@ -38,9 +38,9 @@ let
     else cfg.passwordSecret;
 
 
-  port = 9000;
+  port = 9001;
   webListenUri = "http://${listenOn}:${toString port}/tools/${config.flyingcircus.enc.name}/graylog";
-  restListenUri = "http://${listenOn}:${toString port}/tools/${config.flyingcircus.enc.name}/graylog/api";
+  restListenUri = "${webListenUri}/api";
 
   # -- helper functions --
   passwordActivation = file: password: user:
@@ -138,8 +138,46 @@ in
 
       environment.systemPackages = [ logstashSSLHelper ];
 
-      # XXX Access should *only* be allowed from directory and same-rg.
-      networking.firewall.allowedTCPPorts = [ port ];
+      networking.firewall.allowedTCPPorts = [ 9000 9002 ];
+
+      flyingcircus.roles.nginx.enable = true;
+      flyingcircus.roles.nginx.httpConfig =
+      let
+          listenOnPort = port: lib.concatMapStringsSep "\n    "
+              (addr: "listen ${addr}:${port};")
+              (fclib.listenAddressesQuotedV6 config "ethsrv");
+
+          allow = ips: lib.concatMapStringsSep "\n    "
+              (addr: "allow ${addr};")
+              (ips);
+
+      in
+      ''
+        server {
+            ${listenOnPort "9000"}
+
+            ${allow config.flyingcircus.static.directory.proxy_ips}
+            deny all;
+
+            location /tools/${config.flyingcircus.enc.name}/graylog {
+                proxy_pass http://127.0.0.1:9001;
+            }
+          }
+
+        server {
+            ${listenOnPort "9002"}
+
+            location /tools/${config.flyingcircus.enc.name}/graylog {
+                proxy_pass http://127.0.0.1:9001;
+                proxy_set_header REMOTE_USER "";
+                proxy_set_header X-Graylog-Server-URL http://${config.networking.hostName}.${config.networking.domain}:9002/tools/${config.flyingcircus.enc.name}/graylog/api;
+            }
+
+            location = / {
+              rewrite ^ /tools/${config.flyingcircus.enc.name}/graylog;
+            }
+          }
+      '';
 
       system.activationScripts.fcio-loghost =
         stringAfter
@@ -153,9 +191,21 @@ in
         inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
         elasticsearchDiscoveryZenPingUnicastHosts =
           "${config.networking.hostName}.${config.networking.domain}:9300";
-        # ipv6 would be nice too
+        javaHeap = ''${toString
+          (fclib.max [
+            ((fclib.current_memory config 1024) / 5)
+            1024
+            ])}m'';
         extraConfig = ''
-          trusted_proxies 195.62.125.243/32, 195.62.125.11/32, 172.22.49.56/32
+          trusted_proxies 127.0.0.1/8
+          processbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) - 2)
+              5])}
+          outputbuffer_processors = ${toString
+            (fclib.max [
+              ((fclib.current_cores config 1) / 2)
+              3])}
         '';
       };
 
@@ -168,10 +218,10 @@ in
         esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
       };
 
-      systemd.services.configure-inputs-for-graylog = {
+      systemd.services.graylog-config = {
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
-         after = [ "graylog.service" ];
+         after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
          serviceConfig = {
            Type = "oneshot";
            User = "graylog";
@@ -201,8 +251,10 @@ in
             default_group = "Admin";
             auto_create_user = true;
             username_header = "Remote-User";
+            fullname_header = "X-Graylog-Fullname";
+            email_header = "X-Graylog-Email";
             require_trusted_proxies = true;
-            trusted_proxies = "95.62.125.11/32, 195.62.125.243/32, 172.22.49.56/32";
+            trusted_proxies = "127.0.0.1/8";
           };
         in
           ''${pkgs.fcmanage}/bin/fc-graylog \
@@ -268,7 +320,7 @@ in
             <Key "throughput">
               Type "gauge"
             </Key>
-        </URL>
+          </URL>
         </Plugin>
       '';
 

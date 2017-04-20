@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs ? (import <nixpkgs> {})}:
 
 rec {
 
@@ -53,14 +53,18 @@ rec {
     (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
 
   mc = pkgs.callPackage ./mc.nix { };
+  mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
   memcached = pkgs.callPackage ./memcached.nix { };
-  mongodb = pkgs.callPackage ./mongodb {
+  mongodb = mongodb_3_0;
+  mongodb_3_0 = pkgs.callPackage ../../../../pkgs/servers/nosql/mongodb {
     pcre = pcre-cpp;
     sasl = pkgs.cyrus_sasl;
   };
-  mongodb_3_2 = mongodb;
-  mongodb_3_0 = pkgs.mongodb;
+  mongodb_3_2 = pkgs.callPackage ./mongodb {
+    pcre = pcre-cpp;
+    sasl = pkgs.cyrus_sasl;
+  };
 
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
@@ -94,6 +98,14 @@ rec {
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
 
+  inherit (pkgs.callPackages ./postgresql { })
+    postgresql93
+    postgresql94
+    postgresql95
+    postgresql96;
+
+  rum = pkgs.callPackage ./postgresql/rum { postgresql = postgresql96; };
+
   inherit (pkgs.callPackages ./php { })
     php55
     php56
@@ -102,7 +114,7 @@ rec {
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
-  qemu = pkgs.callPackage ./qemu-2.5.nix {
+  qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
     x86Only = true;
   };

@@ -3,6 +3,8 @@
 {
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
+  mariadb = hydraJob (import ./mariadb.nix { inherit system; });
+
   memcached = hydraJob (import ./memcached.nix { inherit system; }) ;
 
   login = hydraJob (import ./login.nix { inherit system; }) ;
@@ -23,6 +25,8 @@
     (import ./postgresql.nix { rolename = "postgresql94"; });
   postgresql_9_5 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql95"; });
+  postgresql_9_6 = hydraJob
+    (import ./postgresql.nix { rolename = "postgresql96"; });
 
   rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
 

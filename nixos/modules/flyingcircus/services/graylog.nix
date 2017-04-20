@@ -138,6 +138,12 @@ in
         description = "Any other configuration options you might want to add";
       };
 
+      javaHeap = mkOption {
+        type = types.str;
+        default="1g";
+        description = "Max Java heap (-Xms/-Xmx)";
+      };
+
     };
   };
 
@@ -161,6 +167,7 @@ in
       environment = {
         JAVA_HOME = jre;
         GRAYLOG_CONF = "${confFile}";
+        JAVA_OPTS = "-Djava.library.path=\${GRAYLOGCTL_DIR}/../lib/sigar -Xms${cfg.javaHeap} -Xmx${cfg.javaHeap} -XX:NewRatio=1 -server -XX:+ResizeTLAB -XX:+UseConcMarkSweepGC -XX:+CMSConcurrentMTEnabled -XX:+CMSClassUnloadingEnabled -XX:+UseParNewGC -XX:-OmitStackTraceInFastThrow";
       };
       path = [ pkgs.openjdk8 pkgs.which pkgs.procps ];
       preStart = ''
