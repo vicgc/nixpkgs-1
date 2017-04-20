@@ -18,6 +18,7 @@ criticalexceptions:
       - 'maximum authentication attempts exceeded for .* port .* ssh2 \[preauth\]'
       - 'multi_json/adapters/json_common.rb:19:in `encode'
       - 'nginx.*\[error\].*connect\(\) failed \(111: Connection refused\) while connecting to upstream'
+      - 'node\[.*\]: Exception'
       - 'rabbitmq-server.*ERROR REPORT'
       - 'rabbitmq-server\[\d+\]: Channel error on connection'
       - 'sftpfix.py\[.*\]: .*workflowerror.log'
