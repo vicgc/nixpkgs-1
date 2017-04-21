@@ -122,6 +122,7 @@ with lib;
       code = 501;
       stats = 502;
       sudo-srv = 503;
+      manager = 504;
 
       # Our custom services
       sensuserver = 31001;
