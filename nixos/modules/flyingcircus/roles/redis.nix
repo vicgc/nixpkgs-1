@@ -59,12 +59,14 @@ in
       chmod 0660 /etc/local/redis/password
     '';
 
-    systemd.services.redis = {
+    systemd.services.redis = rec {
       serviceConfig = {
         LimitNOFILE = 64000;
         PermissionsStartOnly = true;
       };
 
+      after = [ "network.target" "network-interfaces.target" ];
+      wants = after;
       preStart = "echo never > /sys/kernel/mm/transparent_hugepage/enabled";
       postStop = "echo madvise > /sys/kernel/mm/transparent_hugepage/enabled";
     };
