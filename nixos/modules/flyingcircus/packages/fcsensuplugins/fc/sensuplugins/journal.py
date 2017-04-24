@@ -11,9 +11,11 @@ import logging
 import nagiosplugin
 import os
 import re
+import requests
 import shlex
 import subprocess
 import yaml
+
 
 PATTERN_SECTIONS = [
     'warningpatterns', 'warningexceptions',
@@ -41,8 +43,8 @@ class Journal(nagiosplugin.Resource):
         os.environ['LANG'] = 'en_US.utf8'
 
     def load_patterns(self):
-        with open(self.pattern_yaml) as fobj:
-            patterns = yaml.safe_load(fobj)
+        response = requests.get(self.pattern_yaml)
+        patterns = yaml.safe_load(response.content)
         _log.debug('patterns:\n%r', patterns)
         compiled = {}
         for section in PATTERN_SECTIONS:
@@ -137,7 +139,7 @@ def main():
                    default='journalctl --no-pager --output=short '
                    '--since=-10minutes',
                    help='journalctl invocation (default: "%(default)s")')
-    a.add_argument('CONFIG', help='log check rules yaml')
+    a.add_argument('CONFIG', help='URL to log check rules yaml')
     a.add_argument('-t', '--timeout', default=10,
                    help='about execution after TIMEOUT seconds')
     a.add_argument('-v', '--verbose', action='count', default=0)
@@ -149,6 +151,7 @@ def main():
         nagiosplugin.ScalarContext('critical', critical='0:0'),
         JournalSummary())
     check.main(args.verbose, args.timeout)
+
 
 if __name__ == '__main__':
     main()

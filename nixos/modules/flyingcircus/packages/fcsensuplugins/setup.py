@@ -17,8 +17,9 @@ setup(
     ],
     packages=['fc.sensuplugins'],
     install_requires=[
-        'nagiosplugin',
         'PyYAML',
+        'nagiosplugin',
+        'requests',
     ],
     entry_points={
         'console_scripts': [
