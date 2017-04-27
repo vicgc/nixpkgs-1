@@ -40,8 +40,13 @@ in
         echo "Want to activate nix.readOnlyStore=false" > /reboot || true
     '';
 
-  boot.blacklistedKernelModules = [ "bochs_drm" ];
+
+   # The upstream ubuntu.conf disables _all_ watchdogs. That's insane.
   boot.kernelModules = [ "i6300esb" ];
+  environment.etc."modprobe.d/ubuntu.conf".source = lib.mkForce ./modprobe.conf;
+
+
+  boot.blacklistedKernelModules = [ "bochs_drm" ];
   boot.initrd.supportedFilesystems = [ "xfs" ];
   boot.kernelParams = [
     # Crash management
