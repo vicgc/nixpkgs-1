@@ -105,6 +105,13 @@ in {
           The address of the server (RabbitMQ) to connect to.
         '';
       };
+      loglevel = mkOption {
+        type = types.str;
+        default = "warn";
+        description = ''
+          The level of logging.
+        '';
+      };
       password = mkOption {
         type = types.str;
         description = ''
@@ -236,7 +243,7 @@ in {
       serviceConfig = {
         User = "sensuclient";
         ExecStart = ''
-          ${sensu}/bin/sensu-client -L warn -c ${client_json} ${local_sensu_configuration}
+          ${sensu}/bin/sensu-client -L ${cfg.loglevel} -c ${client_json} ${local_sensu_configuration}
         '';
         Restart = "always";
         RestartSec = "5s";
