@@ -68,20 +68,20 @@
     ];
   };
   "aws-sdk" = {
-    version = "2.6.44";
+    version = "2.9.15";
     source = {
       type = "gem";
-      sha256 = "0j53bpvdlq7ny3bmrdkqh19zh2ifj0g029sf50jyaf789nx5zl5v";
+      sha256 = "0xwyd3kgfs0ii0pb1f13brzppjmyf5v403qg52s0v9f78qlckg7c";
     };
     dependencies = [
       "aws-sdk-resources"
     ];
   };
   "aws-sdk-core" = {
-    version = "2.6.44";
+    version = "2.9.15";
     source = {
       type = "gem";
-      sha256 = "0gqcbhnd5k5ich2l7vyn2a6bz3yrmlc95hp0bvrf6i4cm1b8gvmz";
+      sha256 = "1p64c642cvlapw5rair87k31xdw3k9acycfjl4mkwd9z7w8al1s0";
     };
     dependencies = [
       "aws-sigv4"
@@ -89,10 +89,10 @@
     ];
   };
   "aws-sdk-resources" = {
-    version = "2.6.44";
+    version = "2.9.15";
     source = {
       type = "gem";
-      sha256 = "1mpily2565js9bhqsidf4202l3s4l6dq5akbk2aizkkfsjdfhl8j";
+      sha256 = "08r7vhv0l7fma7hm2bm1f93611f5acca62p4dq2sdn2djq3wlnwf";
     };
     dependencies = [
       "aws-sdk-core"
@@ -161,10 +161,10 @@
     };
   };
   "domain_name" = {
-    version = "0.5.20161129";
+    version = "0.5.20170404";
     source = {
       type = "gem";
-      sha256 = "0gq8g2f4kk7hqcdis9gr3zc597cv3c3cr9za0a7k8h9ajj12byg8";
+      sha256 = "12hs8yijhak7p2hf1xkh98g0mnp5phq3mrrhywzaxpwz1gw5r3kf";
     };
     dependencies = [
       "unf"
@@ -257,10 +257,10 @@
     ];
   };
   "ffi" = {
-    version = "1.9.17";
+    version = "1.9.18";
     source = {
       type = "gem";
-      sha256 = "07hnyr47mndsjfanzh348wm3fxjx9nx68mdb3cpsdvfqrxnz97s7";
+      sha256 = "034f52xf7zcqgbvwbl20jwdyjwznvqnwpbaps9nk18v9lgb1dpx0";
     };
   };
   "fileutils" = {
@@ -291,10 +291,10 @@
     };
   };
   "i18n" = {
-    version = "0.7.0";
+    version = "0.8.1";
     source = {
       type = "gem";
-      sha256 = "1i5z1ykl8zhszsxcs8mzl8d0dxgs3ylz8qlzrw74jb0gplkx6758";
+      sha256 = "1s6971zmjxszdrp59vybns9gzxpdxzdklakc5lp8nl4fx5kpxkbp";
     };
   };
   "inifile" = {
@@ -319,10 +319,10 @@
     };
   };
   "libxml-ruby" = {
-    version = "2.9.0";
+    version = "3.0.0";
     source = {
       type = "gem";
-      sha256 = "1prdc73db1p7zkdsp41523qmmn95981kmsf91kn7c8yam9w64np2";
+      sha256 = "0xy8wmjwjcnv36zi042678ncjzpxvy351ccbv7mzkns2n3kxfp54";
     };
   };
   "libxml-xmlrpc" = {
@@ -434,6 +434,13 @@
     source = {
       type = "gem";
       sha256 = "0gzfmcywp1da8nzfqsql2zqi648mfnx6qwkig3cv36n9m0yy676y";
+    };
+  };
+  "oj" = {
+    version = "3.0.5";
+    source = {
+      type = "gem";
+      sha256 = "1zyb8clpk7hlqym1i8gjc6b2zi2fb732k5sbhxmnw6ijdgkvhwbm";
     };
   };
   "pg" = {
@@ -830,24 +837,24 @@
     ];
   };
   "thread_safe" = {
-    version = "0.3.5";
+    version = "0.3.6";
     source = {
       type = "gem";
-      sha256 = "1hq46wqsyylx5afkp6jmcihdpv4ynzzq9ygb6z2pb1cbz5js0gcr";
+      sha256 = "0nmhcgq6cgz44srylra07bmaw99f5271l0dpsvl5f75m44l0gmwy";
     };
   };
   "tilt" = {
-    version = "2.0.5";
+    version = "2.0.7";
     source = {
       type = "gem";
-      sha256 = "0lgk8bfx24959yq1cn55php3321wddw947mgj07bxfnwyipy9hqf";
+      sha256 = "1is1ayw5049z8pd7slsk870bddyy5g2imp4z78lnvl8qsl8l0s7b";
     };
   };
   "tzinfo" = {
-    version = "1.2.2";
+    version = "1.2.3";
     source = {
       type = "gem";
-      sha256 = "1c01p3kg6xvy1cgjnzdfq45fggbwish8krd0h864jvbpybyx7cgx";
+      sha256 = "05r81lk7q7275rdq7xipfm0yxgqyd2ggh73xpc98ypngcclqcscl";
     };
     dependencies = [
       "thread_safe"
@@ -864,10 +871,10 @@
     ];
   };
   "unf_ext" = {
-    version = "0.0.7.2";
+    version = "0.0.7.4";
     source = {
       type = "gem";
-      sha256 = "04d13bp6lyg695x94whjwsmzc2ms72d94vx861nx1y40k3817yp8";
+      sha256 = "14hr2dzqh33kqc0xchs8l05pf3kjcayvad4z1ip5rdjxrkfk8glb";
     };
   };
   "uuidtools" = {
