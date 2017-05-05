@@ -1,6 +1,7 @@
 #!/bin/sh
 set -x
 NIX_PATH="nixpkgs=$(dirname $0)/../../../../../"
+rm -rf .bundle
 rm -f Gemfile.lock
 rm -rf /tmp/bundix
 nix-shell -p git -p stdenv -p stdenv -p cacert -p bundler -p openssl \
