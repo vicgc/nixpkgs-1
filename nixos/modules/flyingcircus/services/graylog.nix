@@ -17,6 +17,7 @@ let
     elasticsearch_cluster_name = ${cfg.elasticsearchClusterName}
     elasticsearch_discovery_zen_ping_multicast_enabled = ${configBool cfg.elasticsearchDiscoveryZenPingMulticastEnabled}
     elasticsearch_discovery_zen_ping_unicast_hosts = ${cfg.elasticsearchDiscoveryZenPingUnicastHosts}
+    elasticsearch_network_host = ${config.networking.hostName}.${config.networking.domain}
     message_journal_dir = ${cfg.messageJournalDir}
     mongodb_uri = ${cfg.mongodbUri}
     web_listen_uri = ${cfg.webListenUri}
