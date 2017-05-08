@@ -75,8 +75,7 @@ in {
         after = wants;
         serviceConfig = {
           ExecStart = ''
-            ${pkgs.collectdproxy}/bin/statshost-proxy \
-              -s cfg_stats.send_to
+            ${pkgs.collectdproxy}/bin/statshost-proxy -s ${cfg_stats.send_to}
           '';
           Restart = "always";
           RestartSec = "60s";

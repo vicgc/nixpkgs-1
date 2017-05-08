@@ -49,14 +49,14 @@ def handle_receive(reader, writer, sender):
                 if submits < 10:
                     notice = log.info
                 elif submits == 10:
-                    log.info('Notifying only every 100 submits now.')
+                    log.info('Notifying only every 1000 submits now.')
                     notice = log.info
-                elif submits % 100 == 0:
+                elif submits % 1000 == 0:
                     notice = log.info
                 else:
                     notice = log.debug
-                notice('Sending %d items, %d bytes (%d).',
-                       len(to_send), len(send_string), submits)
+                notice('Sending %d items, %d bytes received from %s (%d).',
+                       len(to_send), len(send_string), peername, submits)
 
                 sender.sendto(send_string)
                 to_send = []
