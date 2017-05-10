@@ -134,14 +134,13 @@ class ReqManager:
     def schedule(self):
         """Triggers request scheduling on server."""
         LOG.debug('scheduling maintenance requests')
-        if not self.requests:
-            return
         schedule_maintenance = {reqid: {
             'estimate': int(req.estimate), 'comment': req.comment}
             for reqid, req in self.requests.items()}
-        LOG.debug('scheduling requests: %s', schedule_maintenance)
+        if schedule_maintenance:
+            LOG.debug('scheduling requests: %s', schedule_maintenance)
         result = self.directory.schedule_maintenance(schedule_maintenance)
-        deleted_requests = set()
+        disappeared = set()
         for key, val in result.items():
             try:
                 req = self.requests[key]
@@ -153,10 +152,10 @@ class ReqManager:
             except KeyError:
                 LOG.warning('(req %s) request disappeared, marking as deleted',
                             key)
-                deleted_requests.add(key)
-        if deleted_requests:
+                disappeared.add(key)
+        if disappeared:
             self.directory.end_maintenance(
-                {key: {'result': 'deleted'} for key in deleted_requests})
+                {key: {'result': 'deleted'} for key in disappeared})
 
     def runnable(self):
         """Generate due Requests in running order."""
@@ -266,6 +265,21 @@ class ReqManager:
             req.dir = dest
             req.save()
 
+    @require_lock
+    def delete(self, reqid):
+        LOG.debug('trying to delete request matching %s', reqid)
+        req = None
+        for i in self.requests:
+            if i.startswith(reqid):
+                req = self.requests[i]
+                break
+        if not req:
+            LOG.warning('cannot locate request matching %s', reqid)
+            return
+        req.state = State.deleted
+        req.save()
+        LOG.info('(req %s) marking as deleted', req.id)
+
 
 def transaction(spooldir=DEFAULT_DIR, enc_path=None, do_scheduling=True):
     with ReqManager(spooldir, enc_path) as rm:
@@ -274,6 +288,20 @@ def transaction(spooldir=DEFAULT_DIR, enc_path=None, do_scheduling=True):
         rm.execute()
         rm.postpone()
         rm.archive()
+
+
+def delete(reqid, spooldir=DEFAULT_DIR, enc_path=None):
+    with ReqManager(spooldir, enc_path) as rm:
+        rm.delete(reqid)
+        rm.archive()
+
+
+def listreqs(spooldir=DEFAULT_DIR):
+    rm = ReqManager(spooldir)
+    rm.scan()
+    out = str(rm)
+    if out:
+        print(out)
 
 
 def setup_logging(verbose=False):
@@ -285,20 +313,34 @@ def setup_logging(verbose=False):
 
 def main(verbose=False):
     a = argparse.ArgumentParser(description="""\
-Schedules, runs, and archives maintenance requests.
+Managed local maintenance requests.
 """)
-    a.add_argument('-v', '--verbose', action='store_true', default=verbose)
-    a.add_argument('-s', '--spooldir', metavar='DIR', default=DEFAULT_DIR,
-                   help='requests spool dir (default: %(default)s)')
+    cmd = a.add_argument_group(
+        'actions', description='Select activities to be performed (default: '
+        'schedule, run, archive)')
+    cmd.add_argument('-d', '--delete', metavar='ID', default=None,
+                     help='delete specified request (see `--list` output)')
+    cmd.add_argument('-l', '--list', action='store_true', default=False,
+                     help='list active maintenance requests')
+    cmd.add_argument('-S', '--no-scheduling', default=False,
+                     action='store_true',
+                     help='skip maintenance scheduling, for example to test '
+                     'local modifications in the request YAML')
     a.add_argument('-E', '--enc-path', metavar='PATH', default=None,
                    help='full path to enc.json')
-    a.add_argument('-S', '--no-scheduling', default=False, action='store_true',
-                   help='skip maintenance scheduling, for example to test '
-                   'local modifications in the request json (default: '
-                   '%(default)s)')
+    a.add_argument('-s', '--spooldir', metavar='DIR', default=DEFAULT_DIR,
+                   help='requests spool dir (default: %(default)s)')
+    a.add_argument('-v', '--verbose', action='store_true', default=verbose)
     args = a.parse_args()
     setup_logging(args.verbose)
-    transaction(args.spooldir, args.enc_path, not args.no_scheduling)
+    if args.delete and args.list:
+        a.error('multually exclusive actions: list + delete')
+    if args.delete:
+        delete(args.delete, args.spooldir, args.enc_path)
+    elif args.list:
+        listreqs(args.spooldir)
+    else:
+        transaction(args.spooldir, args.enc_path, not args.no_scheduling)
 
 
 def list_maintenance():
@@ -311,9 +353,4 @@ retrylimit exceeded (r), hard error (e), deleted (d), postponed (p).
     a.add_argument('-d', '--spooldir', metavar='DIR', default=DEFAULT_DIR,
                    help='spool dir for requests (default: %(default)s)')
     args = a.parse_args()
-
-    rm = ReqManager(args.spooldir)
-    rm.scan()
-    out = str(rm)
-    if out:
-        print(out)
+    listreqs(args.spooldir)

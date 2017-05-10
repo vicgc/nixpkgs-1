@@ -123,13 +123,6 @@ def test_list_other_requests(reqmanager):
 
 
 @unittest.mock.patch('fc.util.directory.connect')
-def test_schedule_empty(connect, reqmanager):
-    rpccall = connect().schedule_maintenance
-    reqmanager.schedule()
-    rpccall.assert_not_called()
-
-
-@unittest.mock.patch('fc.util.directory.connect')
 def test_schedule_requests(connect, reqmanager):
     req = reqmanager.add(Request(Activity(), 1, 'comment'))
     rpccall = connect().schedule_maintenance
@@ -152,6 +145,16 @@ def test_delete_disappeared_requests(connect, reqmanager):
     endm = connect().end_maintenance
     reqmanager.schedule()
     endm.assert_called_once_with({'123abc': {'result': 'deleted'}})
+
+
+@unittest.mock.patch('fc.util.directory.connect')
+def test_explicitly_deleted(connect, reqmanager):
+    req = reqmanager.add(Request(Activity(), 90))
+    req.state = State.deleted
+    arch = connect().end_maintenance
+    reqmanager.archive()
+    arch.assert_called_once_with(
+        {req.id: {'duration': None, 'result': 'deleted'}})
 
 
 @unittest.mock.patch('fc.util.directory.connect')
@@ -302,6 +305,13 @@ e  {id3}  2016-04-20 11:00 UTC  1m 30s    error request (duration: 1m 15s)
 *  {id2}  2016-04-20 12:00 UTC  2h        due request
 -  {id1}  --- TBA ---           14m       pending request\
 """.format(id1=r1.id[:7], id2=r2.id[:7], id3=r3.id[:7])
+
+
+def test_delete_end_to_end(tmpdir):
+    with request_population(1, tmpdir) as (rm, reqs):
+        req = reqs[0]
+        rm.delete(req.id[0:7])
+        assert req.state == State.deleted
 
 
 def test_list_end_to_end(tmpdir, capsys):
