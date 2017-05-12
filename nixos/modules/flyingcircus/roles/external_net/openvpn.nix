@@ -84,7 +84,14 @@ let
   mgmPsk = builtins.hashString "md5" ("OpenVPN@" + config.networking.hostName);
 
   checkOpenVPN = pkgs.writeScript "check_openvpn" ''
-    #!${pkgs.expect}/bin/expect -f
+    #!${pkgs.bash}/bin/bash
+    OUTPUT="$(${pkgs.expect}/bin/expect -f ${checkOpenVPNExpect})"
+    EXITCODE=$?
+    echo "$OUTPUT" | egrep -v "PASSWORD"
+    exit $EXITCODE
+  '';
+
+  checkOpenVPNExpect = pkgs.writeText "check_openvpn_expect" ''
     set timeout 20
 
     puts "OpenVPN: checking management interface"
