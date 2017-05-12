@@ -35,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name='fc.maintenance',
-    version='2.0',
+    version='2.1',
     description=__doc__,
     long_description=long_description,
     url='https://github.com/flyingcircus/nixpkgs',

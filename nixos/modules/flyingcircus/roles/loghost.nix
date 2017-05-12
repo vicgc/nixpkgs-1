@@ -100,6 +100,14 @@ let
 
   syslogPort = 5140;
 
+  esNodes =
+    ["${config.networking.hostName}.${config.networking.domain}:9350"] ++
+    map
+      (service: "${service.address}:9300")
+      (filter
+        (s: s.service == "elasticsearch-node")
+        config.flyingcircus.enc_services);
+
 in
 {
 
@@ -190,7 +198,7 @@ in
         elasticsearchClusterName = "graylog";
         inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
         elasticsearchDiscoveryZenPingUnicastHosts =
-          "${config.networking.hostName}.${config.networking.domain}:9300";
+          concatStringsSep "," esNodes;
         javaHeap = ''${toString
           (fclib.max [
             ((fclib.current_memory config 1024) / 5)
@@ -215,7 +223,7 @@ in
         dataDir = "/var/lib/elasticsearch";
         clusterName = "graylog";
         heapDivisor = 3;
-        esNodes = ["${config.networking.hostName}.${config.networking.domain}:9350"];
+        esNodes = esNodes;
       };
 
       systemd.services.graylog-config = {

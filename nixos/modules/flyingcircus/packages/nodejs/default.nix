@@ -56,10 +56,10 @@ let
 
 in {
   nodejs4 = common rec {
-    version = "4.6.0";
+    version = "4.8.3";
     src = fetchurl {
       url = "http://nodejs.org/dist/v${version}/node-v${version}.tar.xz";
-      sha256 = "1566q1kkv8j30fgqx8sm2h8323f38wwpa1hfb10gr6z46jyhv4a2";
+      sha256 = "d84e7544c2e31a2d0825b4f8b093d169bf8bdb1881ee8cf75ff937918e59e9cb";
     };
   };
 
