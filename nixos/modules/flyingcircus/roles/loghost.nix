@@ -101,7 +101,8 @@ let
   syslogPort = 5140;
 
   esNodes =
-    ["${config.networking.hostName}.${config.networking.domain}:9350"] ++
+    ["${config.networking.hostName}.${config.networking.domain}:9350"
+     "${config.networking.hostName}.${config.networking.domain}:9300"] ++
     map
       (service: "${service.address}:9300")
       (filter
