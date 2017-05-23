@@ -6,6 +6,7 @@ rec {
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
+  clamav = pkgs.callPackage ./clamav.nix { };
   collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
     libvirt = null;
