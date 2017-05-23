@@ -26,6 +26,9 @@ rec {
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
   elasticsearch = pkgs.callPackage ./elasticsearch { };
+  electron = pkgs.callPackage ./electron.nix {
+    gconf = pkgs.gnome.GConf;
+  };
   expat = pkgs.callPackage ./expat.nix { };
 
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
