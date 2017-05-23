@@ -43,6 +43,7 @@ in
     ./network.nix
     ./packages.nix
     ./sensu-client.nix
+    ./shell.nix
     ./ssl/certificate.nix
     ./ssl/dhparams.nix
     ./systemd.nix
@@ -195,55 +196,18 @@ in
     flyingcircus.enc_service_clients = enc_service_clients;
     flyingcircus.system_state = system_state;
 
-    users.motd = ''
-        Welcome to the Flying Circus!
-
-        Support:   support@flyingcircus.io or +49 345 219401-0
-        Status:    http://status.flyingcircus.io/
-        Docs:      https://flyingcircus.io/doc/
-        Release:   ${config.system.nixosVersion}
-
-    '' +
-    (lib.optionalString
-      (enc ? name &&
-        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
-        (lib.hasAttrByPath [ "parameters" "environment" ] enc) &&
-        (lib.hasAttrByPath [ "parameters" "service_description" ] enc))
-      ''
-        Hostname:  ${enc.name}    Environment: ${enc.parameters.environment}    Location:  ${enc.parameters.location}
-        Services:  ${enc.parameters.service_description}
-
-      '');
-
     services.cron.enable = true;
     sound.enable = false;
     fonts.fontconfig.enable = true;
-    programs.zsh.enable = true;
 
     environment.pathsToLink = [ "/include" ];
-    environment.shellInit =
-     # FCIO_* only exported if ENC data is present.
-     (lib.optionalString
-      (enc ? name &&
-        (lib.hasAttrByPath [ "parameters" "location" ] enc) &&
-        (lib.hasAttrByPath [ "parameters" "environment" ] enc))
-       ''
-         # Grant easy access to the machine's ENC data for some variables to
-         # shell scripts.
-         export FCIO_LOCATION="${enc.parameters.location}"
-         export FCIO_ENVIRONMENT="${enc.parameters.environment}"
-         export FCIO_HOSTNAME="${enc.name}"
-       '') +
-       ''
-         # help pip to find libz.so when building lxml
-         export LIBRARY_PATH=/var/run/current-system/sw/lib
-         # help dynamic loading like python-magic to fi  nd it's libraries
-         export LD_LIBRARY_PATH=$LIBRARY_PATH
-         # ditto for header files, e.g. sqlite
-         export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
-       '';
-    environment.interactiveShellInit = ''
-      TMOUT=43200
+    environment.shellInit = ''
+      # help pip to find libz.so when building lxml
+      export LIBRARY_PATH=/var/run/current-system/sw/lib
+      # help dynamic loading like python-magic to find it's libraries
+      export LD_LIBRARY_PATH=$LIBRARY_PATH
+      # ditto for header files, e.g. sqlite
+      export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
     '';
 
     boot.kernelPackages = pkgs.linuxPackages_4_4;
