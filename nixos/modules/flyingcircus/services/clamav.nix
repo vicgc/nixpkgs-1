@@ -112,7 +112,6 @@ in
         ExecReload = "${pkgs.coreutils}/bin/kill -USR2 $MAINPID";
         PrivateTmp = "yes";
         PrivateDevices = "yes";
-        PrivateNetwork = "yes";
       };
     };
 
