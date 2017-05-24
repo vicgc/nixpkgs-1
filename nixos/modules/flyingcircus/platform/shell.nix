@@ -4,6 +4,7 @@ let
   parameters = lib.attrByPath [ "parameters" ] {} enc;
   isProd = (lib.attrByPath [ "location" ] "dev" parameters) != "dev"
     && lib.attrByPath [ "production" ] false parameters;
+  opt = lib.optionalString;
 
 in
 {
@@ -14,7 +15,7 @@ in
 
     environment.shellInit =
       # FCIO_* only exported if ENC data is present.
-      (lib.optionalString
+      (opt
         (enc ? name && parameters ? location && parameters ? environment)
         ''
           # Grant easy access to the machine's ENC data for some variables to
@@ -27,29 +28,28 @@ in
     users.motd = ''
         Welcome to the Flying Circus!
 
-        Status:    http://status.flyingcircus.io/
-        Docs:      https://flyingcircus.io/doc/
-        Release:   ${config.system.nixosVersion}
-
+        Status:     http://status.flyingcircus.io/
+        Docs:       https://flyingcircus.io/doc/
+        Release:    ${config.system.nixosVersion}
     '' +
-    (lib.optionalString
+    (opt
       (enc ? name && parameters ? location && parameters ? environment
         && parameters ? service_description)
       ''
-        Hostname:  ${enc.name}    Environment: ${parameters.environment}    Location: ${parameters.location}
-        Services:  ${parameters.service_description}
 
+        Hostname:   ${enc.name}  Environment: ${parameters.environment}  Location: ${parameters.location}
+        Services:   ${parameters.service_description}${opt isProd "  [production]"}
       '');
 
     programs.bash.promptInit =
       let
-        dirColor = "00;34m";
-        prodColor = "00;33m";
-        userColor = if isProd then "01;32m" else "01;34m";
-        rootColor = if isProd then "01;31m" else "01;35m";
+        user = "00;32m";
+        root = "01;31m";
+        prod = "00;36m";
+        dir = "01;34m";
       in ''
-        ### PROMPTING
-        PROMPT_DIRTRIM=3
+        ### prompting
+        PROMPT_DIRTRIM=2
 
         case ''${TERM} in
           [aEkx]term*|rxvt*|gnome*|konsole*|screen|cons25|*color)
@@ -67,29 +67,27 @@ in
           *)
             PS1='\n' ;;
         esac
-      '' + (lib.optionalString isProd ''
-        if ((use_color)); then
-          PS1+='\[\e[${prodColor}\][prod] '
-        else
-          PS1+='[prod] '
-        fi
-      '') +
-      ''
+
         if ((use_color)); then
           if [[ $UID == 0 ]]; then
-            PS1+='\[\e[${rootColor}\]\u@\h '
+            PS1+='\[\e[${root}\]\u@\h '
           else
-            PS1+='\[\e[${userColor}\]\u@\h '
+            PS1+='\[\e[${user}\]\u@\h '
           fi
-          PS1+='\[\e[${dirColor}\]\w \$\[\e[0m\] '
+      '' + (opt isProd ''
+          PS1+='\[\e[${prod}\][prod] '
+      '') +
+      ''
+          PS1+='\[\e[${dir}\]\w \$\[\e[0m\] '
         else
-          PS1+='\n\u@\h \w \$ '
+          PS1+='\u@\h ${opt isProd "[prod] "}\w \$ '
         fi
 
         unset use_color
-    '';
+      '';
 
     programs.zsh.enable = true;
 
   };
 }
+
