@@ -13,8 +13,8 @@ in
 
 {
 
-  imports =
-    [
+  imports = [
+     ./antivirus.nix
      ./compat.nix
      ./datadog.nix
      ./dovecot.nix
