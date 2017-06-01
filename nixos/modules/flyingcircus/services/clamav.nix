@@ -8,6 +8,7 @@ let
   clamavGroup = clamavUser;
   cfg = config.flyingcircus.services.clamav;
   pkg = pkgs.clamav;
+  nagiosPlugins = pkgs.nagiosPluginsOfficial;
 
   clamdConfigFile = pkgs.writeText "clamd.conf" ''
     DatabaseDirectory ${stateDir}
@@ -16,6 +17,8 @@ let
     TemporaryDirectory /tmp
     User clamav
     Foreground yes
+    TCPSocket 3310
+    TCPAddr localhost
 
     ${cfg.daemon.extraConfig}
   '';
@@ -105,15 +108,20 @@ in
         restartTriggers = [ clamdConfigFile ];
 
         preStart = ''
-          mkdir -m 0755 -p ${runDir} ${stateDir}
-          chown ${clamavUser}:${clamavGroup} ${runDir}
+          install -d -o ${clamavUser} -g ${clamavGroup} -m 0755 \
+            ${runDir} ${stateDir}
         '';
 
         serviceConfig = {
           ExecStart = "${pkg}/bin/clamd";
           ExecReload = "${pkgs.coreutils}/bin/kill -USR2 $MAINPID";
-          PrivateTmp = "yes";
-          PrivateDevices = "yes";
+        };
+      };
+
+      flyingcircus.services.sensu-client.checks = {
+        clamav-daemon = {
+          notification = "clamd process running";
+          command = "${nagiosPlugins}/bin/check_clamd -v";
         };
       };
     })
@@ -135,15 +143,24 @@ in
         restartTriggers = [ freshclamConfigFile ];
 
         preStart = ''
-          mkdir -m 0755 -p ${stateDir}
-          chown ${clamavUser}:${clamavGroup} ${stateDir}
+          install -d -o ${clamavUser} -g ${clamavGroup} -m 0755 \
+            ${runDir} ${stateDir}
         '';
 
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${pkg}/bin/freshclam";
           PrivateTmp = "yes";
-          PrivateDevices = "yes";
+        };
+      };
+
+      flyingcircus.services.sensu-client.checks = {
+        clamav-updater = {
+          notification = "ClamAV virus database up-to-date";
+          command = ''
+            ${nagiosPlugins}/bin/check_file_age -w 86400 -c 172800 \
+              ${stateDir}/daily.cld
+          '';
         };
       };
     })
