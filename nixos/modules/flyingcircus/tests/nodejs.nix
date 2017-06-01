@@ -1,12 +1,13 @@
 { system, hydraJob }:
 
 let
-  testFactory = version: (hydraJob (nodejsTest version { inherit system; }));
+  testFactory = version: vname: (hydraJob (nodejsTest version vname { inherit system; }));
 
-  nodejsTest = version:
+  nodejsTest = version: vname:
     import ../../../tests/make-test.nix ({...}:
     {
-      name = "${version}";
+      name = "nodejs-${version}";
+
       nodes = {
         master =
         { pkgs, config, ... }:
@@ -21,9 +22,10 @@ let
           ];
 
           virtualisation.memorySize = 1024;
-          environment.systemPackages = [
-            pkgs.${version}
-          ];
+
+          nixpkgs.config.packageOverrides = pkgs: {
+            nodejs = pkgs.${version};
+          };
         };
       };
 
@@ -31,12 +33,13 @@ let
         startAll;
 
         $master->succeed('node -e \'console.log("ok")\' ');
+        $master->succeed('node --version | grep ${vname}');
       '';
     });
 in
 {
-  nodejs_4 = testFactory "nodejs4";
-  nodejs_6 = testFactory "nodejs6";
-  nodejs_7 = testFactory "nodejs7";
+  nodejs_4 = testFactory "nodejs4" "v4.";
+  nodejs_6 = testFactory "nodejs6" "v6.";
+  nodejs_7 = testFactory "nodejs7" "v7.";
 }
 
