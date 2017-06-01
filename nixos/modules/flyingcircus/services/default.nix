@@ -4,6 +4,7 @@
   imports =
     [
      ./collectdproxy.nix
+     ./clamav.nix
      ./fcmanage.nix
      ./graylog.nix
      ./influxdb011.nix

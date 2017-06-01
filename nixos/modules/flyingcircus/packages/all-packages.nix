@@ -6,6 +6,7 @@ rec {
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
+  clamav = pkgs.callPackage ./clamav.nix { };
   collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
     libvirt = null;
@@ -26,6 +27,9 @@ rec {
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
   elasticsearch = pkgs.callPackage ./elasticsearch { };
+  electron = pkgs.callPackage ./electron.nix {
+    gconf = pkgs.gnome.GConf;
+  };
   expat = pkgs.callPackage ./expat.nix { };
 
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
