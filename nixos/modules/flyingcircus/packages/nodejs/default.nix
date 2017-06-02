@@ -51,6 +51,7 @@ let
       homepage = http://nodejs.org;
       license = licenses.mit;
       platforms = platforms.linux ++ platforms.darwin;
+      priority = -10;
     };
   };
 
