@@ -159,7 +159,7 @@ in
           notification = "ClamAV virus database up-to-date";
           command = ''
             ${nagiosPlugins}/bin/check_file_age -w 86400 -c 172800 \
-              ${stateDir}/daily.cld
+              ${stateDir}/mirrors.dat
           '';
         };
       };
