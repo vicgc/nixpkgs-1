@@ -1,5 +1,13 @@
 # Gateway to external network via VxLAN tunnel.
 
+# HOT TO SET UP DNS
+# (1) Set up a specific FQDN for the FE address(es) of the gateway machine.
+# (2) Set up a NS record that installs this FQDN as the authoritative nameserver
+# for the ext domain.
+# Example:
+# vxlan.test.fcio.net.  CNAME test31.fe
+# ext.test.fcio.net.    NS    vxlan.test.fcio.net.
+
 { config, lib, pkgs, ... }:
 
 with builtins;
@@ -8,11 +16,12 @@ let
   fclib = import ../../lib;
 
   cfg = config.flyingcircus;
+  extnet = cfg.roles.external_net;
   parameters = lib.attrByPath [ "enc" "parameters" ] {} cfg;
   interfaces = lib.attrByPath [ "interfaces" ] {} parameters;
   resource_group = lib.attrByPath [ "resource_group" ] null parameters;
-  net4 = cfg.roles.external_net.vxlan4;
-  net6 = cfg.roles.external_net.vxlan6;
+  net4 = extnet.vxlan4;
+  net6 = extnet.vxlan6;
   dev = "nx0";
   port = 8472;
 
@@ -43,6 +52,8 @@ let
           ip4 = ipaddress.ip_network(net4)
           ip6 = ipaddress.ip_network(net6)
           print(json.dumps({
+            'a': str(ip4[1]),
+            'aaaa': str(ip6[1]),
             'gw4': '{}/{}'.format(ip4[1], ip4.prefixlen),
             'gw6': '{}/{}'.format(ip6[1], ip6.prefixlen),
             'dhcp': (str(ip4[2]), str(ip4[-1])),
@@ -61,6 +72,9 @@ let
       then "${resource_group}.fcio.net"
       else "local";
 
+    feAddrs = fclib.listenAddresses config "ethfe";
+    fqdn = "${config.networking.hostName}.ext.${domain}";
+
     dnsmasqConf = ''
       dhcp-authoritative
       dhcp-fqdn
@@ -74,9 +88,13 @@ let
       dhcp-range=${lib.concatStringsSep "," params.dhcp},24h
       domain=ext.${domain}
       domain-needed
-      interface=ethfe,${dev}
-      no-dhcp-interface=ethfe
+      interface=lo,${dev}
+      except-interface=ethfe
+      except-interface=ethsrv
       local-ttl=60
+      auth-server=${extnet.frontendName},ethfe
+      auth-zone=ext.${domain}
+      host-record=${fqdn},${params.a},${params.aaaa}
     '';
 
 in
@@ -90,7 +108,7 @@ in
       additionalOptions = {
         services.dnsmasq = {
           enable = true;
-          extraConfig = lib.mkOverride 100 dnsmasqConf;
+          extraConfig = dnsmasqConf;
         };
 
         services.chrony.extraConfig = ''

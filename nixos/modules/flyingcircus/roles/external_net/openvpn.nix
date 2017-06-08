@@ -23,7 +23,23 @@ let
     }
   '';
 
-  ovpn = "${pki.caDir}/${frontendName}.ovpn";
+  # Compute server addresses via Python as Nix lacks expressiveness here.
+  addrs = fromJSON (readFile (
+    pkgs.stdenv.mkDerivation {
+      name = "openvpn-dns-options";
+      script = ''
+        import ipaddress
+        import sys
+        net4, net6 = sys.argv[1:]
+        print('{{"ip4": "{}", "ip6": "{}"}}'.format(
+          ipaddress.ip_network(net4)[1], ipaddress.ip_network(net6)[1]))
+      '';
+      passAsFile = [ "script" ];
+      nets = [ accessNets.ipv4 accessNets.ipv6 ];
+      buildCommand = "${pkgs.python34.interpreter} $scriptPath $nets > $out";
+    }).out);
+
+  ovpn = "${pki.caDir}/${extnet.frontendName}.ovpn";
 
   #
   # packages
@@ -33,26 +49,6 @@ let
   pki = pkgs.callPackage ./generate-pki.nix {
     inherit easyrsa openvpn resource_group location;
   };
-
-  #
-  # addresses
-  #
-  # attrset of those fe addresses that have a reverse
-  feReverses =
-    # fake attrset from listenAddresses: { "addr" = null; ... }
-    let feAddrSet =
-      lib.genAttrs (fclib.listenAddresses config "ethfe") (x: null);
-    in
-    intersectAttrs feAddrSet (lib.attrByPath [ "reverses" ] {} parameters);
-
-  # pick a suitable DNS name for client config
-  frontendName =
-    if feReverses != {}
-    then fclib.normalizeDomain domain (head (attrValues feReverses))
-    else
-      if location != null
-      then "${config.networking.hostName}.fe.${location}.${domain}"
-      else "localhost";
 
   allNetworks = lib.zipAttrs (lib.catAttrs "networks" (attrValues interfaces));
 
@@ -70,11 +66,10 @@ let
       ((filter fclib.isIp6
         (attrNames allNetworks ++ extraroutes)) ++ [extnet.vxlan6]);
 
-  # Caution: we also deliver FE addresses here, so these should be included in
-  # the pushed routes.
-  pushNameservers = lib.concatMapStringsSep "\n"
-    (a: "push \"dhcp-option DNS ${a}\"")
-    (fclib.listenAddresses config "ethfe");
+  pushNameservers = ''
+    push "dhcp-option DNS ${addrs.ip4}"
+    push "dhcp-option DNS ${addrs.ip6}"
+  '';
 
   #
   # management & monitoring
@@ -142,7 +137,7 @@ let
   proto = lib.attrByPath [ "proto" ] "udp6" accessNets;
 
   serverConfig = ''
-    # OpenVPN server config for ${frontendName}
+    # OpenVPN server config for ${extnet.frontendName}
     ${serverAddrs}
 
     port 1194
@@ -170,8 +165,8 @@ let
     push "redirect-private"
     ${pushRoutes4}
     ${pushRoutes6}
-    push "dhcp-option DOMAIN ${domain}"
     push "dhcp-option DOMAIN fcio.net"
+    push "dhcp-option DOMAIN ${domain}"
     ${pushNameservers}
   '';
 
@@ -179,14 +174,14 @@ let
   # client config
   #
   ovpnTemplate = pkgs.writeText "client.ovpn-template" ''
-    #viscosity name ${frontendName}
+    #viscosity name ${extnet.frontendName}
 
     client
     dev tun
 
     proto ${lib.removeSuffix "6" proto}
     #proto ${proto}
-    remote ${frontendName}
+    remote ${extnet.frontendName}
     nobind
     persist-key
     persist-tun
@@ -243,7 +238,7 @@ in
     environment.systemPackages = [ pkgs.easyrsa3 ];
 
     environment.etc = {
-      "local/openvpn/${frontendName}.ovpn".source = ovpn;
+      "local/openvpn/${extnet.frontendName}.ovpn".source = ovpn;
       "local/openvpn/networks.json.example".text = defaultAccessNets;
       "local/openvpn/README.txt".text = readFile ./README.openvpn;
     };
@@ -291,9 +286,11 @@ in
 
     services.dnsmasq = {
       enable = true;
-      extraConfig = lib.mkOverride 500 ''
+      extraConfig = ''
+        # OpenVPN specific configuration
         domain-needed
-        # interface=ethfe
+        listen-address=${addrs.ip4}
+        listen-address=${addrs.ip6}
       '';
     };
 
