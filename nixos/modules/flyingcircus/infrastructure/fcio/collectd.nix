@@ -24,6 +24,7 @@ mkIf (params ? location && params ? resource_group) {
   services.collectd.extraConfig = ''
     Interval 5
 
+    LoadPlugin conntrack
     LoadPlugin cpu
     LoadPlugin disk
     LoadPlugin entropy
