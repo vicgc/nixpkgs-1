@@ -70,10 +70,10 @@ in
     flyingcircus.network.policyRouting = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = !(pathExists "/etc/local/simplerouting");
+        default = true;
         description = ''
-          Enable policy routing? Touch /etc/local/simplerouting to turn policy
-          routing off.
+          Enable policy routing? Automatically deselected for external network
+          gateways.
         '';
       };
 

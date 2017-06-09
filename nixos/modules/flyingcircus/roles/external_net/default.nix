@@ -1,8 +1,30 @@
 # Managed external network (OpenVPN/DHP/...) gateway
 { lib, config, pkgs, ... }:
 
+with builtins;
+
 let
+  fclib = import ../../lib;
   cfg = config.flyingcircus;
+  parameters = lib.attrByPath [ "enc" "parameters" ] {} cfg;
+
+  # attrset of those fe addresses that have a reverse
+  feReverses =
+    # fake attrset from listenAddresses: { "addr" = null; ... }
+    let feAddrSet =
+      lib.genAttrs (fclib.listenAddresses config "ethfe") (x: null);
+    in
+    intersectAttrs feAddrSet (lib.attrByPath [ "reverses" ] {} parameters);
+
+  # pick a suitable DNS name for client config
+  domain = config.networking.domain;
+  defaultFrontendName =
+    if feReverses != {}
+    then fclib.normalizeDomain domain (head (attrValues feReverses))
+    else
+      if location != null
+      then "${config.networking.hostName}.fe.${location}.${domain}"
+      else "localhost";
 
 in
 {
@@ -33,6 +55,16 @@ in
           IPv6 network range for VxLAN external network. Must be changed on all
           nodes within a RG for end-to-end routing. So it is best to leave it
           alone.
+        '';
+      };
+
+      frontendName = lib.mkOption {
+        type = lib.types.str;
+        default = defaultFrontendName;
+        description = ''
+          DNS host name for the external network gateway. This is also the name
+          of the OpenVPN client configuration. The default is derived from the
+          FE address' reverse name.
         '';
       };
 
