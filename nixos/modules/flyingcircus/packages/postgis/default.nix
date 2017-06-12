@@ -70,9 +70,8 @@ let
     };
   });
 
-in rec {
-
-  v_2_3_1 = pgDerivationBaseNewer.merge ( fix : {
+in
+pgDerivationBaseNewer.merge (fix: {
     version = "2.3.1";
     sha256 = "0xd21h2k6x3i1b3z6pgm3pmkfpxm6irxd5wbx68acjndjgd6p3ac";
     sql_srcs = ["postgis.sql" "spatial_ref_sys.sql"];
@@ -95,6 +94,4 @@ in rec {
               " \
           "raster/scripts/python/Makefile";
     '';
-  });
-
-}
+  })
