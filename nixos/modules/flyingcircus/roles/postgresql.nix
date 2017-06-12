@@ -106,7 +106,9 @@ in
   {
     services.postgresql.enable = true;
     services.postgresql.package = postgresqlPkg;
-    services.postgresql.extraPlugins = lib.optionals
+    services.postgresql.extraPlugins = [
+      (pkgs.postgis.override { postgresql = postgresqlPkg; }).v_2_3_1
+    ] ++ lib.optionals
       (lib.versionAtLeast version "9.6")
       [ (pkgs.rum.override { postgresql = postgresqlPkg; }) ];
 
