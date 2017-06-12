@@ -288,7 +288,8 @@ in
       enable = true;
       extraConfig = ''
         # OpenVPN specific configuration
-        domain-needed
+        bind-dynamic
+        interface=lo
         listen-address=${addrs.ip4}
         listen-address=${addrs.ip6}
       '';
