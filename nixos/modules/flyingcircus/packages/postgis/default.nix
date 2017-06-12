@@ -1,13 +1,6 @@
 args@{fetchurl, composableDerivation, stdenv, perl, libxml2, postgresql, geos, proj, flex, gdal, json_c, pkgconfig, file, ...}:
 
   /*
-
-  ### NixOS - usage:
-  ==================
-
-    services.postgresql.extraPlugins = [ (pkgs.postgis.override { postgresql = pkgs.postgresql95; }).v_2_3_1 ];
-
-
   ### important Postgis implementation details:
   =============================================
 
@@ -22,11 +15,6 @@ args@{fetchurl, composableDerivation, stdenv, perl, libxml2, postgresql, geos, p
 
    Thus if you want to use postgresql dumps which were created by non NixOS
    systems you have to adopt the library path.
-
-
-   ### TODO:
-   =========
-   the bin commands to have gtk gui:
   */
 
 
