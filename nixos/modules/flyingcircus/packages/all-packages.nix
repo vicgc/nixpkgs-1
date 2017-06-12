@@ -101,6 +101,7 @@ rec {
   percona57 = pkgs.callPackage ./percona/5.7.nix { boost = boost159; };
   percona56 = pkgs.callPackage ./percona/5.6.nix { boost = boost159; };
 
+  postgis = pkgs.callPackage ./postgis { };
   inherit (pkgs.callPackages ./postgresql { })
     postgresql93
     postgresql94
