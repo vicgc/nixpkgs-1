@@ -100,6 +100,7 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKqKaOCYLUxtjAs9e3amnTRH5NM2j0kjLOE+5ZGy9/W4 zagy@drrr.local"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAg5mbkbBk0dngSVmlZJEH0hAUqnu3maJzqEV9Su1Cff flanitz"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILGzlmaZ3KHjbrIZgzr6g+xokoFdEMF1eKJGFOa49/K1 plumps@samantha.local"
+
     ];
   };
 
