@@ -36,8 +36,8 @@ let
     users = (lib.concatMapStringsSep ",\n" (
        user:
          ''
-
            "password": "{crypt}${user.hashedPassword}"
+         ''
     ));
     in pkgs.writeText "uchiwa.json" ''
     {
