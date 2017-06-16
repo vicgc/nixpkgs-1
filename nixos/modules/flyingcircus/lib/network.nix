@@ -123,10 +123,9 @@ rec {
     let
       # don't generate default routes via networks that have no local addresses
       netsWithLocalAddrs = nets:
-      lib.traceVal (
         filter
           (n: encIface.networks ? ${n} && length encIface.networks.${n} > 0)
-          nets);
+          nets;
     in
     foldl'
       (acc: cidr:
