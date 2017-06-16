@@ -21,13 +21,15 @@ pip-selfcheck.json
 /pkgs/desktops/plasma-*/tmp/
 /pkgs/development/libraries/kde-frameworks-*/tmp/
 /pkgs/development/libraries/qt-5/*/tmp/
-pyvenv.cfg
 __pycache__
+pyvenv.cfg
 result
 result-*
+*.rs.bk
+*.sublime-workspace
 *.sw?
 tags
+target/
 .vagrant
 .version-suffix
-*.sublime-workspace
 *.sublime-project

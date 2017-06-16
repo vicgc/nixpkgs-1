@@ -34,6 +34,7 @@ rec {
   };
   expat = pkgs.callPackage ./expat.nix { };
 
+  fcbox = pkgs.callPackage ./fcbox { };
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
