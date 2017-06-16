@@ -118,15 +118,23 @@ rec {
     in
     "\n# policy rules for ${vlan}\n${fromRules}\n${toRules}\n";
 
-    # A list of default gateways from a list of networks in CIDR form.
-    gateways = encInterface: filteredNets:
-      foldl'
-        (acc: cidr:
-          if hasAttr cidr encInterface.gateways
-          then acc ++ [encInterface.gateways.${cidr}]
-          else acc)
-        []
-        filteredNets;
+  # A list of default gateways from a list of networks in CIDR form.
+  gateways = encIface: filteredNets:
+    let
+      # don't generate default routes via networks that have no local addresses
+      netsWithLocalAddrs = nets:
+      lib.traceVal (
+        filter
+          (n: encIface.networks ? ${n} && length encIface.networks.${n} > 0)
+          nets);
+    in
+    foldl'
+      (acc: cidr:
+        if hasAttr cidr encIface.gateways
+        then acc ++ [encIface.gateways.${cidr}]
+        else acc)
+      []
+      (netsWithLocalAddrs filteredNets);
 
   # Routes for an individual VLAN on an interface. This falls apart into two
   # blocks: (1) subnet routes for all subnets on which the interface has at
@@ -169,10 +177,7 @@ rec {
   # List of nets (CIDR) that have at least one address present which satisfies
   # `predicate`.
   networksWithAtLeastOneAddress = encNetworks: predicate:
-  let
-    hasAtAll = pred: cidrs: lib.any pred cidrs;
-  in
-    if (hasAtAll predicate (allInterfaceAddresses encNetworks))
+    if (lib.any predicate (allInterfaceAddresses encNetworks))
     then filter predicate (lib.attrNames encNetworks)
     else [];
 
