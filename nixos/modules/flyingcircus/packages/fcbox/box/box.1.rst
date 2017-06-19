@@ -16,7 +16,7 @@ Administer Flying Circus NFS box access rights
 SYNOPSIS
 ========
 
-**box grant** *user* | **public** | **private** *boxdir* ...
+**box grant** { *user* | **public** | **private** } *boxdir* ...
 
 
 DECRIPTION

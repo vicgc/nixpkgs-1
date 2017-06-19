@@ -3,6 +3,7 @@ name = "box"
 version = "0.2.0"
 description = "Manage shared 'box' directories. This utility allows for secure file giveaways inside the box."
 authors = ["Christian Kauhaus <kc@flyingcircus.io>"]
+license = "ZPL-2.1"
 
 [dependencies]
 clap = "2.22"
@@ -10,6 +11,8 @@ errno = "0.2"
 libc = "0.2"
 users = "0.5"
 walkdir = "1"
+
+[dev-dependencies]
 tempdir = "0.3"
 
 [dependencies.error-chain]

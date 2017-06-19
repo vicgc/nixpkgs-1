@@ -173,9 +173,7 @@ fn grant<U: Users>(boxdir: &Path, touser: &str, usercache: &U) -> Result<()> {
             chown_recursive(&boxdir, user, SERVICE)
         }
         Some(_) => {
-            Err(ErrorKind::GrantUser(format!("Cannot give files away to non-serviceuser {}",
-                                             touser))
-                .into())
+            Err(ErrorKind::GrantUser(format!("`{}' is not a service user.", touser)).into())
         }
         None => Err(ErrorKind::GrantUser(format!("User {} not found", touser)).into()),
     }

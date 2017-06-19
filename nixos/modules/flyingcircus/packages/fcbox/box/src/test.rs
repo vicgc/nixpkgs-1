@@ -2,7 +2,10 @@
 
 extern crate tempdir;
 
+use libc::mode_t;
 use self::tempdir::TempDir;
+use std::fs::{self, File};
+use std::os::unix::fs::PermissionsExt;
 use super::*;
 use users::mock::MockUsers;
 use users::{User, Group};
@@ -79,4 +82,31 @@ fn grant_to_human_users_should_fail() {
     let users = mock_users().0;
     let tmpdir = TempDir::new("fc-box").unwrap();
     grant(tmpdir.path(), "dave", &users).expect_err("no error result");
+}
+
+/// Generic test runner for make_{public,private} functions
+fn modetest(dirperm_before: mode_t, dirperm_after: mode_t, fileperm: mode_t,
+            uut: &Fn(&Path, &User) -> Result<()>) -> Result<()> {
+    let tmpdir = TempDir::new("fc-box")?;
+    let boxdir = tmpdir.path().join("box");
+    fs::create_dir(&boxdir)?;
+    chmod(&boxdir, dirperm_before)?;
+    let f = boxdir.join("file");
+    let _ = File::create(&f);
+    chmod(&f, fileperm)?;
+    assert!(uut(&boxdir, &User::new(1046, "johndoe", 100)).is_ok());
+    assert_eq!(dirperm_after, fs::metadata(&boxdir)?.permissions().mode());
+    // not changed
+    assert_eq!(fileperm, fs::metadata(&f)?.permissions().mode());
+    Ok(())
+}
+
+#[test]
+fn test_make_private() {
+    modetest(0o755, 0o700, 0o644, &make_private).unwrap();
+}
+
+#[test]
+fn test_make_public() {
+    modetest(0o700, 0o755, 0o600, &make_public).unwrap();
 }
