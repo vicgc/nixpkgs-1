@@ -13,6 +13,7 @@
         cyrus_sasl
         db
         dstat
+        fcbox
         fcmaintenance
         file
         fio
@@ -68,5 +69,6 @@
     ] ++
     lib.optional (!config.services.postgresql.enable) pkgs.postgresql;
 
+    security.setuidPrograms = [ "box" ];
   };
 }
