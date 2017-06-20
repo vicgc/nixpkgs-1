@@ -29,6 +29,5 @@ buildRustPackage rec {
     description = "C binding generator";
     homepage = https://github.com/Yamakaky/rust-bindgen;
     license = with licenses; [ bsd3 ];
-    maintainers = [ maintainers.ralith ];
   };
 }

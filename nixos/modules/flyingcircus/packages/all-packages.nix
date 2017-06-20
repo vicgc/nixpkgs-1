@@ -2,7 +2,10 @@
 , lib ? pkgs.lib
 , stdenv ? pkgs.stdenv }:
 
-rec {
+let
+  rust = pkgs.callPackage ./rust/bootstrap.nix { };
+
+in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
@@ -131,7 +134,6 @@ rec {
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
-  rust = pkgs.callPackage ./rust/bootstrap.nix { };
   inherit (rust) rustc cargo;
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
   makeRustPlatform = rust: lib.fix (self:
@@ -148,6 +150,11 @@ rec {
     });
   rustfmt = pkgs.callPackage ./rust/rustfmt.nix { };
   rust-bindgen = pkgs.callPackage ./rust/bindgen.nix { };
+
+  # compatibility fixes for 15.09
+  rustCargoPlatform = rustPlatform;
+  rustStable = rustPlatform;
+  rustUnstable = rustPlatform;
 
   sensu = pkgs.callPackage ./sensu { };
 
