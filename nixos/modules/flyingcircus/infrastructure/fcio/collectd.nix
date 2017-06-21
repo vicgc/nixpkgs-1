@@ -2,7 +2,6 @@
 with lib;
 
 let
-  fclib = import ../../lib;
   enc = config.flyingcircus.enc;
   params = if enc ? parameters then enc.parameters else {};
 
@@ -21,7 +20,6 @@ let
 
 in
 mkIf (params ? location && params ? resource_group) {
-
   services.collectd.enable = true;
   services.collectd.extraConfig = ''
     Interval 5
@@ -38,11 +36,6 @@ mkIf (params ? location && params ? resource_group) {
     LoadPlugin syslog
     LoadPlugin vmem
     LoadPlugin write_graphite
-
-    LoadPlugin write_prometheus
-    <Plugin "write_prometheus">
-      Port "9103"
-    </Plugin>
 
     <LoadPlugin uptime>
       Interval 360
