@@ -237,7 +237,7 @@ in
             }
 
             location / {
-                rewrite . /grafana/ redirect;
+                rewrite ^ /grafana/ redirect;
             }
 
             location /grafana/ {
@@ -254,7 +254,10 @@ in
               listen *:80;
               listen [::]:80;
               server_name ${httpHost};
-              rewrite . https://$server_name$request_uri redirect;
+
+              location / {
+                rewrite ^ https://$server_name$request_uri redirect;
+              }
           }
 
           server {
