@@ -202,7 +202,7 @@ in
           concatStringsSep "," esNodes;
         javaHeap = ''${toString
           (fclib.max [
-            ((fclib.current_memory config 1024) / 5)
+            ((fclib.current_memory config 1024) * 15 / 100)
             1024
             ])}m'';
         extraConfig = ''
@@ -223,7 +223,7 @@ in
         enable = true;
         dataDir = "/var/lib/elasticsearch";
         clusterName = "graylog";
-        heapDivisor = 3;
+        heapPercentage = 35;
         esNodes = esNodes;
       };
 

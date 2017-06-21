@@ -116,10 +116,10 @@ in rec {
     };
   };
 
-  nixpkgs =
-    builtins.removeAttrs
-      (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
-      [ "linuxPackages" "linuxPackages_4_4" ]
+  nixpkgs = lib.filterAttrs
+    (n: v: lib.isDerivation v) (builtins.removeAttrs
+    (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
+    [ "linuxPackages" "linuxPackages_4_4" ])
     // {
       python27Packages =
         filterPkgs ownPythonPackages nixpkgs'.python27Packages;

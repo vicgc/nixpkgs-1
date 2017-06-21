@@ -1,6 +1,11 @@
-{ pkgs ? (import <nixpkgs> {})}:
+{ pkgs ? (import <nixpkgs> {})
+, lib ? pkgs.lib
+, stdenv ? pkgs.stdenv }:
 
-rec {
+let
+  rust = pkgs.callPackage ./rust/bootstrap.nix { };
+
+in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
@@ -17,7 +22,7 @@ rec {
 
   cron = pkgs.callPackage ./cron.nix { };
   curl = pkgs.callPackage ./curl rec {
-    fetchurl = pkgs.stdenv.fetchurlBoot;
+    fetchurl = stdenv.fetchurlBoot;
     zlibSupport = true;
     sslSupport = zlibSupport;
     scpSupport = zlibSupport;
@@ -32,6 +37,7 @@ rec {
   };
   expat = pkgs.callPackage ./expat.nix { };
 
+  fcbox = pkgs.callPackage ./fcbox { };
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
@@ -127,6 +133,28 @@ rec {
   rabbitmq_server = pkgs.callPackage ./rabbitmq-server.nix { };
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+
+  inherit (rust) rustc cargo;
+  rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
+  makeRustPlatform = rust: lib.fix (self:
+    let
+      callPackage = pkgs.newScope self;
+    in rec {
+      inherit rust;
+
+      rustRegistry = pkgs.callPackage ./rust/rust-packages.nix { };
+
+      buildRustPackage = pkgs.callPackage ./rust/build-support {
+        inherit rust rustRegistry;
+      };
+    });
+  rustfmt = pkgs.callPackage ./rust/rustfmt.nix { };
+  rust-bindgen = pkgs.callPackage ./rust/bindgen.nix { };
+
+  # compatibility fixes for 15.09
+  rustCargoPlatform = rustPlatform;
+  rustStable = rustPlatform;
+  rustUnstable = rustPlatform;
 
   sensu = pkgs.callPackage ./sensu { };
 

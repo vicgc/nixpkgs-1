@@ -33,7 +33,7 @@ let
 
   esHeap =
     fclib.min [
-      (currentMemory / cfg.heapDivisor)
+      (currentMemory * cfg.heapPercentage / 100)
       (31 * 1024)];
 
 in
@@ -64,12 +64,12 @@ in
         '';
       };
 
-      heapDivisor = mkOption {
+      heapPercentage = mkOption {
         type = types.int;
-        default = 2;
+        default = 50;
         description = ''
           Tweak amount of memory to use for ES heap
-          (systemMemory / heapDivisor)
+          (systemMemory * heapPercentage / 100)
         '';
       };
 
