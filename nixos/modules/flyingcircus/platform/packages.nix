@@ -44,6 +44,7 @@
         nodejs
         openldap
         openssl_1_0_2
+        pciutils
         php
         protobuf
         psmisc

@@ -69,6 +69,29 @@ let
           ln -s $image/image.qcow2.bz2 $out/
         '');
 
+  # A Vagrant base box.
+  flyingcircus_vagrant_box =
+      with import nixpkgsSrc { inherit system; };
+      with lib;
+      # Declare the image as a build product so that it shows up in Hydra.
+      # This requires a properly running virtualbox on the host where hyda (or the worker) is
+      # running.
+      hydraJob (runCommand "nixos-flyingcircus-vagrant-${system}"
+        { meta = {
+            description = "NixOS Flying Circus Vagrant base box (${system})";
+            maintainers = maintainers.theuni;
+          };
+        }
+        ''
+          mkdir -p $out/nix-support
+          cd $out
+          cp -va ${./modules/flyingcircus/imaging/packer}/* .
+          ${pkgs.packer}/bin/packer build \
+              -var-file /etc/packer/atlas.json nixos.json \
+              -var iso_url ${nixos'.iso_minimal_new_kernel}/iso/*.iso
+          echo "file raw $out/packer_virtualbox-iso_virtualbox.box" >> $out/nix-support/hydra-build-products
+        '');
+
   # List of package names for Python packages defined in modules/flyingcircus
   ownPythonPackages = builtins.attrNames
     (import modules/flyingcircus/packages/python-packages.nix {
@@ -88,7 +111,8 @@ let
 
 in rec {
   nixos = {
-    inherit (nixos') channel;
+    inherit (nixos') channel iso_minimal_new_kernel;
+
     tests = {
       inherit (nixos'.tests)
         firewall
@@ -140,4 +164,5 @@ in rec {
   });
 
 } //
-lib.optionalAttrs buildImage { inherit flyingcircus_vm_image; }
+lib.optionalAttrs buildImage {
+    inherit flyingcircus_vm_image flyingcircus_vagrant_box; }

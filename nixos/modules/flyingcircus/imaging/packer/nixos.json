@@ -1,0 +1,66 @@
+{
+  "push": {
+    "name": "",
+    "vcs": true
+  },
+  "variables": {
+    "atlas_username": "ctheune2",
+    "atlas_name": "fc-15.09-dev",
+    "atlas_token": "",
+    "revision": "asdf",
+    "iso_url": "/nix/store/3hrdlnj3c9y6cnsdhh3r0mzn8yk4a3fw-nixos-minimal-new-kernel-15.09pre-11035.gfedcba-x86_64-linux.iso/iso/nixos-minimal-new-kernel-15.09pre-11035.gfedcba-x86_64-linux.iso"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "boot_wait": "30s",
+      "boot_command": [
+        "echo http://{{ .HTTPIP }}:{{ .HTTPPort}} > .packer_http<enter>",
+        "mkdir -m 0700 .ssh<enter>",
+        "curl $(cat .packer_http)/install_rsa.pub > .ssh/authorized_keys<enter>",
+        "start sshd<enter>"
+      ],
+      "http_directory": "scripts",
+      "shutdown_command": "shutdown -h now",
+      "ssh_key_path": "./scripts/install_rsa",
+      "ssh_port": 22,
+      "ssh_username": "root",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum_type": "none",
+      "guest_additions_mode": "disable",
+      "guest_os_type": "Linux_64",
+      "virtualbox_version_file": ".vbox_version",
+      "vboxmanage": [
+          ["modifyvm", "{{.Name}}", "--memory", "1024"]
+        ],
+      "headless": true
+      }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["./scripts/install.sh {{user `revision`}}"]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+       "type": "vagrant",
+       "keep_input_artifact": false
+      },
+      {
+        "type": "atlas",
+        "token": "{{user ``atlas_token``}",
+        "only": ["virtualbox-iso"],
+        "artifact": "{{user `atlas_username`}}/{{user `atlas_name`}}",
+        "artifact_type": "vagrant.box",
+        "metadata": {
+            "provider": "virtualbox",
+            "version": "{{user `evaluation`}}",
+            "description": "Update to {{user `branch`}}@{{user `evaluation`}}.{{user `revision`}}"
+        }
+      }
+    ]
+  ]
+}
+
