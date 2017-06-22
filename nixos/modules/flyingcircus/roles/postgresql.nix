@@ -219,6 +219,14 @@ in
       };
     };
 
+    services.telegraf.extraConfig = {
+      inputs = {
+        postgresql = {
+          address = "host=/tmp user=root sslmode=disable dbname=postgres";
+        };
+      };
+    };
+
   });
 
 }
