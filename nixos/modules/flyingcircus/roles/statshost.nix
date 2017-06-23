@@ -25,6 +25,8 @@ let
       "-storage.local.series-file-shrink-ratio 0.1"
       "-storage.local.memory-chunks 1048576"  # Find out useful value.
     ];
+  prometheusListenAddress =
+    "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
 
   statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
@@ -182,11 +184,22 @@ in
 
       services.prometheus.enable = true;
       services.prometheus.extraFlags = promFlags;
-      services.prometheus.listenAddress =
-        "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+      services.prometheus.listenAddress = prometheusListenAddress;
       services.prometheus.scrapeConfigs = [
+        { job_name = "prometheus";
+          scrape_interval = "5s";
+          static_configs = [{
+            targets = [prometheusListenAddress];
+            labels = {
+              host = config.networking.hostName;
+            };
+          }];
+        }
         { job_name = "static";
           scrape_interval = "15s";
+          # We use a file sd here. Static config would restart prometheus for
+          # each change. This way prometheus picks up the change automatically
+          # and without restart.
           file_sd_configs = [{
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
