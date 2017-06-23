@@ -211,7 +211,7 @@ in
           honor_labels = true;
           params = {
             "match[]" = [
-              "{job=\"static\"}"
+              "{job=~\"static|prometheus\"}"
             ];
           };
           file_sd_configs = [{
