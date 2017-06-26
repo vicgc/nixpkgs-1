@@ -6,9 +6,11 @@
     environment.systemPackages = with pkgs; [
         apacheHttpd
         atop
+        automake
         bc
         bind
         bundler
+        cmake
         curl
         cyrus_sasl
         db
@@ -18,8 +20,10 @@
         file
         fio
         gcc
+        gdb
         gdbm
         git
+        gnumake
         gnupg
         go
         gptfdisk
@@ -46,12 +50,13 @@
         openldap
         openssl_1_0_2
         php
+        pkgconfig
         protobuf
         psmisc
         pv
         python2Full
-        pythonPackages.virtualenv
         python34
+        pythonPackages.virtualenv
         screen
         strace
         subversion
