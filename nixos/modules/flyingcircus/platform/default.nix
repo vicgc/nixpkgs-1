@@ -201,15 +201,6 @@ in
     fonts.fontconfig.enable = true;
 
     environment.pathsToLink = [ "/include" ];
-    environment.shellInit = ''
-      # help pip to find libz.so when building lxml
-      export LIBRARY_PATH=/var/run/current-system/sw/lib
-      # help dynamic loading like python-magic to find it's libraries
-      export LD_LIBRARY_PATH=$LIBRARY_PATH
-      # ditto for header files, e.g. sqlite
-      export C_INCLUDE_PATH=/var/run/current-system/sw/include:/var/run/current-system/sw/include/sasl
-    '';
-
     boot.kernelPackages = pkgs.linuxPackages_4_4;
     boot.supportedFilesystems = [ "nfs4" ];
 

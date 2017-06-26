@@ -13,24 +13,33 @@ in
       export TMOUT=43200
     '';
 
-    environment.shellInit =
+    environment.shellInit = ''
+      # help building locally compiled programs
+      export LIBRARY_PATH=$HOME/.nix-profile/lib:/run/current-system/sw/lib
+      # header files
+      export CPATH=$HOME/.nix-profile/include:/run/current-system/sw/include
+      export C_INCLUDE_PATH=$CPATH
+      export CPLUS_INCLUDE_PATH=$CPATH
+      # pkg-config
+      export PKG_CONFIG_PATH=$HOME/.nix-profile/lib/pkgconfig:/run/current-system/sw/lib/pkgconfig
+    '' +
+    (opt
+      (enc ? name && parameters ? location && parameters ? environment)
       # FCIO_* only exported if ENC data is present.
-      (opt
-        (enc ? name && parameters ? location && parameters ? environment)
-        ''
-          # Grant easy access to the machine's ENC data for some variables to
-          # shell scripts.
-          export FCIO_LOCATION="${parameters.location}"
-          export FCIO_ENVIRONMENT="${parameters.environment}"
-          export FCIO_HOSTNAME="${enc.name}"
-        '');
+      ''
+        # Grant easy access to the machine's ENC data for some variables to
+        # shell scripts.
+        export FCIO_LOCATION="${parameters.location}"
+        export FCIO_ENVIRONMENT="${parameters.environment}"
+        export FCIO_HOSTNAME="${enc.name}"
+      '');
 
     users.motd = ''
-        Welcome to the Flying Circus!
+      Welcome to the Flying Circus!
 
-        Status:     http://status.flyingcircus.io/
-        Docs:       https://flyingcircus.io/doc/
-        Release:    ${config.system.nixosVersion}
+      Status:     http://status.flyingcircus.io/
+      Docs:       https://flyingcircus.io/doc/
+      Release:    ${config.system.nixosVersion}
     '' +
     (opt
       (enc ? name && parameters ? location && parameters ? environment
