@@ -62,7 +62,7 @@ with lib;
       #
       # This seems to be https://sourceware.org/bugzilla/show_bug.cgi?id=13028
       # which is fixed in glibc 2.22 which is included in NixOS 16.03.
-      dev = ["172.30.3.10" "172.20.2.38"];
+      dev = [ "172.20.3.65" "172.20.3.66" ];
       rzob = ["195.62.125.5" "195.62.125.135"];
       rzrl1 = ["172.24.32.3" "172.24.48.4"];
       whq = ["212.122.41.143" "212.122.41.169"];
@@ -75,22 +75,24 @@ with lib;
     };
 
     flyingcircus.static.directory = {
-      proxy_ips = ["195.62.125.6" "195.62.125.11" "2a02:248:101:62::108c" "2a02:248:101:62::dd" "2a02:248:101:63::d4"];
+      proxy_ips =
+      [ "195.62.125.6"
+        "195.62.125.11"
+        "2a02:248:101:62::108c"
+        "2a02:248:101:62::dd"
+        "2a02:248:101:63::d4"
+      ];
     };
 
     flyingcircus.static.ntpservers = {
-      # Those are the routers and ceph mons. This needs to move to the
+      # Those are the routers and backup servers. This needs to move to the
       # directory service discovery.
-      dev = [ "selma" "barney" "eddie" "sherri" "cartman02" "patty"];
+      dev = [ "barney" "eddie" "patty"];
       rzob = [ "carme" "cartman07" "cartman11" "kenny00" "cartman12" "kenny01" "cartman10" "iocaste" "cartman13" "cartman08" "cartman06" ];
       rzrl1 = [ "kyle04" "kenny03" "kenny02" "cartman04" "cartman05" ];
       whq = [ "barbrady01" "cartman00" "kyle03" "terri" "edna" "hibbert" "bob" "lou" ];
-
       # Location-independent NTP servers from the global public pool.
-      standalone = [ "0.pool.ntp.org"
-                     "1.pool.ntp.org"
-                     "2.pool.ntp.org"
-                     "3.pool.ntp.org"];
+      standalone = [ "0.pool.ntp.org" "1.pool.ntp.org" "2.pool.ntp.org" ];
     };
 
     # Generally allow DHCP?
