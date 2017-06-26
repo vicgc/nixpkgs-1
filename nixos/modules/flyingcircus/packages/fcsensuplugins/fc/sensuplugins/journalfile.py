@@ -60,7 +60,7 @@ class SimpleContext(Context):
 def main():
     a = argparse.ArgumentParser()
     a.add_argument('-c', '--critical', metavar='RANGE', default='500:',
-                   help='return critical if file is smaller than RANGE')
+                   help='return critical if file is outside RANGE')
 
     args = a.parse_args()
     check = Check(
