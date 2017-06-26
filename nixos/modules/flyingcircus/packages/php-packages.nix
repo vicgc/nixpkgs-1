@@ -26,4 +26,29 @@ rec {
     ];
   };
 
+  xcache = buildPecl rec {
+    name = "xcache-${version}";
+
+    version = "3.2.0";
+
+    src = pkgs.fetchurl {
+      url = "http://xcache.lighttpd.net/pub/Releases/${version}/${name}.tar.bz2";
+      sha256 = "1gbcpw64da9ynjxv70jybwf9y88idm01kb16j87vfagpsp5s64kx";
+    };
+
+    doCheck = true;
+    checkTarget = "test";
+
+    configureFlags = [
+      "--enable-xcache"
+      "--enable-xcache-coverager"
+      "--enable-xcache-optimizer"
+      "--enable-xcache-assembler"
+      "--enable-xcache-encoder"
+      "--enable-xcache-decoder"
+    ];
+
+    buildInputs = [ pkgs.m4 ];
+  };
+
 }
