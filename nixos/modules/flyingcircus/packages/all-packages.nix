@@ -9,6 +9,7 @@ in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
+  busybox = pkgs.callPackage ./busybox { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
   clamav = pkgs.callPackage ./clamav.nix { };
