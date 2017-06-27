@@ -23,7 +23,7 @@ let
     else [  # Proxy only
       "-storage.local.retention 24h"
       "-storage.local.series-file-shrink-ratio 0.1"
-      "-storage.local.memory-chunks 1048576"  # Find out useful value.
+      "-storage.local.memory-chunks 131072"  # Find out useful value.
     ];
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
