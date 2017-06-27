@@ -62,7 +62,7 @@ with lib;
       #
       # This seems to be https://sourceware.org/bugzilla/show_bug.cgi?id=13028
       # which is fixed in glibc 2.22 which is included in NixOS 16.03.
-      dev = [ "172.20.3.65" "172.20.3.66" ];
+      dev = [ "172.20.3.1" "172.20.2.7" "172.20.2.44" ];
       rzob = ["195.62.125.5" "195.62.125.135"];
       rzrl1 = ["172.24.32.3" "172.24.48.4"];
       whq = ["212.122.41.143" "212.122.41.169"];

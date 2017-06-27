@@ -137,7 +137,7 @@ in
          (hasAttr cfg.enc.parameters.location cfg.static.nameservers)
       then cfg.static.nameservers.${cfg.enc.parameters.location}
       else [];
-    networking.resolvconfOptions = "ndots:1 timeout:1 attempts:4 rotate";
+    networking.resolvconfOptions = "ndots:1 timeout:1 attempts:6";
 
     networking.search = lib.optionals
       (lib.hasAttrByPath [ "parameters" "location" ] cfg.enc &&
