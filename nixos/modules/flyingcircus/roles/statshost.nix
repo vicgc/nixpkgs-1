@@ -128,6 +128,10 @@ in
           common = ''
             server_name ${httpHost};
 
+            location /.well-known {
+              root /tmp/letsencrypt;
+            }
+
             location / {
                 rewrite . /grafana/ redirect;
             }
