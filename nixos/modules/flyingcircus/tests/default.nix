@@ -17,6 +17,8 @@
   inherit (import ./mysql.nix { inherit system hydraJob; })
     mysql_5_5 mysql_5_6 mysql_5_7;
 
+  oraclejava = hydraJob (import ./oraclejava.nix { inherit system; });
+
   postgresql_9_3 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql93"; });
   postgresql_9_4 = hydraJob
