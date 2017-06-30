@@ -316,7 +316,7 @@ in {
 
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.coturn}/bin/turnserver -c ${configFile}";
+        ExecStart = "${pkgs.coturn}/bin/turnserver -c ${configFile} --log-file syslog";
         RuntimeDirectory = "turnserver";
         User = "turnserver";
         Group = "turnserver";
