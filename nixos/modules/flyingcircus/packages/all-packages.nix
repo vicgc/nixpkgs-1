@@ -48,6 +48,11 @@ in rec {
     gyp = pkgs.pythonPackages.gyp;
   };
 
+  imagemagick = imagemagickBig.override {
+    ghostscript = null;
+  };
+
+  imagemagickBig = pkgs.callPackage ./ImageMagick { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   kibana = pkgs.callPackage ./kibana.nix { };
