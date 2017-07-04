@@ -3,7 +3,7 @@
 , stdenv ? pkgs.stdenv }:
 
 let
-  pkgs_17_03 = (import (pkgs.fetchFromGitHub {
+  pkgs_17_03 = (import ((import <nixpkgs> {}).fetchFromGitHub {
       owner = "NixOS";
       repo = "nixpkgs";
       rev = "7aca46f9a94c06a49cbdcf25e95457d3d02541f7";
