@@ -23,7 +23,11 @@
 # >>> '{"id":"57fe09c2ec3fa136a780adb9"}'
 import click
 import json
+import logging
 import requests
+
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
 @click.command()
@@ -51,11 +55,13 @@ def main(user, password, api, input_conf, sso_conf):
     r.raise_for_status()
     for _input in r.json()['states']:
         if _input['message_input']['title'] == data['title']:
+            logging.info('Graylog input already configured. No run needed.')
             return None
 
     # create input for UDP
     r = s.post(api + '/system/inputs', json=data)
     r.raise_for_status()
+    logging.info('Graylog input configured.')
     # return r.json()['id']
 
 
