@@ -22,6 +22,5 @@ stdenv.mkDerivation rec {
     license = with licenses; [ bsd3 ];
     description = "A TURN server";
     platforms = platforms.all;
-    maintainers = [ maintainers.ralith ];
   };
 }
