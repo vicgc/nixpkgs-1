@@ -233,7 +233,8 @@ in
          after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
          serviceConfig = {
            Type = "oneshot";
-           User = "graylog";
+           User = config.services.graylog.user;
+           RemainAfterExit = true;
          };
          script = let
            api = restListenUri;
@@ -254,7 +255,7 @@ in
                                    # a primary key for identifying the config
                                    # object
              type = "org.graylog2.inputs.syslog.udp.SyslogUDPInput";
-             global = false;
+             global = true;
            };
           sso_body = {
             default_group = "Admin";
