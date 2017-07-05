@@ -103,6 +103,7 @@ with lib;
     ids.uids = {
       # Sames as upstream/master, but not yet merged
       kibana = 211;
+      turnserver = 249;
 
       # Our custom services
       sensuserver = 31001;
@@ -118,6 +119,9 @@ with lib;
       # The generic 'service' GID is different from Gentoo.
       # But 101 is already used in NixOS.
       service = 900;
+
+      # Sames as upstream/master, but not yet merged
+      turnserver = 249;
 
       # Our permissions
       login = 500;

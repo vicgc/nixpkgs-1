@@ -5,6 +5,7 @@
     [
      ./collectdproxy.nix
      ./clamav.nix
+     ./coturn.nix
      ./fcmanage.nix
      ./graylog.nix
      ./influxdb011.nix
