@@ -27,7 +27,9 @@ in rec {
     lvm2 = null;        # dito
   };
   collectdproxy = pkgs.callPackage ./collectdproxy { };
-
+  coturn = pkgs.callPackage ./coturn { libevent = libevent.override {
+    withOpenSSL = true;
+    };};
   cron = pkgs.callPackage ./cron.nix { };
   curl = pkgs.callPackage ./curl rec {
     fetchurl = stdenv.fetchurlBoot;
@@ -64,6 +66,8 @@ in rec {
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   kibana = pkgs.callPackage ./kibana.nix { };
+
+  libevent = pkgs.callPackage ./libevent.nix { };
 
   libidn = pkgs.callPackage ./libidn.nix { };
 
