@@ -18,7 +18,7 @@ let
 
   export = "/srv/nfs/shared";
   mountpoint = "/mnt/nfs";
-  mountopts = "rw,soft,intr,rsize=8192,wsize=8192,noauto,x-systemd.automount";
+  mountopts = "rw,soft,intr,rsize=8192,wsize=8192,vers=4,noauto,x-systemd.automount";
 
   service_clients = filter
     (s: s.service == "nfs_rg_share-server")
