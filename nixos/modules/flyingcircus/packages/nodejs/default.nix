@@ -65,10 +65,10 @@ in {
   };
 
   nodejs6 = common rec {
-    version = "6.9.1";
+    version = "6.11.1";
     src = fetchurl {
       url = "http://nodejs.org/dist/v${version}/node-v${version}.tar.gz";
-      sha256 = "1gz3gyy3dkwr1kd3q85lhkl1m8q84fdq75xy1qgpa42d7b59g2d9";
+      sha256 = "0187d4e4ef00cee2b70b0ad0689100050654f26629775d097b145d0d8727f9a0";
     };
   };
 
