@@ -144,5 +144,14 @@ in
       critical = 63000;
     };
 
+    services.telegraf.extraConfig = {
+      inputs = {
+        mongodb = {
+          servers = ["mongodb://127.0.0.1:27017"];
+          gather_perdb_stats = true;
+        };
+      };
+    };
+
   };
 }

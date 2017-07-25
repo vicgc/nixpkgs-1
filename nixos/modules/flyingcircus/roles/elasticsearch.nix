@@ -165,6 +165,16 @@ in
 
     };
 
+    services.telegraf.extraConfig = {
+      inputs = {
+        elasticsearch = {
+          servers = ["http://${thisNode}:9200"];
+          cluster_health = true;
+          cluster_stats = true;
+        };
+      };
+    };
+
     services.collectd.extraConfig = ''
       LoadPlugin curl_json
       <Plugin curl_json>
