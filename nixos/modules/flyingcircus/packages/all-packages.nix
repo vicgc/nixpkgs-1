@@ -62,8 +62,8 @@ in rec {
   imagemagick = imagemagickBig.override {
     ghostscript = null;
   };
-
   imagemagickBig = pkgs.callPackage ./ImageMagick { };
+  influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   kibana = pkgs.callPackage ./kibana.nix { };
@@ -145,7 +145,6 @@ in rec {
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
   prometheus = pkgs_17_03.prometheus;
-
 
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
