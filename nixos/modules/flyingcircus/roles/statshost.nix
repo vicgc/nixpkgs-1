@@ -7,6 +7,7 @@ with lib;
 let
   fclib = import ../lib;
 
+  # For details, see the option description below
   cfgStatsGlobal = config.flyingcircus.roles.statshost;
   cfgStatsRG = config.flyingcircus.roles.statshost-master;
   cfgProxyGlobal = config.flyingcircus.roles.statshostproxy;
@@ -67,6 +68,7 @@ in
 {
   options = {
 
+    # The following two roles are *system/global* roles for FC use.
     flyingcircus.roles.statshost = {
       enable = mkEnableOption "Grafana/InfluxDB stats host (global)";
 
@@ -90,16 +92,18 @@ in
     };
 
     flyingcircus.roles.statshostproxy = {
-      enable = mkEnableOption "Enable stats proxy.";
+      enable = mkEnableOption "Stats proxy, which relays an entire location";
     };
 
 
+    # The following two roles are "customer" roles, customers can use them to
+    # have their own statshost.
     flyingcircus.roles.statshost-master = {
       enable = mkEnableOption "Grafana/Prometheus stats host for one RG";
     };
 
     flyingcircus.roles.statshost-relay = {
-      enable = mkEnableOption "Grafana/Prometheus stats relay";
+      enable = mkEnableOption "RG-specific Grafana/Prometheus stats relay";
     };
 
   };
