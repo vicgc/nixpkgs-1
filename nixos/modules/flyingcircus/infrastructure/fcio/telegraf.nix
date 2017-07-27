@@ -5,6 +5,9 @@ let
   fclib = import ../../lib;
   enc = config.flyingcircus.enc;
   params = if enc ? parameters then enc.parameters else {};
+
+  port = "9126";
+
 in
 mkIf (params ? location && params ? resource_group) {
 
@@ -21,7 +24,7 @@ mkIf (params ? location && params ? resource_group) {
     outputs = {
       prometheus_client = {
         listen = "${lib.head(
-          fclib.listenAddressesQuotedV6 config "ethsrv")}:9126";
+          fclib.listenAddressesQuotedV6 config "ethsrv")}:${port}";
       };
     };
   };
@@ -64,5 +67,15 @@ mkIf (params ? location && params ? resource_group) {
     See https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md
     for details on how to configure telegraf.
   '';
+
+  flyingcircus.services.sensu-client.checks = {
+    telegraph_prometheus_output = {
+      notification = "Telegraf prometheus output alive";
+      command = ''
+        check_http -H ${config.networking.hostName} -p ${port} \
+          -u /metrics
+      '';
+    };
+  };
 
 }

@@ -225,6 +225,16 @@ in
         }
       ];
 
+      flyingcircus.services.sensu-client.checks = {
+        prometheus = {
+          notification = "Prometheus http port alive";
+          command = ''
+            check_http -H ${config.networking.hostName} -p 9090 \
+              -u /metrics
+          '';
+        };
+      };
+
     })
 
     # Grafana
