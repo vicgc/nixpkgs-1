@@ -40,6 +40,8 @@ in
          (fclib.listenAddressesQuotedV6 config "lo"));
     services.varnish.config = varnishCfg;
     services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
+    # XXX: needs to be migrated to varnish service
+    systemd.services.varnish.after = [ "network.target" ];
 
     system.activationScripts.varnish = ''
       install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
