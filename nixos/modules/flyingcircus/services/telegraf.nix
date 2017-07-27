@@ -5,13 +5,19 @@ with lib;
 let
   cfg = config.services.telegraf;
 
+  telegrafConfig = { inputs = cfg.inputs; } // cfg.extraConfig;
   configFile = pkgs.runCommand "config.toml" {
     buildInputs = [ pkgs.remarshal ];
   } ''
     remarshal -if json -of toml \
-      < ${pkgs.writeText "config.json" (builtins.toJSON cfg.extraConfig)} \
+      < ${pkgs.writeText "config.json" (builtins.toJSON telegrafConfig)} \
       > $out
   '';
+
+  startupOptions = "--config '${configFile}'" +
+    optionalString (cfg.configDir != null)
+      " --config-directory '${cfg.configDir}'";
+
 in {
   ###### interface
   options = {
@@ -25,22 +31,33 @@ in {
         type = types.package;
       };
 
+      configDir = mkOption {
+        description = "Additional configuration directory.";
+        default = null;
+        type = types.nullOr types.path;
+      };
+
+      inputs = mkOption {
+        default = {};
+        type = types.attrsOf (types.listOf types.attrs);
+      };
+
       extraConfig = mkOption {
         default = {};
         description = "Extra configuration options for telegraf";
         type = types.attrsOf types.attrs;
         example = {
           outputs = {
-            influxdb = {
+            influxdb = [{
               urls = ["http://localhost:8086"];
               database = "telegraf";
-            };
+            }];
           };
           inputs = {
-            statsd = {
+            statsd = [{
               service_address = ":8125";
               delete_timings = true;
-            };
+            }];
           };
         };
       };
@@ -55,7 +72,7 @@ in {
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       serviceConfig = {
-        ExecStart=''${cfg.package}/bin/telegraf -config "${configFile}"'';
+        ExecStart=''${cfg.package}/bin/telegraf ${startupOptions}'';
         ExecReload="${pkgs.coreutils}/bin/kill -HUP $MAINPID";
         User = "telegraf";
         Restart = "on-failure";

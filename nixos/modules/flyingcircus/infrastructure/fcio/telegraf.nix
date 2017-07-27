@@ -9,6 +9,10 @@ in
 mkIf (params ? location && params ? resource_group) {
 
   services.telegraf.enable = true;
+  services.telegraf.configDir =
+    if builtins.pathExists "/etc/local/telegraf"
+    then /etc/local/telegraf
+    else null;
   services.telegraf.extraConfig = {
     global_tags = {
         location = params.location;
@@ -20,27 +24,45 @@ mkIf (params ? location && params ? resource_group) {
           fclib.listenAddressesQuotedV6 config "ethsrv")}:9126";
       };
     };
-    inputs = {
-      cpu = {
-        percpu = false;
-        totalcpu = true;
-      };
-      disk = {
-        mount_points = [
-          "/"
-          "/tmp"
-        ];
-      };
-      diskio = {
-        skip_serial_number = true;
-      };
-      kernel = {};
-      mem = {};
-      netstat = {};
-      net = {};
-      processes = {};
-      system = {};
-      swap = {};
-    };
   };
+  services.telegraf.inputs = {
+    cpu = [{
+      percpu = false;
+      totalcpu = true;
+    }];
+    disk = [{
+      mount_points = [
+        "/"
+        "/tmp"
+      ];
+    }];
+    diskio = [{
+      skip_serial_number = true;
+    }];
+    kernel = [{}];
+    mem = [{}];
+    netstat = [{}];
+    net = [{}];
+    processes = [{}];
+    system = [{}];
+    swap = [{}];
+  };
+
+  systemd.services.telegraf.serviceConfig = {
+    PermissionsStartOnly = "true";
+    ExecStartPre = ''
+      ${pkgs.coreutils}/bin/install -d -o root -g service -m 02775 \
+        /etc/local/telegraf
+    '';
+  };
+
+  environment.etc."local/telegraf/README.txt".text = ''
+    There is a telegraf daemon running on this machine to gather statistics.
+    To gather additional or custom statistis add a proper configuration file
+    here. `*.conf` will beloaded.
+
+    See https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md
+    for details on how to configure telegraf.
+  '';
+
 }

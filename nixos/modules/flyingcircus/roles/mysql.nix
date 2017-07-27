@@ -283,12 +283,10 @@ in
       };
     };
 
-    services.telegraf.extraConfig = {
-      inputs = {
-        mysql = {
-          servers = ["root:${rootPassword}@unix(/run/mysqld/mysqld.sock)/?tls=false"];
-        };
-      };
+    services.telegraf.inputs = {
+      mysql = [{
+        servers = ["root:${rootPassword}@unix(/run/mysqld/mysqld.sock)/?tls=false"];
+      }];
     };
 
   };

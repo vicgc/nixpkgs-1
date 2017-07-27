@@ -198,12 +198,10 @@ in
         }
     '';
 
-    services.telegraf.extraConfig = {
-      inputs = {
-        nginx = {
-          urls = ["http://localhost:80/nginx_status"];
-        };
-      };
+    services.telegraf.inputs = {
+      nginx = [{
+        urls = ["http://localhost:80/nginx_status"];
+      }];
     };
 
 
