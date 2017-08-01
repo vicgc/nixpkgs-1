@@ -5,24 +5,72 @@
 with lib;
 
 let
-  cfg = config.flyingcircus.roles.statshost;
-  cfg_proxy = config.flyingcircus.roles.statshostproxy;
+  fclib = import ../lib;
 
-  # can be replaced with pkgs.influxdb once InfluxDB 0.11 is present in upstream
-  # nixpkgs.
-  influxdb = (pkgs.callPackage ../packages/influxdb.nix { }).bin //
-    { outputs = [ "bin" ]; };
+  # For details, see the option description below
+  cfgStatsGlobal = config.flyingcircus.roles.statshost;
+  cfgStatsRG = config.flyingcircus.roles.statshost-master;
+  cfgProxyGlobal = config.flyingcircus.roles.statshostproxy;
+  cfgProxyRG = config.flyingcircus.roles.statshost-relay;
 
-  statshost_service = lib.findFirst
+  prometheus = cfgStatsRG.enable || cfgProxyRG.enable;
+  promFlags =
+    if cfgStatsRG.enable
+    then [
+      "-storage.local.retention 1400h"
+      "-storage.local.series-file-shrink-ratio 0.3"
+      "-storage.local.memory-chunks 1048576"
+    ]
+    else [  # Proxy only
+      "-storage.local.retention 24h"
+      "-storage.local.series-file-shrink-ratio 0.1"
+      "-storage.local.memory-chunks 131072"  # Find out useful value.
+    ];
+  prometheusListenAddress =
+    "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+
+  statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
     null
     config.flyingcircus.enc_services;
 
+  grafanaLdapConfig = pkgs.writeText "ldap.toml" ''
+    verbose_logging = true
+
+    [[servers]]
+    host = "ldap.rzob.gocept.net"
+    port = 389
+    start_tls = true
+    bind_dn = "uid=%s,ou=People,dc=gocept,dc=com"
+    search_base_dns = ["ou=People,dc=gocept,dc=com"]
+    search_filter = "(uid=%s)"
+    group_search_base_dns = ["ou=Group,dc=gocept,dc=com"]
+    group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
+
+    [servers.attributes]
+    name = "cn"
+    surname = "displaname"
+    username = "uid"
+    member_of = "cn"
+    email = "mail"
+
+    [[servers.group_mappings]]
+    group_dn = "${config.flyingcircus.enc.parameters.resource_group}"
+    org_role = "Admin"
+
+    [[servers.group_mappings]]
+    group_dn = "*"
+    org_role = ""
+
+  '';
+
 in
 {
   options = {
+
+    # The following two roles are *system/global* roles for FC use.
     flyingcircus.roles.statshost = {
-      enable = mkEnableOption "Grafana/InfluxDB stats host";
+      enable = mkEnableOption "Grafana/InfluxDB stats host (global)";
 
       useSSL = mkOption {
         type = types.bool;
@@ -44,20 +92,33 @@ in
     };
 
     flyingcircus.roles.statshostproxy = {
-      enable = mkEnableOption "Enable stats proxy.";
+      enable = mkEnableOption "Stats proxy, which relays an entire location";
+    };
+
+
+    # The following two roles are "customer" roles, customers can use them to
+    # have their own statshost.
+    flyingcircus.roles.statshost-master = {
+      enable = mkEnableOption "Grafana/Prometheus stats host for one RG";
+    };
+
+    flyingcircus.roles.statshost-relay = {
+      enable = mkEnableOption "RG-specific Grafana/Prometheus stats relay";
     };
 
   };
 
   config = mkMerge [
-    (mkIf cfg.enable {
+
+    # Global stats host. Currently influxdb.
+    (mkIf cfgStatsGlobal.enable {
 
       # make the 'influx' command line tool accessible
-      environment.systemPackages = [ influxdb ];
+      environment.systemPackages = [ pkgs.influxdb ];
 
       services.influxdb011.enable = true;
       services.influxdb011.dataDir = "/srv/influxdb";
-      services.influxdb011.package = influxdb;
+      services.influxdb011.package = pkgs.influxdb;
 
       services.influxdb011.extraConfig = {
         http.enabled = true;
@@ -110,21 +171,91 @@ in
 
       boot.kernel.sysctl."net.core.rmem_max" = 8388608;
 
+      services.collectdproxy.statshost.enable = true;
+      services.collectdproxy.statshost.send_to =
+        "${cfgStatsGlobal.hostName}:2003";
+    })
+
+    # RG-specific statshost. Prometheus
+    (mkIf prometheus {
+
+      environment.etc."local/statshost/scrape-rg.json".text = builtins.toJSON [{
+        targets = builtins.sort builtins.lessThan (lib.unique
+          (map
+            (host: "${host.name}.fcio.net:9126")
+            config.flyingcircus.enc_addresses.srv));
+      }];
+
+      services.prometheus.enable = true;
+      services.prometheus.extraFlags = promFlags;
+      services.prometheus.listenAddress = prometheusListenAddress;
+      services.prometheus.scrapeConfigs = [
+        { job_name = "prometheus";
+          scrape_interval = "5s";
+          static_configs = [{
+            targets = [prometheusListenAddress];
+            labels = {
+              host = config.networking.hostName;
+            };
+          }];
+        }
+        { job_name = "static";
+          scrape_interval = "15s";
+          # We use a file sd here. Static config would restart prometheus for
+          # each change. This way prometheus picks up the change automatically
+          # and without restart.
+          file_sd_configs = [{
+            files = ["/etc/local/statshost/scrape-*.json" ];
+            refresh_interval = "10m";
+          }];
+        }
+        { job_name = "fedrate";
+          scrape_interval = "15s";
+          metrics_path = "/federate";
+          honor_labels = true;
+          params = {
+            "match[]" = [
+              "{job=~\"static|prometheus\"}"
+            ];
+          };
+          file_sd_configs = [{
+            files = ["/etc/local/statshost/federate-*.json" ];
+            refresh_interval = "10m";
+          }];
+        }
+      ];
+
+      flyingcircus.services.sensu-client.checks = {
+        prometheus = {
+          notification = "Prometheus http port alive";
+          command = ''
+            check_http -H ${config.networking.hostName} -p 9090 \
+              -u /metrics
+          '';
+        };
+      };
+
+    })
+
+    # Grafana
+    (mkIf (cfgStatsGlobal.enable || cfgStatsRG.enable) {
       services.grafana = {
         enable = true;
         port = 3001;
         addr = "127.0.0.1";
-        rootUrl = "http://${cfg.hostName}/grafana";
+        rootUrl = "http://${cfgStatsGlobal.hostName}/grafana";
+        extraOptions = {
+          AUTH_LDAP_ENABLED = "true";
+          AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
+          LOG_LEVEL = "debug";
+          LOG_FILTERS = "ldap:debug";
+        };
       };
 
-      services.collectdproxy.statshost.enable = true;
-      services.collectdproxy.statshost.send_to = "${cfg.hostName}:2003";
-
       flyingcircus.roles.nginx.enable = true;
-
       flyingcircus.roles.nginx.httpConfig =
         let
-          httpHost = cfg.hostName;
+          httpHost = cfgStatsGlobal.hostName;
           common = ''
             server_name ${httpHost};
 
@@ -133,7 +264,7 @@ in
             }
 
             location / {
-                rewrite . /grafana/ redirect;
+                rewrite ^ /grafana/ redirect;
             }
 
             location /grafana/ {
@@ -145,12 +276,15 @@ in
             }
           '';
         in
-        if cfg.useSSL then ''
+        if cfgStatsGlobal.useSSL then ''
           server {
               listen *:80;
               listen [::]:80;
               server_name ${httpHost};
-              rewrite . https://$server_name$request_uri redirect;
+
+              location / {
+                rewrite ^ https://$server_name$request_uri redirect;
+              }
           }
 
           server {
@@ -174,11 +308,13 @@ in
 
       networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
       networking.firewall.allowedUDPPorts = [ 2003 ];
+
     })
 
-    (mkIf (cfg_proxy.enable && statshost_service != null) {
+    # collectd proxy
+    (mkIf (cfgProxyGlobal.enable && statshostService != null) {
       services.collectdproxy.location.enable = true;
-      services.collectdproxy.location.statshost = cfg.hostName;
+      services.collectdproxy.location.statshost = cfgStatsGlobal.hostName;
       services.collectdproxy.location.listen_addr = config.networking.hostName;
       networking.firewall.allowedUDPPorts = [ 2003 ];
 

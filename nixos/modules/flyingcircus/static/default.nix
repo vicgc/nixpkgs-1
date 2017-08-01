@@ -104,6 +104,8 @@ with lib;
       # Sames as upstream/master, but not yet merged
       kibana = 211;
       turnserver = 249;
+      prometheus = 255;
+      telegraf = 256;
 
       # Our custom services
       sensuserver = 31001;
@@ -118,6 +120,10 @@ with lib;
       users = 100;
       # The generic 'service' GID is different from Gentoo.
       # But 101 is already used in NixOS.
+
+      # Sames as upstream/master, but not yet merged
+      prometheus = 255;
+
       service = 900;
 
       # Sames as upstream/master, but not yet merged

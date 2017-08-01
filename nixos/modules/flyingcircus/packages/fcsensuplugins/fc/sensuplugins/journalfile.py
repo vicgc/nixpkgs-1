@@ -18,14 +18,13 @@ _log = logging.getLogger('nagiosplugin')
 
 class JournalFile(Resource):
 
-    def __init__(self):
-        self.journal_files = glob('/var/log/journal/*/*.journal')
+    def __init__(self, res='/var/log/journal/*/*.journal'):
+        self.journal_files = res
 
     def probe(self):
-        for file in self.journal_files:
+        for file in glob(self.journal_files):
             size = os.path.getsize(file)
-            yield Metric(
-                file, size, 'B', min=0, context='critical')
+            yield Metric(file, size, 'B', min=0, context='critical')
 
 
 class JournalFileSummary(Summary):
