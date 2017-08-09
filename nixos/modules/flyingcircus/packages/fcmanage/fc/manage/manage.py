@@ -31,23 +31,18 @@ import tempfile
 #   + validate the next version and decide whether to switch automatically
 #     or whether to create a maintenance window and let the current one stay
 #     for now, but keep updating ENC data.
+# - perform updates _without_ service restarts immediately?
+# - How do we cope for emergency updates where we need to update *now*? How can
+#   we force this?
 
-enc = None
-
+enc = {}
 
 ACTIVATE = """\
+set -e
 nix-channel --add {url} nixos
-nix-channel --update
+nix-channel --update nixos
 nixos-rebuild switch
 nix-channel --remove next
-"""
-
-ACTIVATE_MESSAGE = """\
-System update to {channel}. The following services will be affected in this \
-order:
-
-{changes}
-
 """
 
 
@@ -67,6 +62,7 @@ class Channel:
                 self.resolved_url = response.headers['location']
             else:
                 break
+        self.resolved_url = self.resolved_url.rstrip('/')
 
     def __str__(self):
         def last(url):
@@ -104,7 +100,7 @@ class Channel:
         """Load channel as given name."""
         subprocess.check_call(
             ['nix-channel', '--add', self.resolved_url, name])
-        subprocess.check_call(['nix-channel', '--update'])
+        subprocess.check_call(['nix-channel', '--update', name])
 
     def switch(self, build_options):
         """Build the "self" channel and switch system to it."""
@@ -142,25 +138,21 @@ class Channel:
         return changes
 
     def register_maintenance(self, changes):
-        notifications = []
-
         def notify(category):
-            services = changes.get(category)
+            services = changes.get(category, [])
             if services:
-                notifications.append(
-                    '{}: {}'.format(
-                        category.capitalize(),
-                        ', '.join(s.replace('.service', '', 1)
-                                  for s in services)))
+                return '{}: {}'.format(
+                    category.capitalize(),
+                    ', '.join(s.replace('.service', '', 1)
+                              for s in services))
+            else:
+                return ''
 
-        notify('stop')
-        notify('restart')
-        notify('start')
-        notify('reload')
-
-        msg = ACTIVATE_MESSAGE.format(
-            channel=self,
-            changes='\n'.join(notifications))
+        notifications = list(filter(None, (notify(cat)
+                         for cat in ['stop', 'restart', 'start', 'reload'])))
+        msg = ['System update to {}'.format(self)] + notifications
+        if len(msg) > 1:  # add trailing newline if output is multi-line
+            msg += ['']
 
         # XXX: We should use an fc-manage call (like --activate), instead of
         # Dumping the script into the maintenance request.
@@ -168,7 +160,7 @@ class Channel:
         with fc.maintenance.ReqManager() as rm:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.shellscript.ShellScriptActivity(script),
-                '5m', comment=msg))
+                300, comment='\n'.join(msg)))
 
 
 def load_enc(enc_path):
@@ -258,7 +250,8 @@ def system_state():
 
 
 def update_inventory():
-    if 'directory_password' not in enc['parameters']:
+    if (not enc or not enc.get('parameters') or
+            not enc['parameters'].get('directory_password')):
         print('No directory password. Not updating inventory.')
         return
     try:
@@ -283,39 +276,40 @@ def update_inventory():
 
 
 def build_channel_with_maintenance(build_options):
+    if not enc or not enc.get('parameters'):
+        print('No ENC data. Not building channel.')
+        return
+    # always rebuild current channel (ENC updates, activation scripts etc.)
     current_channel = Channel.current('nixos')
-    next_channel = Channel.current('next')
-    if not next_channel:
-        # If there is already a next channel, don't try another update.
-        # We announced the previous update and should stick to that not
-        # updating another one.
-        #
-        # How do we cope for emergency updates where we need to update
-        # *now*? How can we force this?
-        next_channel = Channel(enc['parameters']['environment_url'])
-    if next_channel != current_channel:
-        print('Preparing switch form {} to to {}.'.format(
-            current_channel, next_channel))
-        next_channel.prepare_maintenance()
-    if current_channel is None:
-        print('There is currently no channel active. Not building.')
-    else:
+    if current_channel:
         print('Rebuilding {}'.format(current_channel))
         current_channel.switch(build_options)
+    # scheduled update already present?
+    if Channel.current('next'):
+        rm = fc.maintenance.ReqManager()
+        rm.scan()
+        if rm.requests:
+            print('Channel update prebooked @ {}'.format(
+                list(rm.requests.values())[0].next_due))
+            return
+    # scheduled update available?
+    next_channel = Channel(enc['parameters'].get('environment_url'))
+    if next_channel and next_channel != current_channel:
+        print('Preparing switch from {} to {}.'.format(
+            current_channel, next_channel))
+        next_channel.prepare_maintenance()
+        return
 
 
 def build_channel(build_options):
-    print('Switching channel ...')
     try:
-        if os.path.exists('/etc/local/build-with-maintenance'):
-            build_channel_with_maintenance(build_options)
+        if enc and enc.get('parameters'):
+            channel = Channel(enc['parameters']['environment_url'])
         else:
-            if enc:
-                channel = Channel(enc['parameters']['environment_url'])
-            else:
-                channel = Channel.current('nixos')
-            if channel:
-                channel.switch(build_options)
+            channel = Channel.current('nixos')
+        if channel:
+            print('Building {}'.format(channel))
+            channel.switch(build_options)
     except Exception:
         logging.exception('Error switching channel')
 
@@ -380,6 +374,11 @@ def parse_args():
     build.add_argument('-c', '--channel', default=False, dest='build',
                        action='store_const', const='build_channel',
                        help='switch machine to FCIO channel')
+    build.add_argument('-C', '--channel-with-maintenance', default=False,
+                       dest='build', action='store_const',
+                       const='build_channel_with_maintenance',
+                       help='switch machine to FCIO channel during scheduled '
+                       'maintenance')
     build.add_argument('-d', '--development', default=False, dest='build',
                        action='store_const', const='build_dev',
                        help='switch machine to local checkout in '

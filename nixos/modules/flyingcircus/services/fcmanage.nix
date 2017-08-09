@@ -7,20 +7,24 @@ with lib;
 
 let
   cfg = config.flyingcircus;
+  defaultUpdateAction =
+    if cfg.agent.with-maintenance then "--channel-with-maintenance" else "--channel";
 
 in {
   options = {
 
     flyingcircus.agent = {
-      enable = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Enable automatically running the Flying Circus management agent.";
+      enable = mkEnableOption "automatic runs of the Flying Circus management agent";
+
+      with-maintenance = mkOption {
+        default = false;
+        description = "Perform NixOS updates in scheduled maintenance.";
+        type = lib.types.bool;
       };
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --maintenance --channel";
+        default = "--directory --system-state --maintenance ${defaultUpdateAction}";
         description = "Steps to run by the agent.";
       };
     };
