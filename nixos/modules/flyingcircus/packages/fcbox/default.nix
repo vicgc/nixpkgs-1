@@ -7,7 +7,8 @@ buildRustPackage rec {
   version = "0.2.0";
 
   src = ./box;
-  depsSha256 = "1bfm5zkiwm5ydq6n7ajp7vlsa6pgg0d1dyi9jsi4bakx6nf7nsyw";
+  cargoDepsSha256 = "1nla3bp3yifkhjww7rp65i9xlv91scrsg7y8szy18sngn0ji20ac";
+  doCheck = true;
 
   postBuild = ''
     substituteAllInPlace box.1.rst

@@ -10,8 +10,6 @@ let
       sha256 = "1xpa667qyrr0r9za13gs2pggd64rlzdwn3i9akq9931ssbgrgv7s";
   }) {});
 
-  rust = pkgs.callPackage ./rust/bootstrap.nix { };
-
 in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
@@ -158,7 +156,8 @@ in rec {
 
   remarshal = pkgs_17_03.remarshal;
 
-  inherit (rust) rustc cargo;
+  rust = pkgs.callPackage ./rust/default.nix { };
+
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
   makeRustPlatform = rust: lib.fix (self:
     let
@@ -168,7 +167,7 @@ in rec {
 
       rustRegistry = pkgs.callPackage ./rust/rust-packages.nix { };
 
-      buildRustPackage = pkgs.callPackage ./rust/build-support {
+      buildRustPackage = pkgs.callPackage ./rust/buildRustPackage.nix {
         inherit rust rustRegistry;
       };
     });
