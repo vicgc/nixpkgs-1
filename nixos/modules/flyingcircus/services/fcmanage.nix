@@ -7,14 +7,21 @@ with lib;
 
 let
   cfg = config.flyingcircus;
-  defaultUpdateAction =
-    if cfg.agent.with-maintenance then "--channel-with-maintenance" else "--channel";
+
+  # migration for #26699
+  deprecatedBuildWithMaintenanceFlag =
+    builtins.pathExists "/etc/local/build-with-maintenance";
+
+  channelAction =
+    if deprecatedBuildWithMaintenanceFlag || cfg.agent.with-maintenance
+    then "--channel-with-maintenance"
+    else "--channel";
 
 in {
   options = {
-
     flyingcircus.agent = {
-      enable = mkEnableOption "automatic runs of the Flying Circus management agent";
+      enable = mkEnableOption
+        "automatic runs of the Flying Circus management agent";
 
       with-maintenance = mkOption {
         default = false;
@@ -24,15 +31,21 @@ in {
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --maintenance ${defaultUpdateAction}";
+        default = "--directory --system-state --maintenance ${channelAction}";
         description = "Steps to run by the agent.";
       };
     };
-
   };
 
   config = mkMerge [
     {
+      # migration for #26699
+      warnings = lib.optional deprecatedBuildWithMaintenanceFlag ''
+        Deprecated "build-with-maintenance" flag file detected.
+        Set NixOS option "flyingcircus.agent.with-maintenance" instead and
+        delete the old flag file to get rid of this warning.
+      '';
+
       # We always install the management agent, but we don't necessarily
       # enable it running automatically.
       environment.systemPackages = [
@@ -73,11 +86,9 @@ in {
         %sudo-srv ALL=(root) FCMANAGE
         %service  ALL=(root) FCMANAGE
       '';
-
     }
 
     (mkIf config.flyingcircus.agent.enable {
-
       systemd.timers.fc-manage = {
         description = "Timer for fc-manage";
         wantedBy = [ "timers.target" ];
@@ -88,7 +99,6 @@ in {
           # RandomSec = "3m";
         };
       };
-
     })
   ];
 }
