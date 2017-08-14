@@ -285,18 +285,18 @@ let
 in {
 
   php55 = generic {
-    version = "5.5.35";
-    sha256 = "1msqh8ii0qwzzcwlwn8f493x2r3hy2djzrrwd5jgs87893b8sr1d";
+    version = "5.5.37";
+    sha256 = "122xj115fjl6rqlxqqjzvh16fbm801yqcmfh9hn7zwfa8sz0wf6j";
   };
 
   php56 = generic {
-    version = "5.6.21";
-    sha256 = "144m8xzpqv3pimxh2pjhbk4fy1kch9afkzclcinzv2dnfjspmvdl";
+    version = "5.6.30";
+    sha256 = "01krq8r9xglq59x376zlg261yikckq179jmhnlcg3gqxza9w41d1";
   };
 
   php70 = generic {
-    version = "7.0.15";
-    sha256 = "1nbxwj4yx30k77qibhmnx0rvqhia1zbkwi5ps5nzm0sn6d3zkj58";
+    version = "7.0.21";
+    sha256 = "07r3qqyyvf16k4xk5b2070fwilggmph5937drjm8cvyyjb1k789b";
   };
 
 }
