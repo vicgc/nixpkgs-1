@@ -20,7 +20,6 @@ stdenv.mkDerivation rec {
      ncurses
      percona
      vim
-     xxdiff
      ];
 
   enableParallelBuilding = true;
