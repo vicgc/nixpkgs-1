@@ -66,14 +66,11 @@ in
 
   config = mkMerge [
     (mkIf (cfg.roles.nfs_rg_client.enable && service ? address) {
-      # work around kernel bug, see #27810
-      boot.blacklistedKernelModules = [ "rpcsec_gss_krb5" ];
-
       fileSystems = {
         "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
           fsType = "nfs4";
-          options = mountopts;
+          options = "${mountopts},nfsvers=4";
           noCheck = true;
         };
       };
@@ -81,11 +78,6 @@ in
       systemd.tmpfiles.rules = [
         "d ${mountpoint}"
       ];
-
-      services.logrotate.config = ''
-        /var/log/autofs {
-        }
-      '';
     })
 
     (mkIf (cfg.roles.nfs_rg_share.enable && service_clients != []) {
