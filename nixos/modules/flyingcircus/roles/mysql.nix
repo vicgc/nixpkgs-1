@@ -19,6 +19,11 @@ let
     then "$(${pkgs.apg}/bin/apg -a 1 -M lnc -n 1 -m 12)"
     else "\"${cfg.rootPassword}\"";
 
+  rootPassword =
+    if builtins.pathExists root_password_file
+    then removeSuffix "\n" (builtins.readFile root_password_file)
+    else "";
+
   localConfig =
     if pathExists /etc/local/mysql
     then "!includedir ${/etc/local/mysql}"
@@ -277,5 +282,12 @@ in
         '';
       };
     };
+
+    services.telegraf.inputs = {
+      mysql = [{
+        servers = ["root:${rootPassword}@unix(/run/mysqld/mysqld.sock)/?tls=false"];
+      }];
+    };
+
   };
 }

@@ -20,7 +20,6 @@ import ../../../tests/make-test.nix ({ pkgs, ... }:
         imports = [
           ./setup.nix
           ../platform
-          ../roles/postgresql.nix
           ../services/fcmanage.nix
           ../services/sensu/client.nix
           ../static

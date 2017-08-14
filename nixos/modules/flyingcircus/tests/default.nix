@@ -30,6 +30,8 @@
   postgresql_9_6 = hydraJob
     (import ./postgresql.nix { rolename = "postgresql96"; });
 
+  prometheus = hydraJob (import ./prometheus.nix { inherit system; });
+
   rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
 
   sensuserver = hydraJob (import ./sensu.nix { inherit system; });

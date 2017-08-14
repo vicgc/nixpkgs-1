@@ -9,9 +9,6 @@ with lib;
 let
   cfg = config.services.influxdb011;
 
-  remarshal = (pkgs.callPackage ../packages/remarshal.nix { }).bin //
-    { outputs = [ "bin" ]; };
-
   configOptions = recursiveUpdate {
     meta = {
       bind-address = ":8088";
@@ -104,7 +101,7 @@ let
   } cfg.extraConfig;
 
   configFile = pkgs.runCommand "config.toml" {
-    buildInputs = [ remarshal ];
+    buildInputs = [ pkgs.remarshal ];
   } ''
     remarshal -if json -of toml \
       < ${pkgs.writeText "config.json" (builtins.toJSON configOptions)} \
@@ -169,7 +166,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network-interfaces.target" ];
       serviceConfig = {
-        ExecStart = ''${cfg.package}/bin/influxd -config "${configFile}"'';
+        ExecStart = ''${cfg.package.bin}/bin/influxd -config "${configFile}"'';
         User = "${cfg.user}";
         Group = "${cfg.group}";
         PermissionsStartOnly = true;

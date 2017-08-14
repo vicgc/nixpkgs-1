@@ -20,7 +20,8 @@ let
           (attrNames
             (builtins.readDir /etc/local/datadog))));
 
-  ddHome = config.users.users.datadog.home;
+  ddHome =
+    optionalString (config.users.users?datadog) config.users.users.datadog.home;
 
 in
 {
@@ -37,6 +38,8 @@ in
   config = mkIf cfg.enable {
     system.activationScripts.fcio-datadog = ''
       install -d -o root -g service -m 02775 /etc/local/datadog
+    '' +
+    optionalString (ddHome != "") ''
       install -d -o datadog -g datadog -m 0755 ${ddHome}
     '';
 

@@ -126,6 +126,23 @@ let
       ssl_session_timeout 10m;
       ssl_dhparam /etc/ssl/dhparams.pem;
 
+      # Server Status for monitoring:
+      server {
+        listen 127.0.0.1:80 default_server;
+        listen [::1]:80 default_server;
+        access_log off;
+        server_name _;
+        server_name_in_redirect off;
+
+        location /nginx_status {
+          stub_status on;
+          access_log   off;
+          allow 127.0.0.1;
+          allow ::1;
+          deny all;
+         }
+      }
+
       ${localConfig}
 
       ${config.flyingcircus.roles.nginx.httpConfig}
@@ -180,6 +197,13 @@ in
             endscript
         }
     '';
+
+    services.telegraf.inputs = {
+      nginx = [{
+        urls = ["http://localhost:80/nginx_status"];
+      }];
+    };
+
 
     environment.etc = {
 

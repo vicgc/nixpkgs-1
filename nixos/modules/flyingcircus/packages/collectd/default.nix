@@ -7,6 +7,7 @@
 , libdbi ? null
 , libgcrypt ? null
 , libmemcached ? null, cyrus_sasl ? null
+, libmicrohttpd ? null
 , libmodbus ? null
 , libnotify ? null, gdk_pixbuf ? null
 , liboping ? null
@@ -26,18 +27,18 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "collectd-5.4.3";
+  name = "collectd-5.7.2";
 
   src = fetchurl {
     url = "http://collectd.org/files/${name}.tar.bz2";
-    sha256 = "1na3wwwzn430vw8mvwigjyxjl9d5329jb75sby8gi8yj996csb3b";
+    sha256 = "14p5cc3ys3qfg71xzxfvmxdmz5l4brpbhlmw1fwdda392lia084x";
   };
 
   buildInputs = [
     pkgconfig curl iptables libcredis libdbi libgcrypt libmemcached cyrus_sasl
     libmodbus libnotify gdk_pixbuf liboping libpcap libsigrok libvirt
     lm_sensors libxml2 lvm2 mysql.lib postgresql protobufc rabbitmq-c rrdtool
-    varnish yajl
+    varnish yajl libmicrohttpd
   ];
 
   # for some reason libsigrok isn't auto-detected

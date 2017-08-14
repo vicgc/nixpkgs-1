@@ -52,6 +52,7 @@ in rec {
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
 
+  grafana = pkgs_17_03.grafana;
   graylog = pkgs.callPackage ./graylog.nix { };
 
   http-parser = pkgs.callPackage ./http-parser {
@@ -61,8 +62,8 @@ in rec {
   imagemagick = imagemagickBig.override {
     ghostscript = null;
   };
-
   imagemagickBig = pkgs.callPackage ./ImageMagick { };
+  influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
   kibana = pkgs.callPackage ./kibana.nix { };
@@ -103,6 +104,8 @@ in rec {
       modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
     };
 
+  nix = pkgs_17_03.nix;
+
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
     nodejs4 nodejs6 nodejs7;
 
@@ -141,6 +144,8 @@ in rec {
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
+  prometheus = pkgs_17_03.prometheus;
+
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
     x86Only = true;
@@ -150,6 +155,8 @@ in rec {
   rabbitmq_server = pkgs.callPackage ./rabbitmq-server.nix { };
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+
+  remarshal = pkgs_17_03.remarshal;
 
   inherit (rust) rustc cargo;
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
@@ -174,6 +181,8 @@ in rec {
   rustUnstable = rustPlatform;
 
   sensu = pkgs.callPackage ./sensu { };
+
+  telegraf = pkgs_17_03.telegraf;
 
   uchiwa = pkgs.callPackage ./uchiwa { };
 
