@@ -70,17 +70,14 @@ in
         "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
           fsType = "nfs4";
-          options = mountopts;
+          options = "${mountopts},nfsvers=4";
           noCheck = true;
         };
       };
+
       systemd.tmpfiles.rules = [
         "d ${mountpoint}"
       ];
-      services.logrotate.config = ''
-        /var/log/autofs {
-        }
-      '';
     })
 
     (mkIf (cfg.roles.nfs_rg_share.enable && service_clients != []) {
