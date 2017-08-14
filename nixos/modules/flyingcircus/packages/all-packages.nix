@@ -141,6 +141,8 @@ in rec {
     php56
     php70;
 
+  php70Packages = pkgs_17_03.php70Packages;
+
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
