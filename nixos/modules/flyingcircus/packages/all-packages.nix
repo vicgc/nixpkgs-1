@@ -114,7 +114,7 @@ in rec {
         onlyHeaders = true;
       };
     })
-    openssl_1_0_2 openssl_1_1_0;
+    openssl_1_0_2 openssl_1_1_0 openssl_1_0_1;
   openssl = openssl_1_0_2;
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
