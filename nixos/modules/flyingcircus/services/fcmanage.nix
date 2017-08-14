@@ -20,13 +20,16 @@ let
 in {
   options = {
     flyingcircus.agent = {
-      enable = mkEnableOption
-        "automatic runs of the Flying Circus management agent";
+      enable = mkOption {
+        default = true;  # <-!!!
+        description = "Run the Flying Circus management agent automatically.";
+        type = types.bool;
+      };
 
       with-maintenance = mkOption {
         default = false;
         description = "Perform NixOS updates in scheduled maintenance.";
-        type = lib.types.bool;
+        type = types.bool;
       };
 
       steps = mkOption {
@@ -88,7 +91,7 @@ in {
       '';
     }
 
-    (mkIf config.flyingcircus.agent.enable {
+    (mkIf cfg.agent.enable {
       systemd.timers.fc-manage = {
         description = "Timer for fc-manage";
         wantedBy = [ "timers.target" ];
