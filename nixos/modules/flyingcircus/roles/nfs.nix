@@ -18,7 +18,7 @@ let
 
   export = "/srv/nfs/shared";
   mountpoint = "/mnt/nfs";
-  mountopts = "rw,soft,intr,rsize=8192,wsize=8192,vers=4,noauto,x-systemd.automount";
+  mountopts = "rw,soft,intr,rsize=8192,wsize=8192,noauto,x-systemd.automount";
 
   service_clients = filter
     (s: s.service == "nfs_rg_share-server")
@@ -66,6 +66,9 @@ in
 
   config = mkMerge [
     (mkIf (cfg.roles.nfs_rg_client.enable && service ? address) {
+      # work around kernel bug, see #27810
+      boot.blacklistedKernelModules = [ "rpcsec_gss_krb5" ];
+
       fileSystems = {
         "${mountpoint}/shared" = {
           device = "${service.address}:${export}";
@@ -74,9 +77,11 @@ in
           noCheck = true;
         };
       };
+
       systemd.tmpfiles.rules = [
         "d ${mountpoint}"
       ];
+
       services.logrotate.config = ''
         /var/log/autofs {
         }
