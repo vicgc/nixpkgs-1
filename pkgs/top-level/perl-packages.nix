@@ -7087,7 +7087,7 @@ let self = _self // overrides; _self = with self; {
       license = "perl";
     };
   };
-  
+
   MouseXGetOpt = buildPerlModule {
     name = "mousex-getopt-0.35";
     src = fetchurl {
@@ -9428,7 +9428,7 @@ let self = _self // overrides; _self = with self; {
       platforms = stdenv.lib.platforms.linux;
     };
   };
-  
+
   PackageVariant = buildPerlPackage {
     name = "Package-Variant-1.002002";
     src = fetchurl {
@@ -12137,10 +12137,10 @@ let self = _self // overrides; _self = with self; {
   };
 
   XMLLibXML = buildPerlPackage rec {
-    name = "XML-LibXML-2.0121";
+    name = "XML-LibXML-2.0129";
     src = fetchurl {
       url = "mirror://cpan/authors/id/S/SH/SHLOMIF/${name}.tar.gz";
-      sha256 = "1j8d3kmkdlzvyx3khvrcrvp798h50i6zc5i3zm04d81prc8i0hzc";
+      sha256 = "0rmk6vysfgcn8434wyydd56midgshly37wx7c50ch038l2djd82w";
     };
     SKIP_SAX_INSTALL = 1;
     buildInputs = [ pkgs.libxml2 ];
