@@ -271,9 +271,6 @@ in
                 proxy_pass http://localhost:3001/;
             }
 
-            location /grafana/public {
-                alias ${config.services.grafana.staticRootPath};
-            }
           '';
         in
         if cfgStatsGlobal.useSSL then ''
