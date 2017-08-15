@@ -21,11 +21,11 @@ in
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  name = "perl-5.22.0";
+  name = "perl-5.22.3";
 
   src = fetchurl {
     url = "mirror://cpan/src/5.0/${name}.tar.gz";
-    sha256 = "0g5bl8sdpzx9gx2g5jq3py4bj07z2ylk7s1qn0fvsss2yl3hhs8c";
+    sha256 = "10q087l1ffdy3gpryr8z540jcnsr0dhm37raicyfqqkyvys1yd8v";
   };
 
   outputs = [ "out" "man" ];
