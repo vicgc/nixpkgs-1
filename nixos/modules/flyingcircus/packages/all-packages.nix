@@ -63,6 +63,9 @@ in rec {
     ghostscript = null;
   };
   imagemagickBig = pkgs.callPackage ./ImageMagick { };
+
+  iptables = pkgs_17_03.iptables;
+
   influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
