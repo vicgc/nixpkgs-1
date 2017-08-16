@@ -14,7 +14,7 @@ buildRustPackage rec {
     rev = "${version}";
     sha256 = "0pv1vcgp455hys8hb0yj4vrh2k01zysayswkasxq4hca8s2p7qj9";
   };
-  cargoDepsSha256 = "1nrd8r1lirinqh3bdf2n3m7g8v2jk1wz7rq7gkrs7qqpgb5alxfm";
+  cargoDepsSha256 = "13s7yxry80csj1s792j517qyc91ixdc2jyahp844fyadl6q75f5h";
 
   buildInputs = [ llvmPackages.clang-unwrapped ];
 

@@ -7,7 +7,7 @@ buildRustPackage rec {
   version = "0.2.0";
 
   src = ./box;
-  cargoDepsSha256 = "1nla3bp3yifkhjww7rp65i9xlv91scrsg7y8szy18sngn0ji20ac";
+  cargoDepsSha256 = "0kq30r25jj6w8rx2fydz4gy1rm29nlijvrbf3gsyhmvms06jpxn0";
   doCheck = true;
 
   postBuild = ''

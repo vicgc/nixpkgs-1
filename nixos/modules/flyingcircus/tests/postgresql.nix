@@ -8,7 +8,7 @@ import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
         ./setup.nix
         ../platform
         ../roles/postgresql.nix
-        ../services/fcmanage.nix
+        ../services/agent.nix
         ../services/sensu/client.nix
         ../services/telegraf.nix
         ../static

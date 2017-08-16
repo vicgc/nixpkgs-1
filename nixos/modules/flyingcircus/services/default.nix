@@ -3,10 +3,10 @@
 {
   imports =
     [
+     ./agent.nix
      ./clamav.nix
      ./collectdproxy.nix
      ./coturn.nix
-     ./fcmanage.nix
      ./grafana.nix
      ./graylog.nix
      ./influxdb011.nix
