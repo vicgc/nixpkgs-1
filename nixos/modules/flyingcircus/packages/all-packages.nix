@@ -49,6 +49,7 @@ in rec {
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
+  fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
 
   grafana = pkgs_17_03.grafana;
   graylog = pkgs.callPackage ./graylog.nix { };
@@ -155,6 +156,8 @@ in rec {
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
   remarshal = pkgs_17_03.remarshal;
+
+  ripgrep = pkgs.callPackage ./ripgrep.nix { };
 
   rust = pkgs.callPackage ./rust/default.nix { };
 

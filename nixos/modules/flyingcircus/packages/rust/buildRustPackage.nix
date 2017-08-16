@@ -27,7 +27,7 @@ let
     inherit src;
     name = "${name}-cargo-deps";
     buildInputs = [ rust.cargo ];
-    phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
+    phases = [ "unpackPhase" "installPhase" ];
     installPhase = ''
       export CARGO_HOME=$PWD
       cat <<__EOF__ > $CARGO_HOME/config
@@ -42,10 +42,6 @@ let
       mkdir $out
       cp $CARGO_HOME/registry/cache/*/*.crate $out
       ln -s ${rustRegistry} $out/index
-    '';
-    fixupPhase = ''
-      # git repos contain different bits all the time
-      rm -rf $CARGO_HOME/registry/index/*/.git
     '';
     preferLocalBuild = true;
     outputHashMode = "recursive";

@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, rustPlatform, makeWrapper }:
+{ stdenv, fetchFromGitHub, rustPlatform }:
 
 with rustPlatform;
 
@@ -14,7 +14,6 @@ buildRustPackage rec {
   };
 
   cargoDepsSha256 = "10bafvlq3dkr62d00b7gpaslwllmjax1j4z0y2cnw0x2qdkk48p1";
-  doCheck = true;
 
   preFixup = ''
     mkdir -p "$out/man/man1"
