@@ -100,7 +100,7 @@ stdenv.mkDerivation rec {
     export GOBIN="$out/bin"
     export PATH="$GOBIN:$PATH"
     cd ./src
-    ./all.bash
+    ./make.bash
   '';
 
   setupHook = ./setup-hook.sh;

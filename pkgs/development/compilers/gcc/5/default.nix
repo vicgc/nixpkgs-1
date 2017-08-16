@@ -57,7 +57,7 @@ assert langGo -> langCC;
 with stdenv.lib;
 with builtins;
 
-let version = "5.2.0";
+let version = "5.4.0";
 
     # Whether building a cross-compiler for GNU/Hurd.
     crossGNU = cross != null && cross.config == "i586-pc-gnu";
