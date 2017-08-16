@@ -206,6 +206,10 @@ let
     ip46tables -N nixos-drop
     ip46tables -A nixos-drop -j DROP
 
+    # FCIO: Allow DNS during firewall reload
+    ip46tables -A nixos-drop -p udp --sport 53 -j ACCEPT
+    ip46tables -A nixos-drop -p udp --dport 53 -j ACCEPT
+
     # Don't allow traffic to leak out until the script has completed
     ip46tables -A INPUT -j nixos-drop
     if ${startScript}; then
