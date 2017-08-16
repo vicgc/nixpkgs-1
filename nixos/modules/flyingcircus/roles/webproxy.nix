@@ -58,5 +58,12 @@ in
       "local/varnish/default.vcl.example".text = vcl_example;
     };
 
+    services.telegraf.inputs = {
+      varnish = [{
+        binary = "${pkgs.varnish}/bin/varnishstat";
+        stats = ["all"];
+      }];
+    };
+
   };
 }
