@@ -10,10 +10,10 @@ buildRustPackage rec {
     owner = "flyingcircusio";
     repo = "userscan";
     rev = "${version}";
-    sha256 = "1pk0vl43k00flxsk3b6xjch7llkybws28z9r7iiqsdja0d96dwzn";
+    sha256 = "1vfcs8hzl84xdr6wjsdiraqpb56lgcd4cyzjb65ia1j4afd0div5";
   };
 
-  cargoDepsSha256 = "0p7p31py246f3rcdh8sm2w45qjx3qc72rc4k038077mv67nlsxsr";
+  cargoDepsSha256 = "1wmrb5x3x3cvsnslmlhmipr43x4chfk626vkh850aljd34sdh905";
   doCheck = true;
 
   meta = with stdenv.lib; {
