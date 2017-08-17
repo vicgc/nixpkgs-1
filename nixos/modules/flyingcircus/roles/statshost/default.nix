@@ -5,7 +5,7 @@
 with lib;
 
 let
-  fclib = import ../lib;
+  fclib = import ../../lib;
 
   # For details, see the option description below
   cfgStatsGlobal = config.flyingcircus.roles.statshost;
@@ -88,6 +88,12 @@ in
         default = "stats.flyingcircus.io";
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
+      };
+
+      prometeusMetricRelabel = mkOption {
+        type = types.listOf types.attrs;
+        default = [];
+        description = "Prometheus metric relabel configuration.";
       };
     };
 
@@ -208,6 +214,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometeusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -222,6 +229,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometeusMetricRelabel;
         }
       ];
 
@@ -249,6 +257,8 @@ in
           AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
           LOG_LEVEL = "debug";
           LOG_FILTERS = "ldap:debug";
+          DASHBOARDS_JSON_ENABLED = "true";
+          DASHBOARDS_JSON_PATH = "${./dashboards}";
         };
       };
 
