@@ -347,7 +347,7 @@ in
     })
     # This configuration part defines loghosts clients as loghosts which happen to be their own clients as well
     (mkIf (loghostService != null) {
-      services.rsyslogd.extraConfig = ''
+      flyingcircus.syslog.extraRules = ''
         *.* @${loghostService.address}:${toString syslogPort};RSYSLOG_SyslogProtocol23Format
       '';
     }

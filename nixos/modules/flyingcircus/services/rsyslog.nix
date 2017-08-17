@@ -21,10 +21,6 @@
 
   config =
   let
-    loghostService = lib.findFirst
-      (s: s.service == "loghost-server")
-      null
-    config.flyingcircus.enc_services;
     exclude = lib.concatMapStrings
       (facility: ";${facility}.none")
       (builtins.attrNames config.flyingcircus.syslog.separateFacilities);
