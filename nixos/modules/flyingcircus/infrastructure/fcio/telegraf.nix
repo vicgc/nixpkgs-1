@@ -8,6 +8,26 @@ let
 
   port = "9126";
 
+  encTags =
+    builtins.listToAttrs
+      (builtins.filter
+        # Filter unwanted labels. Some are multi-valued, which does not make
+        # sense for prometheus. The "env" might change, hence move metrics to
+        # another time series. If the user creates custom labels this will
+        # happen as well. But that's the user's choice then.
+        (tag: ((tag.name != "fc_component") &&
+               (tag.name != "fc_role") &&
+               (tag.name != "env")))
+        (map
+          (split: nameValuePair (elemAt split 0) (elemAt split 1))
+            (map
+              (combined: splitString ":" combined)
+              enc.labels)));
+
+    globalTags = encTags // {
+      resource_group = params.resource_group;
+    };
+
 in
 mkIf (params ? location && params ? resource_group) {
 
@@ -17,10 +37,7 @@ mkIf (params ? location && params ? resource_group) {
     then /etc/local/telegraf
     else null;
   services.telegraf.extraConfig = {
-    global_tags = {
-        location = params.location;
-        resource_group = params.resource_group;
-    };
+    global_tags = globalTags;
     outputs = {
       prometheus_client = {
         listen = "${lib.head(
