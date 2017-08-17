@@ -231,6 +231,7 @@ in
          description = "Enable Inputs for Graylog";
          requires = [ "graylog.service" ];
          after = [ "graylog.service" "mongodb.service" "elasticsearch.service" ];
+         wantedBy = [ "multi-user.target" ];
          serviceConfig = {
            Type = "oneshot";
            User = config.services.graylog.user;

@@ -178,6 +178,23 @@ in
         mkdir -p ${cfg.messageJournalDir} -m 755
         chown -R ${cfg.user} ${cfg.messageJournalDir}
       '';
+      postStart = ''
+        # Wait until GL is available for use
+        count=0
+        while true;
+        do
+            ${pkgs.curl}/bin/curl -s ${cfg.webListenUri} && break
+            if [ $count -eq 30 ]
+            then
+                echo "Tried 30 times, giving up..."
+                exit 1
+            fi
+
+            echo "Graylog not yet started. Waiting for 1 second..."
+            count=$((count++))
+            sleep 1
+        done
+      '';
       serviceConfig = {
         User="${cfg.user}";
         PermissionsStartOnly=true;
