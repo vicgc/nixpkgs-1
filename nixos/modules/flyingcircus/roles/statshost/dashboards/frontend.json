@@ -816,7 +816,7 @@
           "renderer": "flot",
           "seriesOverrides": [
             {
-              "alias": "HIt Ratio",
+              "alias": "Hit Ratio",
               "yaxis": 2
             }
           ],
@@ -855,7 +855,7 @@
               "step": 20
             },
             {
-              "expr": "varnish_cache_hit / (varnish_cache_hit +  varnish_cache_miss)",
+              "expr": "varnish_cache_hit{host=\"$Host\"} / (varnish_cache_hit{host=\"$Host\"} +  varnish_cache_miss{host=\"$Host\"})",
               "intervalFactor": 2,
               "legendFormat": "HIt Ratio",
               "metric": "varnish_cache_hit",
