@@ -381,7 +381,7 @@
               "step": 60
             }
           ],
-          "thresholds": "60,80",
+          "thresholds": "0.6,0.8",
           "title": "Hit-Rate",
           "type": "singlestat",
           "valueFontSize": "80%",
