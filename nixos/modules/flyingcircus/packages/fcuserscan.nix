@@ -3,17 +3,17 @@
 with rustPlatform;
 
 buildRustPackage rec {
-  name = "userscan-${version}";
-  version = "4e9dfb0";
+  name = "fc-userscan-${version}";
+  version = "e0ae456";
 
   src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "userscan";
     rev = "${version}";
-    sha256 = "1s08jc3ai24mljb8ylbhws6z6pjgg8p31sdgqmz40xic4gcq3h69";
+    sha256 = "03fib3jhxl7fzb1a662yx0hldkpv0ccyr88arn1vpvkadf4hb7yn";
   };
 
-  cargoDepsSha256 = "1wmrb5x3x3cvsnslmlhmipr43x4chfk626vkh850aljd34sdh905";
+  cargoDepsSha256 = "0hz73mf4rx4qk9cjnwda2i93kiprjmmcric14j6glzi3x80nr51z";
   doCheck = true;
 
   meta = with stdenv.lib; {

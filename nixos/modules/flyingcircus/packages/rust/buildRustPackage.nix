@@ -17,8 +17,6 @@
 , ... } @ args:
 
 let
-  frozenFlag = if rustRegistry != null then "--frozen" else "--locked";
-
   # Creates a "local-registry" directory which contains all dependendies needed
   # to compile `src`. Fixed output derivation to keep sandboxes happy.
   cargoLocalRegistry = src: sha256: rustRegistry: stdenv.mkDerivation {
@@ -59,9 +57,7 @@ in stdenv.mkDerivation ({
     rust.cargo
   ];
 
-  postUnpack = if rustRegistry == null then ''
-    export CARGO_HOME=$sourceRoot/.cargo
-  '' else ''
+  postUnpack = ''
     export CARGO_HOME=$PWD/.cargo
     mkdir -p $CARGO_HOME
     cat <<__EOF__ > $CARGO_HOME/config
@@ -78,14 +74,14 @@ in stdenv.mkDerivation ({
 
   buildPhase = ''
     runHook preBuild
-    cargo build ${if release then "--release" else ""} ${frozenFlag}
+    cargo build ${if release then "--release" else ""} --frozen
 
     runHook postBuild
   '';
 
   checkPhase = ''
     runHook preCheck
-    cargo test ${frozenFlag}
+    cargo test --frozen
     runHook PostCheck
   '';
 
