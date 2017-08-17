@@ -69,6 +69,12 @@ let
           ln -s $image/image.qcow2.bz2 $out/
         '');
 
+  # Prebuild packages listed below since they will be needed on VMs but are not
+  # mentioned anywhere else here.
+  preBuild = with pkgs; {
+    inherit libsodium qt4;
+  };
+
   # List of package names for Python packages defined in modules/flyingcircus
   ownPythonPackages = builtins.attrNames
     (import modules/flyingcircus/packages/python-packages.nix {
@@ -117,15 +123,15 @@ in rec {
   };
 
   nixpkgs = lib.filterAttrs
-    (n: v: lib.isDerivation v) (builtins.removeAttrs
-    (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
-    [ "linuxPackages" "linuxPackages_4_4" ])
+    (n: v: lib.isDerivation v)
+      (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
     // {
       python27Packages =
         filterPkgs ownPythonPackages nixpkgs'.python27Packages;
       python34Packages =
         filterPkgs ownPythonPackages nixpkgs'.python34Packages;
-    };
+    } //
+    preBuild;
 
   tested = lib.hydraJob (pkgs.releaseTools.aggregate {
     name = "nixos-${nixos.channel.version}";
