@@ -13,7 +13,7 @@ buildRustPackage rec {
     sha256 = "03fib3jhxl7fzb1a662yx0hldkpv0ccyr88arn1vpvkadf4hb7yn";
   };
 
-  cargoDepsSha256 = "0hz73mf4rx4qk9cjnwda2i93kiprjmmcric14j6glzi3x80nr51z";
+  cargoDepsSha256 = "0xswg07q9f1vparrj7bg5xn33dpxcdaqmhxfv2bvgyc0q0nix0yf";
   doCheck = true;
 
   meta = with stdenv.lib; {

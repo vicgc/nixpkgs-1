@@ -39,7 +39,7 @@ let
       cargo fetch --locked
       mkdir $out
       cp $CARGO_HOME/registry/cache/*/*.crate $out
-      ln -s ${rustRegistry} $out/index
+      ${pkgs.python3.interpreter} ${./vendor.py} -d $out ${rustRegistry}
     '';
     preferLocalBuild = true;
     outputHashMode = "recursive";
