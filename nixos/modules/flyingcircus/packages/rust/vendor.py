@@ -37,7 +37,6 @@ def copy_indexfile(crate, rust_registry, lookup):
         version = m.group(2)
         index = lookup[shortname]
         target = p.join('index', index)
-        print('*', shortname, version)
         os.makedirs(p.dirname(target), exist_ok=True)
         # append mode to allow for multiple versions of the same crate
         with open(target, 'a') as t:
