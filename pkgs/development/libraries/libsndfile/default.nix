@@ -1,11 +1,11 @@
 { stdenv, fetchurl, flac, libogg, libvorbis, pkgconfig }:
 
 stdenv.mkDerivation rec {
-  name = "libsndfile-1.0.25";
+  name = "libsndfile-1.0.28";
 
   src = fetchurl {
     url = "http://www.mega-nerd.com/libsndfile/files/${name}.tar.gz";
-    sha256 = "10j8mbb65xkyl0kfy0hpzpmrp0jkr12c7mfycqipxgka6ayns0ar";
+    sha256 = "1afzm7jx34jhqn32clc5xghyjglccam2728yxlx37yj2y0lkkwqz";
   };
 
   buildInputs = [ pkgconfig flac libogg libvorbis ];

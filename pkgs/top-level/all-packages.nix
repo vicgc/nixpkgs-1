@@ -5430,15 +5430,6 @@ let
 
   byacc = callPackage ../development/tools/parsing/byacc { };
 
-  cargo = callPackage ../development/tools/build-managers/cargo {
-    # cargo needs to be built with rustCargoPlatform, which uses cargoSnapshot
-    rustPlatform = rustCargoPlatform;
-  };
-
-  cargoSnapshot = {
-    cargo = callPackage ../development/tools/build-managers/cargo/snapshot.nix { };
-  };
-
   casperjs = callPackage ../development/tools/casperjs { };
 
   cbrowser = callPackage ../development/tools/misc/cbrowser { };
@@ -5790,8 +5781,6 @@ let
   premake4 = callPackage ../development/tools/misc/premake { };
 
   premake = premake4;
-
-  racerRust = callPackage ../development/tools/rust/racer { };
 
   radare = callPackage ../development/tools/analysis/radare {
     inherit (gnome) vte;

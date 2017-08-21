@@ -17,6 +17,7 @@
         dstat
         fcbox
         fcmaintenance
+        fcuserscan
         file
         fio
         gcc
@@ -57,6 +58,7 @@
         python2Full
         python34
         pythonPackages.virtualenv
+        ripgrep
         screen
         strace
         subversion

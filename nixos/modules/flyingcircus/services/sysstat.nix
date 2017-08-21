@@ -26,13 +26,14 @@ in {
     systemd.services.sysstat = {
       description = "Resets System Activity Logs";
       wantedBy = [ "multi-user.target" ];
-      preStart = "test -d /var/log/sa || mkdir -p /var/log/sa";
+      preStart = "install -d /var/log/sa";
 
       serviceConfig = {
         User = "root";
         RemainAfterExit = true;
         Type = "oneshot";
         ExecStart = "${pkgs.sysstat}/lib/sa/sa1 --boot";
+        SuccessExitStatus = "1";
       };
     };
 
@@ -41,7 +42,6 @@ in {
       unitConfig.Documentation = "man:sa1(8)";
 
       serviceConfig = {
-        Type = "oneshot";
         User = "root";
         ExecStart = "${pkgs.sysstat}/lib/sa/sa1 ${cfg.collect-args}";
       };

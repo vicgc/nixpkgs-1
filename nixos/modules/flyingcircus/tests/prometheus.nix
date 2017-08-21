@@ -5,7 +5,7 @@ import ../../../tests/make-test.nix ({lib, pkgs, ... }:
     {
       imports = [
         ../platform
-        ../services/fcmanage.nix
+        ../services/agent.nix
         ../services/prometheus
         ../services/sensu/client.nix
         ../static

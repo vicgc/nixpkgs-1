@@ -3,11 +3,13 @@
 {
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
+  haproxy = hydraJob (import ./haproxy.nix { inherit system; }) ;
+
+  login = hydraJob (import ./login.nix { inherit system; }) ;
+
   mariadb = hydraJob (import ./mariadb.nix { inherit system; });
 
   memcached = hydraJob (import ./memcached.nix { inherit system; }) ;
-
-  login = hydraJob (import ./login.nix { inherit system; }) ;
 
   mongodb = hydraJob (import ./mongodb { inherit system; }) ;
 

@@ -8,11 +8,11 @@ let
   opensslCrossSystem = stdenv.cross.openssl.system or
     (throw "openssl needs its platform name cross building");
 
-  common = { version, sha256 }: stdenv.mkDerivation rec {
-    name = "openssl-${version}";
+  common = { version, release, sha256 }: stdenv.mkDerivation rec {
+    name = "openssl-${version}${release}";
 
     src = fetchurl {
-      url = "http://www.openssl.org/source/${name}.tar.gz";
+      url = "http://downloads.fcio.net/openssl/${name}.tar.gz";
       inherit sha256;
     };
 
@@ -103,18 +103,21 @@ let
 in {
 
   openssl_1_0_1 = common {
-    version = "1.0.1t";
-    sha256 = "4a6ee491a2fdb22e519c76fdc2a628bb3cec12762cd456861d207996c8a07088";
+    version = "1.0.1";
+    release = "u";
+    sha256 = "0fb7y9pwbd76pgzd7xzqfrzibmc0vf03sl07f34z5dhm2b5b84j3";
   };
 
   openssl_1_0_2 = common {
-    version = "1.0.2j";
-    sha256 = "e7aff292be21c259c6af26469c7a9b3ba26e9abaaffd325e3dccc9785256c431";
+    version = "1.0.2";
+    release = "l";
+    sha256 = "037kvpisc6qh5dkppcwbm5bg2q800xh2hma3vghz8xcycmdij1yf";
   };
 
   openssl_1_1_0 = common {
-    version = "1.1.0c";
-    sha256 = "fc436441a2e05752d31b4e46115eb89709a28aef96d4fe786abe92409b2fd6f5";
+    version = "1.1.0";
+    release = "f";
+    sha256 = "0r97n4n552ns571diz54qsgarihrxvbn7kvyv8wjyfs9ybrldxqj";
   };
 
 }
