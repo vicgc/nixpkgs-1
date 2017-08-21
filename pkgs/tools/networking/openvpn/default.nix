@@ -10,8 +10,6 @@ stdenv.mkDerivation rec {
     sha256 = "0yc5rad2q5cm6rk0ali7f3di6v8vw23d3sy0cw5aaq198v5d7qyf";
   };
 
-  patches = optional stdenv.isLinux ./systemd-notify.patch;
-
   buildInputs = [ iproute lzo openssl pam pkgconfig ] ++ optional stdenv.isLinux systemd;
 
   configureFlags = ''
