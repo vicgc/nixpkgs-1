@@ -10,8 +10,6 @@ let
       sha256 = "1xpa667qyrr0r9za13gs2pggd64rlzdwn3i9akq9931ssbgrgv7s";
   }) {});
 
-  rust = pkgs.callPackage ./rust/bootstrap.nix { };
-
 in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
@@ -51,6 +49,7 @@ in rec {
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
+  fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
 
   grafana = pkgs_17_03.grafana;
   graylog = pkgs.callPackage ./graylog.nix { };
@@ -163,7 +162,10 @@ in rec {
 
   remarshal = pkgs_17_03.remarshal;
 
-  inherit (rust) rustc cargo;
+  ripgrep = pkgs.callPackage ./ripgrep.nix { };
+
+  rust = pkgs.callPackage ./rust/default.nix { };
+
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
   makeRustPlatform = rust: lib.fix (self:
     let
@@ -173,7 +175,7 @@ in rec {
 
       rustRegistry = pkgs.callPackage ./rust/rust-packages.nix { };
 
-      buildRustPackage = pkgs.callPackage ./rust/build-support {
+      buildRustPackage = pkgs.callPackage ./rust/buildRustPackage.nix {
         inherit rust rustRegistry;
       };
     });

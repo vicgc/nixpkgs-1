@@ -17,6 +17,9 @@ let
     then "--channel-with-maintenance"
     else "--channel";
 
+  humanGid = toString config.ids.gids.users;
+  serviceGid = toString config.ids.gids.service;
+
 in {
   options = {
     flyingcircus.agent = {
@@ -37,6 +40,9 @@ in {
         default = "--directory --system-state --maintenance ${channelAction}";
         description = "Steps to run by the agent.";
       };
+
+      collect-garbage = mkEnableOption
+        "automatic scanning for Nix store references and garbage collection";
     };
   };
 
@@ -89,6 +95,33 @@ in {
         %sudo-srv ALL=(root) FCMANAGE
         %service  ALL=(root) FCMANAGE
       '';
+
+      systemd.services.fc-collect-garbage =
+      let script = ''
+        #! ${pkgs.stdenv.shell} -e
+        failed=0
+        while read user home; do
+          sudo -u $user -H -- \
+            fc-userscan -v -s 1 -S -c $home/.cache/fc-userscan.json.gz \
+            $home || failed=1
+        done < <(getent passwd | \
+                 awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
+                   { print $1 " " $6 }')
+
+        if (( failed )); then
+          echo "ERROR: fc-userscan failed"
+          exit 1
+        else
+          nice -n19 nix-collect-garbage --delete-older-than 3d
+        fi
+      '';
+      in {
+        description = "Scan users for Nix store references and collect garbage";
+        serviceConfig.Type = "oneshot";
+        path = with pkgs; [ fcuserscan gawk nix glibc sudo ];
+        environment = { LANG = "en_US.utf8"; };
+        inherit script;
+      };
     }
 
     (mkIf cfg.agent.enable {
@@ -100,6 +133,17 @@ in {
           OnUnitActiveSec = "10m";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
+        };
+      };
+    })
+
+    (mkIf cfg.agent.collect-garbage {
+      systemd.timers.fc-collect-garbage = {
+        description = "Timer for fc-collect-garbage";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnStartupSec = "49m";
+          OnUnitActiveSec = "1d";
         };
       };
     })

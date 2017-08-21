@@ -12,16 +12,17 @@ let
     then "x86_64-apple-darwin"
     else throw "missing bootstrap url for platform ${stdenv.system}";
 
-  # fetch hashes by running `print-hashes.sh 1.18.0`
+  # fetch hashes by patching print-hashes.sh to not use the "$DATE" variable
+  # then running `print-hashes.sh 1.16.0`
   bootstrapHash =
     if stdenv.system == "i686-linux"
-    then "821ced1bd5a8e89322f20c3565ef50a3708faca047d21686d4a2139f6dc0b1d6"
+    then "657b78f3c1a1b4412e12f7278e20cc318022fa276a58f0d38a0d15b515e39713"
     else if stdenv.system == "x86_64-linux"
-    then "abdc9f37870c979dd241ba8c7c06d8bb99696292c462ed852c0af7f988bb5887"
+    then "30ff67884464d32f6bbbde4387e7557db98868e87fb2afbb77c9b7716e3bff09"
     else if stdenv.system == "i686-darwin"
-    then "977aaad697a995e28c6d9511fd8301d236da48978f8f3b938d8f22f105e4bf2f"
+    then "bdfd2189245dc5764c9f26bdba1429c2bf9d57477d8e6e3f0ba42ea0dc63edeb"
     else if stdenv.system == "x86_64-darwin"
-    then "30f210e3133121812d74995a2831cfb3fe79c271b3cb1721815943bd4f7eb297"
+    then "5c668fb60a3ba3e97dc2cb8967fc4bb9422b629155284dcb89f94d116bb17820"
     else throw "missing bootstrap hash for platform ${stdenv.system}";
 
   src = fetchurl {
@@ -29,10 +30,12 @@ let
      sha256 = bootstrapHash;
   };
 
-  version = "1.18.0";
+  # Note: the version  MUST be one version prior to the version we're
+  # building
+  version = "1.19.0";
 in import ./binaryBuild.nix
   { inherit stdenv fetchurl makeWrapper cacert zlib curl;
     buildRustPackage = null;
     inherit version src platform;
-    versionType = "bootstrap";
+    versionType = "stable";
   }
