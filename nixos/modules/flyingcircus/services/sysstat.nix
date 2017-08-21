@@ -42,7 +42,6 @@ in {
       unitConfig.Documentation = "man:sa1(8)";
 
       serviceConfig = {
-        Type = "oneshot";
         User = "root";
         ExecStart = "${pkgs.sysstat}/lib/sa/sa1 ${cfg.collect-args}";
       };
