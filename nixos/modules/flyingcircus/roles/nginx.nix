@@ -9,7 +9,7 @@ let
   else "";
 
   baseConfig = ''
-    worker_processes 1;
+    worker_processes ${toString (fclib.current_cores config 1)};
     worker_rlimit_nofile 8192;
 
     error_log stderr;
