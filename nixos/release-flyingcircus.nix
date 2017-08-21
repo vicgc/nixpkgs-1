@@ -70,9 +70,10 @@ let
         '');
 
   # Prebuild packages listed below since they will be needed on VMs but are not
-  # mentioned anywhere else here.
+  # mentioned anywhere else here. Even better than listing packages here is to
+  # write tests.
   preBuild = with pkgs; {
-    inherit libsodium qt4 openvpn;
+    inherit libsodium qt4 openvpn ssmtp;
   };
 
   # List of package names for Python packages defined in modules/flyingcircus

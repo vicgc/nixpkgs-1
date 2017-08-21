@@ -30,9 +30,10 @@
 #         config.option = ...;
 #       };
 #   };
+#   # see https://nixos.org/nixos/manual/index.html#sec-writing-nixos-tests
 #   testScript = ''
-#     $machine->waitForUnit("...")
-#     $vm->waitForUnit("...")
+#     $vm->waitForUnit("...");
+#     $vm->succeed("...") =~ /.../;
 #     ...
 #   '';
 # })
