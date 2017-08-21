@@ -6,6 +6,9 @@ with lib;
 
 let
   cfg = config.services.graylog;
+
+  dataDir = "/var/lib/graylog";
+  pidFile = "/run/graylog/graylog.pid";
   configBool = b: if b then "true" else "false";
 
   confFile = pkgs.writeText "graylog.conf" ''
@@ -55,19 +58,23 @@ in
       isMaster = mkOption {
         type = types.bool;
         default = true;
-        description = "Whether this is the master instance of your Graylog cluster";
+        description = ''
+          Whether this is the master instance of your Graylog cluster
+        '';
       };
 
       nodeIdFile = mkOption {
         type = types.str;
-        default = "/var/lib/graylog/server/node-id";
+        default = "${dataDir}/server/node-id";
         description = "Path of the file containing the graylog node-id";
       };
 
       passwordSecret = mkOption {
         type = types.str;
         description = ''
-          You MUST set a secret to secure/pepper the stored user passwords here. Use at least 64 characters.
+          You MUST set a secret to secure/pepper the stored user passwords here.
+          Use at least 64 characters.
+
           Generate one by using for example: pwgen -N 1 -s 96
         '';
       };
@@ -82,12 +89,14 @@ in
         type = types.str;
         example = "e3c652f0ba0b4801205814f8b6bc49672c4c74e25b497770bb89b22cdeb4e952";
         description = ''
-          You MUST specify a hash password for the root user (which you only need to initially set up the
-          system and in case you lose connectivity to your authentication backend)
-          This password cannot be changed using the API or via the web interface. If you need to change it,
-          modify it here.
+          You MUST specify a hash password for the root user (which you only
+          need to initially set up the system and in case you lose connectivity
+          to your authentication backend) This password cannot be changed using
+          the API or via the web interface. If you need to change it, modify it
+          here.
+
           Create one by using for example: echo -n    | shasum -a 256
-          and use the resulting hash value as string for the option
+          and use the resulting hash value as string for the option.
         '';
       };
 
@@ -106,31 +115,42 @@ in
       elasticsearchDiscoveryZenPingUnicastHosts = mkOption {
         type = types.str;
         default = "127.0.0.1:9300";
-        description = "Tells Graylogs Elasticsearch client how to find other cluster members. See Elasticsearch documentation for details";
+        description = ''
+          Tells Graylogs Elasticsearch client how to find other cluster members.
+          See Elasticsearch documentation for details.
+        '';
       };
 
       messageJournalDir = mkOption {
         type = types.str;
-        default = "/var/lib/graylog/data/journal";
-        description = "The directory which will be used to store the message journal. The directory must be exclusively used by Graylog and must not contain any other files than the ones created by Graylog itself";
+        default = "${dataDir}/data/journal";
+        description = ''
+          The directory which will be used to store the message journal. The
+          directory must be exclusively used by Graylog and must not contain any
+          other files than the ones created by Graylog itself.
+        '';
       };
 
       mongodbUri = mkOption {
         type = types.str;
         default = "mongodb://localhost/graylog";
-        description = "MongoDB connection string. See http://docs.mongodb.org/manual/reference/connection-string/ for details";
+        description = ''
+          MongoDB connection string. See
+          http://docs.mongodb.org/manual/reference/connection-string/ for
+          details.
+        '';
       };
 
       restListenUri = mkOption {
         type = types.str;
-        default = "127.0.0.1:9000/api";
-        description = "The Uri to Graylogs API server.";
+        default = "http://127.0.0.1:9000/api";
+        description = "The URI to Graylogs API server";
       };
 
       webListenUri = mkOption {
         type = types.str;
-        default = "127.0.0.1:9000";
-        description = "The Uri to Graylogs WebUI.";
+        default = "http://127.0.0.1:9000";
+        description = "The URI to Graylogs WebUI";
       };
 
       extraConfig = mkOption {
@@ -168,38 +188,37 @@ in
       environment = {
         JAVA_HOME = jre;
         GRAYLOG_CONF = "${confFile}";
+        GRAYLOG_PID = pidFile;
         JAVA_OPTS = "-Djava.library.path=\${GRAYLOGCTL_DIR}/../lib/sigar -Xms${cfg.javaHeap} -Xmx${cfg.javaHeap} -XX:NewRatio=1 -server -XX:+ResizeTLAB -XX:+UseConcMarkSweepGC -XX:+CMSConcurrentMTEnabled -XX:+CMSClassUnloadingEnabled -XX:+UseParNewGC -XX:-OmitStackTraceInFastThrow";
       };
-      path = [ pkgs.openjdk8 pkgs.which pkgs.procps ];
+      path = with pkgs; [ openjdk8 which procps which ];
+      serviceConfig = {
+        # Run everything except ExecStart as root since we need root permissions
+        # for the preStart script
+        PermissionsStartOnly = true;
+        User="${cfg.user}";
+        ExecStart = "${cfg.package}/bin/graylogctl run";
+        TimeoutStartSec = "5m";
+        ExecStop = "${cfg.package}/bin/graylogctl stop";
+        TimeoutStopSec = "3m";
+      };
       preStart = ''
-        mkdir -p /var/lib/graylog -m 755
-        chown -R ${cfg.user} /var/lib/graylog
-
-        mkdir -p ${cfg.messageJournalDir} -m 755
-        chown -R ${cfg.user} ${cfg.messageJournalDir}
+        install -d -o ${cfg.user} -m 755 \
+          ${dataDir} ${cfg.messageJournalDir} /run/graylog
+        if [[ -e ${pidFile} ]]; then
+          kill -0 $(< ${pidFile} ) || rm -f ${pidFile}
+        fi
       '';
       postStart = ''
         # Wait until GL is available for use
-        count=0
-        while true;
-        do
-            ${pkgs.curl}/bin/curl -s ${cfg.webListenUri} && break
-            if [ $count -eq 30 ]
-            then
-                echo "Tried 30 times, giving up..."
-                exit 1
-            fi
-
-            echo "Graylog not yet started. Waiting for 1 second..."
-            count=$((count++))
+        for count in {0..120}; do
+            ${pkgs.curl}/bin/curl -s ${cfg.webListenUri} && exit
+            echo "Trying to connect to ${cfg.webListenUri} for ''${count}s"
             sleep 1
         done
+        echo "No connection to ${cfg.webListenUri} for 120s, giving up"
+        exit 1
       '';
-      serviceConfig = {
-        User="${cfg.user}";
-        PermissionsStartOnly=true;
-        ExecStart = "${cfg.package}/bin/graylogctl run";
-      };
     };
   };
 }
