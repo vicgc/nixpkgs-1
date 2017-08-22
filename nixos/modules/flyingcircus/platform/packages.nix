@@ -55,6 +55,7 @@
         protobuf
         psmisc
         pv
+        pwgen
         python2Full
         python34
         pythonPackages.virtualenv
