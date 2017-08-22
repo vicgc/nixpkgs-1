@@ -87,7 +87,7 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "current"
         },
         {
           "cacheTimeout": null,
@@ -240,7 +240,7 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "current"
         },
         {
           "cacheTimeout": null,
@@ -317,16 +317,16 @@
               "value": "null"
             }
           ],
-          "valueName": "max"
+          "valueName": "current"
         },
         {
           "cacheTimeout": null,
           "colorBackground": false,
           "colorValue": true,
           "colors": [
-            "rgba(50, 172, 45, 0.97)",
+            "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
-            "rgba(245, 54, 54, 0.9)"
+            "rgba(50, 172, 45, 0.97)"
           ],
           "datasource": null,
           "format": "percentunit",
@@ -730,7 +730,12 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "Backend",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 6,
           "stack": false,
           "steppedLine": false,
@@ -799,7 +804,7 @@
           "legend": {
             "alignAsTable": true,
             "avg": true,
-            "current": false,
+            "current": true,
             "max": false,
             "min": false,
             "show": true,
@@ -857,7 +862,7 @@
             {
               "expr": "varnish_cache_hit{host=\"$Host\"} / (varnish_cache_hit{host=\"$Host\"} +  varnish_cache_miss{host=\"$Host\"})",
               "intervalFactor": 2,
-              "legendFormat": "HIt Ratio",
+              "legendFormat": "Hit Ratio",
               "metric": "varnish_cache_hit",
               "refId": "D",
               "step": 20
