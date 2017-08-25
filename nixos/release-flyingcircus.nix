@@ -73,7 +73,7 @@ let
   # mentioned anywhere else here. Even better than listing packages here is to
   # write tests.
   preBuild = with pkgs; {
-    inherit libsodium qt4 openvpn ssmtp;
+    inherit libsodium qt4 openvpn ssmtp libreoffice;
   };
 
   # List of package names for Python packages defined in modules/flyingcircus
