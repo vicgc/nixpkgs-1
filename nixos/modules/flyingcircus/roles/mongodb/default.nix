@@ -83,6 +83,8 @@ in
     systemd.services.mongodb = {
       preStart = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";
       postStop = "echo always > /sys/kernel/mm/transparent_hugepage/defrag";
+      # intial creating of journal takes ages:
+      serviceConfig.TimeoutStartSec = fclib.mkPlatform 1200;
       serviceConfig.LimitNOFILE = 64000;
       serviceConfig.LimitNPROC = 32000;
       serviceConfig.ExecStart = mkForce ''
