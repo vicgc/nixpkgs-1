@@ -217,7 +217,17 @@ in
         notification = "PostgreSQL alive";
         command =  "/var/setuid-wrappers/sudo -u postgres check-postgres-alive.rb -d postgres";
       };
-    };
+    } // lib.listToAttrs (
+      map (host:
+          let sane_host = replaceStrings [":"] ["_"] host;
+          in
+          { name = "postgresql-listen-${sane_host}-5432";
+            value = {
+              notification = "PostgreSQL listening on ${host}:5432";
+              command =  "check-ports.rb -h ${host} -p 5432";
+              };
+          })
+        listen_addresses);
 
     services.telegraf.inputs = {
       postgresql = [{
