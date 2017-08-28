@@ -39,10 +39,10 @@ mkIf (params ? location && params ? resource_group) {
   services.telegraf.extraConfig = {
     global_tags = globalTags;
     outputs = {
-      prometheus_client = {
+      prometheus_client = [{
         listen = "${lib.head(
           fclib.listenAddressesQuotedV6 config "ethsrv")}:${port}";
-      };
+      }];
     };
   };
   services.telegraf.inputs = {
