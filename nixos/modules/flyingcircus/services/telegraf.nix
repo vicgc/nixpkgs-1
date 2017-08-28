@@ -70,7 +70,7 @@ in {
     systemd.services.telegraf = {
       description = "Telegraf Agent";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" ];
+      after = [ "network-interfaces.target" ];
       serviceConfig = {
         ExecStart=''${cfg.package}/bin/telegraf ${startupOptions}'';
         ExecReload="${pkgs.coreutils}/bin/kill -HUP $MAINPID";

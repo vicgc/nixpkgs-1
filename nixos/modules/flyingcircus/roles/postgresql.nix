@@ -114,16 +114,33 @@ in
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
+    systemd.services.postgresql.after = [ "network-interfaces.target" ];
+    systemd.services.postgresql.wants = [ "network-interfaces.target" ];
+
+    systemd.services.postgresql.postStart =
+    let
+      psql = "${postgresqlPkg}/bin/psql";
+    in ''
+      if ! ${psql} -c '\du' template1 | grep -q '^ *nagios *|'; then
+        ${psql} -c 'CREATE ROLE nagios NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN' template1
+      fi
+      if ! ${psql} -l | grep -q '^ *nagios *|'; then
+        ${postgresqlPkg}/bin/createdb nagios
+      fi
+      ${psql} -q -d nagios -c 'REVOKE ALL ON SCHEMA public FROM PUBLIC CASCADE;'
+    '';
 
     users.users.postgres = {
       shell = "/run/current-system/sw/bin/bash";
       home = "/srv/postgresql";
     };
+
     system.activationScripts.flyingcircus_postgresql = ''
       install -d -o ${toString config.ids.uids.postgres} /srv/postgresql
       install -d -o ${toString config.ids.uids.postgres} -g service -m 02775 \
         /etc/local/postgresql/${version}
     '';
+
     security.sudo.extraConfig = ''
       # Service users may switch to the postgres system user
       %sudo-srv ALL=(postgres) ALL
@@ -208,6 +225,10 @@ in
 
     services.postgresql.authentication = ''
       local postgres root       trust
+      # trusted access for Nagios
+      host    nagios          nagios          0.0.0.0/0               trust
+      host    nagios          nagios          ::/0                    trust
+      # authenticated access for others
       host all  all  0.0.0.0/0  md5
       host all  all  ::/0       md5
     '';
@@ -215,7 +236,8 @@ in
     flyingcircus.services.sensu-client.checks = {
       postgresql = {
         notification = "PostgreSQL alive";
-        command =  "/var/setuid-wrappers/sudo -u postgres check-postgres-alive.rb -d postgres";
+        command = "/var/setuid-wrappers/sudo -u postgres check-postgres-alive.rb -d postgres";
+        interval = 120;
       };
     } // lib.listToAttrs (
       map (host:
@@ -224,8 +246,9 @@ in
           { name = "postgresql-listen-${sane_host}-5432";
             value = {
               notification = "PostgreSQL listening on ${host}:5432";
-              command =  "check-ports.rb -h ${host} -p 5432";
-              };
+              command = "check-postgres-alive.rb -h ${host} -u nagios -d nagios -P 5432";
+              interval = 120;
+            };
           })
         listen_addresses);
 
@@ -236,5 +259,4 @@ in
     };
 
   });
-
 }
