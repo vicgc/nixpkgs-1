@@ -165,14 +165,12 @@ in
 
     };
 
-    services.telegraf.extraConfig = {
-      inputs = {
-        elasticsearch = {
-          servers = ["http://${thisNode}:9200"];
-          cluster_health = true;
-          cluster_stats = true;
-        };
-      };
+    services.telegraf.inputs = {
+      elasticsearch = [{
+        servers = ["http://${thisNode}:9200"];
+        cluster_health = true;
+        cluster_stats = true;
+      }];
     };
 
     services.collectd.extraConfig = ''
