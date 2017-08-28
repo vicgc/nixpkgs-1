@@ -114,6 +114,16 @@ in
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
+    systemd.services.postgresql.after = [ "network-interfaces.target" ];
+    systemd.services.postgresql.wants = [ "network-interfaces.target" ];
+
+
+    systemd.services.postgresql.postStart = ''
+      { ${postgresqlPkg}/bin/psql -c '\du' template1 | grep -q '^ *nagios *|'; } || ${postgresqlPkg}/bin/psql -c 'CREATE ROLE nagios NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN' template1
+
+      { ${postgresqlPkg}/bin/psql -l | grep -q '^ *nagios *|'; } || ${postgresqlPkg}/bin/createdb nagios
+      ${postgresqlPkg}/bin/psql -q -d nagios -c 'REVOKE ALL ON SCHEMA public FROM PUBLIC CASCADE;'
+    '';
 
     users.users.postgres = {
       shell = "/run/current-system/sw/bin/bash";
@@ -124,6 +134,7 @@ in
       install -d -o ${toString config.ids.uids.postgres} -g service -m 02775 \
         /etc/local/postgresql/${version}
     '';
+
     security.sudo.extraConfig = ''
       # Service users may switch to the postgres system user
       %sudo-srv ALL=(postgres) ALL
@@ -208,8 +219,13 @@ in
 
     services.postgresql.authentication = ''
       local postgres root       trust
+      # trusted access for Nagios
+      host    nagios          nagios          0.0.0.0/0               trust
+      host    nagios          nagios          ::/0                    trust
+      # authenticated access for others
       host all  all  0.0.0.0/0  md5
       host all  all  ::/0       md5
+
     '';
 
     flyingcircus.services.sensu-client.checks = {
@@ -224,7 +240,7 @@ in
           { name = "postgresql-listen-${sane_host}-5432";
             value = {
               notification = "PostgreSQL listening on ${host}:5432";
-              command =  "check-ports.rb -h ${host} -p 5432";
+              command =  " check-postgres-alive.rb -h ${host} -u nagios -d nagios -P 5432";
               };
           })
         listen_addresses);
