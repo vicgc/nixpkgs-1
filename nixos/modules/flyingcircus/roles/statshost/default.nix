@@ -61,8 +61,8 @@ let
     [[servers.group_mappings]]
     group_dn = "*"
     org_role = ""
-
   '';
+  grafanaJsonDashboardPath = "${config.services.grafana.dataDir}/dashboards";
 
 in
 {
@@ -95,6 +95,13 @@ in
         default = [];
         description = "Prometheus metric relabel configuration.";
       };
+
+      dashboardsRepository = mkOption {
+        type = types.str;
+        default = "https://github.com/flyingcircusio/grafana.git";
+        description = "Dashboard git repository.";
+      };
+
     };
 
     flyingcircus.roles.statshostproxy = {
@@ -258,7 +265,7 @@ in
           LOG_LEVEL = "debug";
           LOG_FILTERS = "ldap:debug";
           DASHBOARDS_JSON_ENABLED = "true";
-          DASHBOARDS_JSON_PATH = "${./dashboards}";
+          DASHBOARDS_JSON_PATH = "${grafanaJsonDashboardPath}";
         };
       };
 
@@ -315,6 +322,43 @@ in
 
       networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
       networking.firewall.allowedUDPPorts = [ 2003 ];
+
+      # Provide FC dashboards, and update them automatically.
+      systemd.services.fc-grafana-load-dashboards = {
+        description = "Update grafana dashboards.";
+        restartIfChanged = false;
+        after = [ "grafana.service" ];
+        wantedBy = [ "grafana.service" ];
+        serviceConfig = {
+          User = "grafana";
+          Type = "oneshot";
+        };
+        path = [ pkgs.git pkgs.coreutils ];
+        environment = {
+          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+        };
+        script = ''
+          if [ -d ${grafanaJsonDashboardPath} -a -d ${grafanaJsonDashboardPath}/.git ];
+          then
+            cd ${grafanaJsonDashboardPath}
+            git pull
+          else
+            rm -rf ${grafanaJsonDashboardPath}
+            git clone ${cfgStatsGlobal.dashboardsRepository} ${grafanaJsonDashboardPath}
+          fi
+        '';
+      };
+
+      systemd.timers.fc-grafana-load-dashboards = {
+        description = "Timer for updading the grafana dashboards";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          Unit = "graylog-update-geolite.service";
+          OnUnitActiveSec = "1h";
+          # Not yet supported by our systemd version.
+          # RandomSec = "3m";
+        };
+      };
 
     })
 
