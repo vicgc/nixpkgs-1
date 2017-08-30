@@ -89,8 +89,8 @@ mkIf (params ? location && params ? resource_group) {
     telegraph_prometheus_output = {
       notification = "Telegraf prometheus output alive";
       command = ''
-        check_http -H ${config.networking.hostName} -p ${port} \
-          -u /metrics
+        check_http -v -j HEAD -H ${config.networking.hostName} -p ${port} \
+        -u /metrics
       '';
     };
   };
