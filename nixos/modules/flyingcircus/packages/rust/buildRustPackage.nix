@@ -47,6 +47,8 @@ let
     outputHash = sha256;
   };
 
+  targetDir = "target/${if release then "release" else "debug"}";
+
 in stdenv.mkDerivation ({
   RUST_BACKTRACE = 1;
 } // args // {
@@ -75,20 +77,22 @@ in stdenv.mkDerivation ({
   buildPhase = ''
     runHook preBuild
     cargo build ${if release then "--release" else ""} --frozen
-
     runHook postBuild
   '';
 
   checkPhase = ''
     runHook preCheck
-    cargo test --frozen
+    cp -a ${targetDir} ${targetDir}.orig
+    cargo test ${if release then "--release" else ""} --frozen
+    rm -rf ${targetDir}
+    mv ${targetDir}.orig ${targetDir}
     runHook PostCheck
   '';
 
   installPhase = ''
     runHook preInstall
     (
-      cd target/${if release then "release" else "debug"}
+      cd ${targetDir}
       find . -maxdepth 1 -type f -perm -0100 \
         -print0 | xargs -0r install -D -t $out/bin
       find . -maxdepth 1 -type f \

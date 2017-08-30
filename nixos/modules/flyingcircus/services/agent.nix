@@ -97,24 +97,30 @@ in {
       '';
 
       systemd.services.fc-collect-garbage =
-      let script = ''
-        #! ${pkgs.stdenv.shell} -e
-        failed=0
-        while read user home; do
-          sudo -u $user -H -- \
-            fc-userscan -v -s 1 -S -c $home/.cache/fc-userscan.json.gz \
-            $home || failed=1
-        done < <(getent passwd | \
-                 awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
-                   { print $1 " " $6 }')
+      let
+        collectCmd = lib.optionalString
+          cfg.agent.collect-garbage
+          "nice -n19 nix-collect-garbage --delete-older-than 3d";
 
-        if (( failed )); then
-          echo "ERROR: fc-userscan failed"
-          exit 1
-        else
-          nice -n19 nix-collect-garbage --delete-older-than 3d
-        fi
-      '';
+        script = ''
+          failed=0
+          while read user home; do
+            sudo -u $user -H -- \
+              fc-userscan -v -s 1 -S -c $home/.cache/fc-userscan.cache \
+              -z '*.egg' -E ${./userscan.exclude} \
+              $home || failed=1
+          done < <(getent passwd | \
+                   awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
+                     { print $1 " " $6 }')
+
+          if (( failed )); then
+            echo "ERROR: fc-userscan failed"
+            exit 1
+          else
+            : nix-collect-garbage enabled depending on feature flag
+            ${collectCmd}
+          fi
+        '';
       in {
         description = "Scan users for Nix store references and collect garbage";
         serviceConfig.Type = "oneshot";
@@ -137,7 +143,8 @@ in {
       };
     })
 
-    (mkIf cfg.agent.collect-garbage {
+    (mkIf (!(lib.attrByPath [ "parameters" "production" ] true cfg.enc) ||
+        cfg.agent.collect-garbage) {
       systemd.timers.fc-collect-garbage = {
         description = "Timer for fc-collect-garbage";
         wantedBy = [ "timers.target" ];
