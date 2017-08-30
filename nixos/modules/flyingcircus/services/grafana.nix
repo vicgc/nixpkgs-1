@@ -79,6 +79,7 @@ in {
           mapAttrs' (n: v: nameValuePair "GF_${n}" (toString v)) envOptions);
       serviceConfig = {
         ExecStart = mkForce "${cfg.package.bin}/bin/grafana-server -homepath ${cfg.dataDir}";
+        Restart = "always";
       };
       preStart = mkForce ''
         ${pkgs.coreutils}/bin/ln -fs ${cfg.package}/share/grafana/conf ${cfg.dataDir}
