@@ -10,6 +10,13 @@ let
       sha256 = "1xpa667qyrr0r9za13gs2pggd64rlzdwn3i9akq9931ssbgrgv7s";
   }) {});
 
+  pkgs_17_09_pre = (import ((import <nixpkgs> {}).fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = "e619ace733fee725da5a1b84e5cce68d610ba35e";
+      sha256 = "0yidy4pvl58jmwf68bj0dyl0r6h5zchx1rvii593arg6yg3918ja";
+  }) {});
+
 in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
@@ -189,7 +196,9 @@ in rec {
 
   sensu = pkgs.callPackage ./sensu { };
 
-  telegraf = pkgs_17_03.telegraf;
+  telegraf = pkgs.callPackage ./telegraf {
+    inherit (pkgs_17_09_pre) buildGoPackage fetchgit;
+  };
 
   uchiwa = pkgs.callPackage ./uchiwa { };
 

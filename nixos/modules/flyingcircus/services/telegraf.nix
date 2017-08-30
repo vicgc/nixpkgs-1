@@ -48,16 +48,10 @@ in {
         type = types.attrsOf types.attrs;
         example = {
           outputs = {
-            influxdb = [{
-              urls = ["http://localhost:8086"];
-              database = "telegraf";
-            }];
+            influxdb = [ { urls = [ "http://localhost:8086" ]; database = "telegraf"; } ];
           };
           inputs = {
-            statsd = [{
-              service_address = ":8125";
-              delete_timings = true;
-            }];
+            statsd = [ { service_address = ":8125"; delete_timings = true; } ];
           };
         };
       };
@@ -79,10 +73,10 @@ in {
       };
     };
 
-    users.extraUsers = [{
+    users.extraUsers = [ {
       name = "telegraf";
       uid = config.ids.uids.telegraf;
       description = "telegraf daemon user";
-    }];
+    } ];
   };
 }
