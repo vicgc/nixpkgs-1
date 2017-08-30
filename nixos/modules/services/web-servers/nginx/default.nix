@@ -92,25 +92,41 @@ in
   config = mkIf cfg.enable {
     # TODO: test user supplied config file pases syntax test
 
-    systemd.services.nginx = {
+    # FCIO: Use reload instead of restart.
+    systemd.services.nginx =
+      let nginx_ = "${nginx}/bin/nginx -c /etc/nginx.conf -p ${cfg.stateDir}";
+      in {
       description = "Nginx Web Server";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       path = [ nginx ];
+      reloadIfChanged = true;
+      restartTriggers = [ configFile ];
       preStart =
         ''
         mkdir -p ${cfg.stateDir}/logs
         chmod 700 ${cfg.stateDir}
         chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
         '';
+      reload = ''
+        # Force a restart if nginx is not yet using /etc/nginx.conf
+        if systemctl status nginx | grep 'master process' | grep -- '-c /etc/nginx.conf'
+        then
+          ${nginx_} -t && ${nginx_} -s reload
+        else
+          systemctl restart nginx
+        fi
+      '';
       serviceConfig = {
-        ExecStart = "${nginx}/bin/nginx -c ${configFile} -p ${cfg.stateDir}";
-        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+        ExecStart = "${nginx_}";
         Restart = "on-failure";
         RestartSec = "10s";
         StartLimitInterval = "1min";
       };
     };
+
+    # FCIO
+    environment.etc."nginx.conf".source = configFile;
 
     users.extraUsers = optionalAttrs (cfg.user == "nginx") (singleton
       { name = "nginx";
