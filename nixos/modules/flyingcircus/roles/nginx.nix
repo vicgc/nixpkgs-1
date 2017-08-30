@@ -193,7 +193,7 @@ in
             rotate 92
             create 0644 nginx service
             postrotate
-                systemctl reload nginx
+                systemctl kill nginx -s USR1 --kill-who=main
             endscript
         }
     '';
