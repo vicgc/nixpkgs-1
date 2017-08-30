@@ -51,4 +51,16 @@ rec {
     buildInputs = [ pkgs.m4 ];
   };
 
+  yaml = buildPecl {
+    name = "yaml-1.3.1";
+    sha256 = "1fbmgsgnd6l0d4vbjaca0x9mrfgl99yix5yf0q0pfcqzfdg4bj8q";
+
+    configureFlags = [
+      "--with-yaml=${pkgs.libyaml}"
+    ];
+    buildInputs = [
+      pkgs.libyaml
+    ];
+  };
+
 }
