@@ -37,18 +37,35 @@ with lib;
       message = "You must provide services.haproxy.config.";
     }];
 
-    systemd.services.haproxy = {
+    # FCIO
+    systemd.services.haproxy = let
+      haproxy_ = "${pkgs.haproxy}/sbin/haproxy-systemd-wrapper -f /etc/haproxy.cfg -p /run/haproxy.pid";
+      verifyConfig = "${pkgs.haproxy}/sbin/haproxy -c -q -f /etc/haproxy.cfg";
+      in {
       description = "HAProxy";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+      reloadIfChanged = true;
+      restartTriggers = [ haproxyCfg ];
+      reload = ''
+        if ${pkgs.procps}/bin/pgrep -f '${haproxy_}'
+        then
+          ${verifyConfig} && ${pkgs.coreutils}/bin/kill -USR2 $MAINPID
+        else
+          echo "Binary or parameters changed. Restarting."
+          systemctl restart haproxy
+        fi
+      '';
+      preStart = verifyConfig;
       serviceConfig = {
-        Type = "forking";
-        PIDFile = "/run/haproxy.pid";
-        ExecStartPre = "${pkgs.haproxy}/sbin/haproxy -c -q -f ${haproxyCfg}";
-        ExecStart = "${pkgs.haproxy}/sbin/haproxy -D -f ${haproxyCfg} -p /run/haproxy.pid";
-        ExecReload = "-${pkgs.bash}/bin/bash -c \"exec ${pkgs.haproxy}/sbin/haproxy -D -f ${haproxyCfg} -p /run/haproxy.pid -sf $MAINPID\"";
+        ExecStart = haproxy_;
+        KillMode = "mixed";
+        Restart = "always";
       };
     };
+
+    # FCIO:
+    environment.etc."haproxy.cfg".source = haproxyCfg;
 
     environment.systemPackages = [ pkgs.haproxy ];
 
