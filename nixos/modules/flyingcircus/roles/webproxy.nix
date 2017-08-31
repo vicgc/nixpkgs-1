@@ -14,6 +14,12 @@ let
     }
   '';
 
+  cacheMemory =
+    (fclib.current_memory config 256)
+    / 100 * cfg.mallocMemoryPercentage;
+
+  varnish_ = "${pkgs.varnish}/sbin/varnishd -a ${config.services.varnish.http_address} -f ${pkgs.writeText "default.vcl" config.services.varnish.config} -n ${config.services.varnish.stateDir} -u varnish -s malloc,${toString cacheMemory}M";
+
 in
 
 {
@@ -26,8 +32,13 @@ in
         default = false;
         description = "Enable the Flying Circus varnish server role.";
       };
-    };
 
+      mallocMemoryPercentage = mkOption {
+        type = types.int;
+        default = 50;
+        description = "Percentage of system memory to allocate to malloc cache";
+      };
+    };
   };
 
   config = mkMerge [
@@ -41,8 +52,13 @@ in
          (fclib.listenAddressesQuotedV6 config "lo"));
     services.varnish.config = varnishCfg;
     services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
-    # XXX: needs to be migrated to varnish service
-    systemd.services.varnish.after = [ "network.target" ];
+    systemd.services.varnish = {
+      # XXX: needs to be migrated to varnish service
+      after = [ "network.target" ];
+      serviceConfig = {
+        ExecStart = (lib.mkOverride 99 varnish_);
+      };
+    };
 
     system.activationScripts.varnish = ''
       install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
