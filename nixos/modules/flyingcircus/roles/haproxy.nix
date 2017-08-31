@@ -75,14 +75,6 @@ in
         an example configuration here.
       '';
       "local/haproxy/haproxy.cfg.example".text = example;
-      "haproxy.cfg" = {
-        source = /etc/local/haproxy/haproxy.cfg;
-        enable = cfg.compat.gentoo.enable;
-      };
-      "haproxy" = {
-        source = /etc/local/haproxy;
-        enable = cfg.compat.gentoo.enable;
-      };
     };
 
     flyingcircus.syslog.separateFacilities = {
