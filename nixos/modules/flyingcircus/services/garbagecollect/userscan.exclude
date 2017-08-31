@@ -5,6 +5,8 @@
 .cache/
 *.crt
 *.css
+Data.fs
+Data.fs.tmp
 *.deb
 diagnostic.data/metrics.*
 *.doc
@@ -14,11 +16,13 @@ elasticsearch/data/
 *.flac
 GeoLite2-City.mmdb
 *.gif
+graylog/data/
 *.gz
+*.hg/store/
 *.htm
 *.html
 *.icc
-*.jar
+influxdb/data/
 journal/
 *.jpeg
 *.jpg
@@ -26,7 +30,9 @@ journal/
 *.kml
 *.kmz
 *.log
+.git/objects/
 *.log-????????
+*.log.?
 *.lzh
 *.m4a
 *.mid
@@ -52,8 +58,10 @@ postgresql/*/pg_*
 *.psd
 *.psd
 *.rar
+redis/*.rdb
 *.rpm
 *.rss
+solr/data/
 *.spl
 *.sql
 *.svg
@@ -69,3 +77,4 @@ postgresql/*/pg_*
 *.xlsx
 *.xml
 *.xz
+zeoclient_*.zec

@@ -17,9 +17,6 @@ let
     then "--channel-with-maintenance"
     else "--channel";
 
-  humanGid = toString config.ids.gids.users;
-  serviceGid = toString config.ids.gids.service;
-
 in {
   options = {
     flyingcircus.agent = {
@@ -41,15 +38,13 @@ in {
         description = "Steps to run by the agent.";
       };
 
-      collect-garbage = mkEnableOption
-        "automatic scanning for Nix store references and garbage collection";
     };
   };
 
   config = mkMerge [
     {
       # migration for #26699
-      warnings = lib.optional deprecatedBuildWithMaintenanceFlag ''
+      warnings = optional deprecatedBuildWithMaintenanceFlag ''
         Deprecated "build-with-maintenance" flag file detected.
         Set NixOS option "flyingcircus.agent.with-maintenance" instead and
         delete the old flag file to get rid of this warning.
@@ -95,39 +90,6 @@ in {
         %sudo-srv ALL=(root) FCMANAGE
         %service  ALL=(root) FCMANAGE
       '';
-
-      systemd.services.fc-collect-garbage =
-      let
-        collectCmd = lib.optionalString
-          cfg.agent.collect-garbage
-          "nice -n19 nix-collect-garbage --delete-older-than 3d";
-
-        script = ''
-          failed=0
-          while read user home; do
-            sudo -u $user -H -- \
-              fc-userscan -v -s 1 -S -c $home/.cache/fc-userscan.cache \
-              -z '*.egg' -E ${./userscan.exclude} \
-              $home || failed=1
-          done < <(getent passwd | \
-                   awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
-                     { print $1 " " $6 }')
-
-          if (( failed )); then
-            echo "ERROR: fc-userscan failed"
-            exit 1
-          else
-            : nix-collect-garbage enabled depending on feature flag
-            ${collectCmd}
-          fi
-        '';
-      in {
-        description = "Scan users for Nix store references and collect garbage";
-        serviceConfig.Type = "oneshot";
-        path = with pkgs; [ fcuserscan gawk nix glibc sudo ];
-        environment = { LANG = "en_US.utf8"; };
-        inherit script;
-      };
     }
 
     (mkIf cfg.agent.enable {
@@ -139,18 +101,6 @@ in {
           OnUnitActiveSec = "10m";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
-        };
-      };
-    })
-
-    (mkIf (!(lib.attrByPath [ "parameters" "production" ] true cfg.enc) ||
-        cfg.agent.collect-garbage) {
-      systemd.timers.fc-collect-garbage = {
-        description = "Timer for fc-collect-garbage";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnStartupSec = "49m";
-          OnUnitActiveSec = "1d";
         };
       };
     })

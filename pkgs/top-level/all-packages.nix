@@ -15351,7 +15351,7 @@ let
 # Augment this list with custom FC packages.
 # This addition should be kept across NixOS upgrades.
 (import ../../nixos/modules/flyingcircus/packages/all-packages.nix {
-  inherit pkgs;
+  inherit pkgs fetchFromGitHub;
 }); # self_ =
 
 
