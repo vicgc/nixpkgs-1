@@ -108,12 +108,14 @@ in
         chmod 700 ${cfg.stateDir}
         chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
         '';
+      # Is nginx is already running with a fixed config file location?
       reload = ''
-        # Force a restart if nginx is not yet using /etc/nginx.conf
-        if systemctl status nginx | grep 'master process' | grep -- '-c /etc/nginx.conf'
+        if systemctl status nginx | \
+          grep -v grep | grep -q 'master process .* -c /etc/nginx.conf'
         then
           ${nginx_} -t && ${nginx_} -s reload
         else
+          echo "config file location changed"
           systemctl restart nginx
         fi
       '';
