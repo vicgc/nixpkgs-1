@@ -73,7 +73,7 @@ let
   # mentioned anywhere else here. Even better than listing packages here is to
   # write tests.
   preBuild = with pkgs; {
-    inherit libsodium qt4 openvpn ssmtp;
+    inherit libsodium qt4 openvpn ssmtp libreoffice;
   };
 
   # List of package names for Python packages defined in modules/flyingcircus
@@ -125,7 +125,7 @@ in rec {
 
   nixpkgs = lib.filterAttrs
     (n: v: lib.isDerivation v)
-      (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
+    (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
     // {
       python27Packages =
         filterPkgs ownPythonPackages nixpkgs'.python27Packages;

@@ -87,7 +87,7 @@ in {
   config = mkIf cfg.enable {
     systemd.services.collectd = {
       description = "Collectd Monitoring Agent";
-      after = [ "network.target" ];
+      after = [ "network-interfaces.target" ];
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {

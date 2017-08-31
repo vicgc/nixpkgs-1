@@ -39,6 +39,7 @@ in
 
   imports = [
     ./firewall.nix
+    ./garbagecollect
     ./logrotate
     ./network.nix
     ./packages.nix

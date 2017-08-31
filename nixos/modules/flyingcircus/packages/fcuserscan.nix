@@ -1,19 +1,20 @@
-{ stdenv, fetchFromGitHub, rustPlatform }:
+{ pkgs, stdenv, fetchFromGitHub, rustPlatform }:
 
 with rustPlatform;
 
 buildRustPackage rec {
   name = "fc-userscan-${version}";
-  version = "0.1.3";
+  version = "0.2.0";
 
   src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "userscan";
-    rev = "${version}";
-    sha256 = "1d988kw3fvir6z8g8jwfqlqpwwhvyybcfkxrfh19g5jgcclqpd5z";
+    rev = version;
+    sha256 = "0gv4fqbv52yy3mkdvbbiv9ldfbs0238sh8hkh10rh3sy0rwl59ac";
   };
 
-  cargoDepsSha256 = "0xswg07q9f1vparrj7bg5xn33dpxcdaqmhxfv2bvgyc0q0nix0yf";
+  cargoDepsSha256 = "0ddzxyn2ykmflxc4hw11vn7b7nk9l7bi83l4idx1m3qz0ywydcqc";
+  propagatedBuildInputs = with pkgs; [ lzo ];
   doCheck = true;
 
   meta = with stdenv.lib; {

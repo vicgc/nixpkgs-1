@@ -1,16 +1,31 @@
 { pkgs ? (import <nixpkgs> {})
 , lib ? pkgs.lib
-, stdenv ? pkgs.stdenv }:
+, stdenv ? pkgs.stdenv
+}:
 
 let
-  pkgs_17_03 = (import ((import <nixpkgs> {}).fetchFromGitHub {
-      owner = "NixOS";
-      repo = "nixpkgs";
-      rev = "7aca46f9a94c06a49cbdcf25e95457d3d02541f7";
-      sha256 = "1xpa667qyrr0r9za13gs2pggd64rlzdwn3i9akq9931ssbgrgv7s";
-  }) {});
+  fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
+
+  pkgs_17_03_src = fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
+    rev = "d76cd1a28bed265b76193aaceee620f65ef24987";
+    sha256 = "1ykpw4h3hycwwnpvwkph8lsjkbcma9hgs8qn9i8f45ay67ndcn63";
+  };
+  pkgs_17_03 = import pkgs_17_03_src {};
+
+  pkgs_17_09_src = fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
+    rev = "6bd53c487d5e523ff4fd8c6cacaa7180caed02d7";
+    sha256 = "14101r4chf2is0j52c7r4h9ynm18x69xgka20n9zw9x18093mga3";
+  };
+  pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
+  # keep these in our own list to avoid frequent re-fetches after garbage
+  # collection
+  inherit pkgs_17_03_src pkgs_17_09_src;
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
@@ -189,7 +204,9 @@ in rec {
 
   sensu = pkgs.callPackage ./sensu { };
 
-  telegraf = pkgs_17_03.telegraf;
+  telegraf = pkgs.callPackage ./telegraf {
+    inherit (pkgs_17_09) buildGoPackage fetchgit;
+  };
 
   uchiwa = pkgs.callPackage ./uchiwa { };
 
@@ -202,6 +219,6 @@ in rec {
 
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
 
-  yarn = pkgs_17_03.yarn;
+  yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs7; };
 
 }
