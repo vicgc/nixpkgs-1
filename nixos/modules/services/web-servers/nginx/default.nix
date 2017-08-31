@@ -110,12 +110,11 @@ in
         '';
       # Is nginx is already running with a fixed config file location?
       reload = ''
-        if systemctl status nginx | \
-          grep -v grep | grep -q 'master process .* -c /etc/nginx.conf'
+        if ${pkgs.procps}/bin/pgrep -a nginx | grep -Fq 'master process ${nginx_}'
         then
           ${nginx_} -t && ${nginx_} -s reload
         else
-          echo "config file location changed"
+          echo "Binary or parameters changed. Restarting."
           systemctl restart nginx
         fi
       '';
