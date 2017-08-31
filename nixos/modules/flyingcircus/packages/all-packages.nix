@@ -1,10 +1,11 @@
 { pkgs ? (import <nixpkgs> {})
 , lib ? pkgs.lib
 , stdenv ? pkgs.stdenv
-, fetchFromGitHub
 }:
 
 let
+  fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
+
   pkgs_17_03_src = fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
@@ -22,7 +23,8 @@ let
   pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
-  # keep these in our own list to avoid frequent re-fetches after garbage collection
+  # keep these in our own list to avoid frequent re-fetches after garbage
+  # collection
   inherit pkgs_17_03_src pkgs_17_09_src;
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };

@@ -125,7 +125,7 @@ in rec {
 
   nixpkgs = lib.filterAttrs
     (n: v: lib.isDerivation v)
-      (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
+    (import modules/flyingcircus/packages/all-packages.nix { inherit pkgs; })
     // {
       python27Packages =
         filterPkgs ownPythonPackages nixpkgs'.python27Packages;
