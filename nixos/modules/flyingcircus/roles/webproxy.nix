@@ -18,7 +18,8 @@ let
     (fclib.current_memory config 256)
     / 100 * cfg.mallocMemoryPercentage;
 
-  varnish_ = "${pkgs.varnish}/sbin/varnishd -a ${config.services.varnish.http_address} -f ${pkgs.writeText "default.vcl" config.services.varnish.config} -n ${config.services.varnish.stateDir} -u varnish -s malloc,${toString cacheMemory}M";
+  configFile = pkgs.writeText "default.vcl" config.services.varnish.config;
+  varnish_ = "${pkgs.varnish}/sbin/varnishd -a ${config.services.varnish.http_address} -f /etc/varnish.vcl -n ${config.services.varnish.stateDir} -u varnish -s malloc,${toString cacheMemory}M";
 
 in
 
@@ -58,6 +59,20 @@ in
       preStart = lib.mkAfter ''
         install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
       '';
+      reloadIfChanged = true;
+      restartTriggers = [ configFile ];
+      reload = ''
+        if ${pkgs.procps}/bin/pgrep -a varnish | grep  -Fq '${varnish_}'
+        then
+          config=$(readlink -e /etc/varnish.vcl)
+          ${pkgs.varnish}/bin/varnishadm vcl.load $config $config &&
+            ${pkgs.varnish}/bin/varnishadm vcl.use $config
+        else
+          echo "Binary or parameters changed. Restarting."
+          systemctl restart varnish
+        fi
+      '';
+
       serviceConfig = {
         ExecStart = (lib.mkOverride 99 varnish_);
       };
@@ -72,6 +87,7 @@ in
         Put your configuration into `default.vcl`.
       '';
       "local/varnish/default.vcl.example".text = vcl_example;
+      "varnish.vcl".source = configFile;
     };
 
     services.telegraf.inputs = {
