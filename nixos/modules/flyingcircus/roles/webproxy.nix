@@ -55,14 +55,13 @@ in
     systemd.services.varnish = {
       # XXX: needs to be migrated to varnish service
       after = [ "network.target" ];
+      preStart = lib.mkAfter ''
+        install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
+      '';
       serviceConfig = {
         ExecStart = (lib.mkOverride 99 varnish_);
       };
     };
-
-    system.activationScripts.varnish = ''
-      install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
-    '';
 
     environment.etc = {
       "local/varnish/README.txt".text = ''
