@@ -7,7 +7,6 @@
      ./clamav.nix
      ./collectdproxy.nix
      ./coturn.nix
-     ./garbagecollect
      ./grafana.nix
      ./graylog.nix
      ./influxdb011.nix
