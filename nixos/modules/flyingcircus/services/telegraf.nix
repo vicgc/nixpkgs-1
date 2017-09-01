@@ -6,7 +6,7 @@ let
   cfg = config.services.telegraf;
 
   telegrafConfig = { inputs = cfg.inputs; } // cfg.extraConfig;
-  configFile = pkgs.runCommand "config.toml" {
+  configFile = pkgs.runCommand "telegraf-config.toml" {
     buildInputs = [ pkgs.remarshal ];
   } ''
     remarshal -if json -of toml \

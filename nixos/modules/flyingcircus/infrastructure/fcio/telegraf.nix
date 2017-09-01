@@ -5,6 +5,7 @@ let
   fclib = import ../../lib;
   enc = config.flyingcircus.enc;
   params = if enc ? parameters then enc.parameters else {};
+  labels = if enc ? labels then enc.labels else [];
 
   port = "9126";
 
@@ -20,9 +21,7 @@ let
                (tag.name != "env")))
         (map
           (split: nameValuePair (elemAt split 0) (elemAt split 1))
-            (map
-              (combined: splitString ":" combined)
-              enc.labels)));
+            (map (combined: splitString ":" combined) labels)));
 
     globalTags = encTags // {
       resource_group = params.resource_group;
