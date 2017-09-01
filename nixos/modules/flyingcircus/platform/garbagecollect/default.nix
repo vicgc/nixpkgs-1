@@ -21,15 +21,15 @@ let
   stamp = "/var/lib/fc-collect-garbage.stamp";
 
   script = ''
+    started=$(date +%s)
     failed=0
     while read user home; do
       sudo -u $user -H -- \
         fc-userscan -v -S -s 1 -c $home/.cache/fc-userscan.cache \
         -z '*.egg,*.jar,*.war' -E ${./userscan.exclude} \
         $home || failed=1
-    done < <(getent passwd | \
-             awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
-               { print $1 " " $6 }')
+    done < <(getent passwd | awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
+              { print $1 " " $6 }')
 
     if (( failed )); then
       echo "ERROR: fc-userscan failed"
@@ -38,7 +38,8 @@ let
       : nix-collect-garbage enabled depending on feature flag
       ${collectCmd}
     fi
-    touch ${stamp}
+    stopped=$(date +%s)
+    echo $((stopped - started)) > ${stamp}
   '';
 
 in {
@@ -76,7 +77,7 @@ in {
         notification = "nix-collect-garbage stamp recent";
         command = ''
           ${pkgs.nagiosPluginsOfficial}/bin/check_file_age -f ${stamp} \
-            -w 216000 -c 432000
+          -w 216000 -c 432000 && echo "| time=$(<${stamp})s;;;0"
         '';
       };
 

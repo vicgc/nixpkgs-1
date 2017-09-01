@@ -2,7 +2,6 @@
 *.bak
 *.bmp
 *.bz2
-.cache/
 *.crt
 *.css
 Data.fs
@@ -13,9 +12,11 @@ diagnostic.data/metrics.*
 *.docx
 elasticsearch/data/
 *.eml
+fc-userscan.cache
 *.flac
 GeoLite2-City.mmdb
 *.gif
+.git/objects/
 graylog/data/
 *.gz
 *.hg/store/
@@ -30,7 +31,6 @@ journal/
 *.kml
 *.kmz
 *.log
-.git/objects/
 *.log-????????
 *.log.?
 *.lzh
