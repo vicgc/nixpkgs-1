@@ -20,6 +20,7 @@ let
       "-storage.local.retention ${toString (cfgStatsGlobal.prometheusRetention * 24)}h"
       "-storage.local.series-file-shrink-ratio 0.3"
       "-storage.local.target-heap-size=${toString prometheusHeap}"
+      "-storage.local.chunk-encoding-version=2"
     ]
     else [  # Proxy only
       "-storage.local.retention 24h"
