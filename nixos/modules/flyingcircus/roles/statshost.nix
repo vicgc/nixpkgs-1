@@ -353,7 +353,7 @@ in
         description = "Timer for updading the grafana dashboards";
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          Unit = "graylog-update-geolite.service";
+          Unit = "fc-grafana-load-dashboards.service";
           OnUnitActiveSec = "1h";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
