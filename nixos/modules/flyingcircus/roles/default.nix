@@ -35,7 +35,7 @@ in
      ./redis.nix
      ./sensuserver.nix
      ./servicecheck.nix
-     ./statshost
+     ./statshost.nix
      ./webdata_blackbee.nix
      ./webgateway.nix
      ./webproxy.nix

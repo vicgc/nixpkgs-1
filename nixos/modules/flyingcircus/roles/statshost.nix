@@ -5,7 +5,7 @@
 with lib;
 
 let
-  fclib = import ../../lib;
+  fclib = import ../lib;
 
   # For details, see the option description below
   cfgStatsGlobal = config.flyingcircus.roles.statshost;
