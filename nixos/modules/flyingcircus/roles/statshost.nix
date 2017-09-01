@@ -17,17 +17,20 @@ let
   promFlags =
     if cfgStatsRG.enable
     then [
-      "-storage.local.retention 1400h"
+      "-storage.local.retention ${toString (cfgStatsGlobal.prometheusRetention * 24)}h"
       "-storage.local.series-file-shrink-ratio 0.3"
-      "-storage.local.memory-chunks 1048576"
+      "-storage.local.target-heap-size=${toString prometheusHeap}"
     ]
     else [  # Proxy only
       "-storage.local.retention 24h"
       "-storage.local.series-file-shrink-ratio 0.1"
-      "-storage.local.memory-chunks 131072"  # Find out useful value.
+      "-storage.local.target-heap-size=${toString (256*1024*1024)}"
     ];
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+  prometheusHeap =
+    (fclib.current_memory config 256) * 1024
+    * cfgStatsGlobal.prometheusHeapMemoryPercentage;
 
   statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
@@ -100,6 +103,18 @@ in
         type = types.str;
         default = "https://github.com/flyingcircusio/grafana.git";
         description = "Dashboard git repository.";
+      };
+
+      prometheusHeapMemoryPercentage = mkOption {
+        type = types.int;
+        default = 66;
+        description = "How much RAM should go to prometheus heap.";
+      };
+
+      prometheusRetention = mkOption {
+        type = types.int;
+        default = 70;
+        description = "How long to keep data in *days*.";
       };
 
     };
@@ -285,7 +300,7 @@ in
             }
 
             location /grafana/ {
-                proxy_pass http://localhost:3001/;
+                proxy_pass http://127.0.0.1:3001/;
             }
 
           '';

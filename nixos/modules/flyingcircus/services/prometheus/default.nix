@@ -67,7 +67,7 @@ let
         '';
       };
 
-      labels = mkOption {
+      external_labels = mkOption {
         type = types.attrsOf types.str;
         default = {};
         description = ''
