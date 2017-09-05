@@ -327,7 +327,7 @@ in
       systemd.services.fc-grafana-load-dashboards = {
         description = "Update grafana dashboards.";
         restartIfChanged = false;
-        after = [ "grafana.service" ];
+        after = [ "network.target" "grafana.service" ];
         wantedBy = [ "grafana.service" ];
         serviceConfig = {
           User = "grafana";
