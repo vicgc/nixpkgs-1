@@ -90,7 +90,7 @@ in
         example = "stats.example.com";
       };
 
-      prometeusMetricRelabel = mkOption {
+      prometheusMetricRelabel = mkOption {
         type = types.listOf types.attrs;
         default = [];
         description = "Prometheus metric relabel configuration.";
@@ -221,7 +221,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometeusMetricRelabel;
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -236,7 +236,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometeusMetricRelabel;
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
       ];
 

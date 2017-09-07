@@ -115,7 +115,7 @@ in
   })
 
  {
-    flyingcircus.roles.statshost.prometeusMetricRelabel = [
+    flyingcircus.roles.statshost.prometheusMetricRelabel = [
       # Remove _counter and _gauge postfixes which telegraf adds. See
       # https://github.com/influxdata/telegraf/issues/2950
       { source_labels = ["__name__"];

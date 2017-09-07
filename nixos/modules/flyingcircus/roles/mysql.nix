@@ -293,7 +293,7 @@ in
   })
 
   {
-    flyingcircus.roles.statshost.prometeusMetricRelabel = [
+    flyingcircus.roles.statshost.prometheusMetricRelabel = [
 
       { source_labels = ["__name__"];
        regex = "(mysql_commands)_(.+)";

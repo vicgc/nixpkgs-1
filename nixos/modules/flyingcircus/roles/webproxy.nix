@@ -69,7 +69,7 @@ in
   })
 
   {
-    flyingcircus.roles.statshost.prometeusMetricRelabel = [
+    flyingcircus.roles.statshost.prometheusMetricRelabel = [
       { source_labels = ["__name__"];
        regex = "(varnish_client_req|varnish_fetch)_(.+)";
        replacement = "\${2}";
