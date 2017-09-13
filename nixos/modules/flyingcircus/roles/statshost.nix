@@ -296,8 +296,15 @@ in
               root /tmp/letsencrypt;
             }
 
-            location / {
+            location = / {
                 rewrite ^ /grafana/ redirect;
+            }
+
+            location / {
+                # Allow access to prometheus
+                auth_basic "FCIO user";
+                auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
+                proxy_pass http://${prometheusListenAddress};
             }
 
             location /grafana/ {
