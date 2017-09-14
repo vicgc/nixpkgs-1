@@ -68,6 +68,11 @@ in
           config=$(readlink -e /etc/current-config/varnish.vcl)
           varnishadm vcl.load $config $config &&
             varnishadm vcl.use $config
+
+          for vcl in $(varnishadm vcl.list | grep ^available | awk {'print $3'});
+          do
+            varnishadm vcl.discard $vcl
+          done
         else
           echo "Binary or parameters changed. Restarting."
           systemctl restart varnish
