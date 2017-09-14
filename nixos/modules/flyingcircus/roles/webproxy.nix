@@ -19,7 +19,7 @@ let
     / 100 * cfg.mallocMemoryPercentage;
 
   configFile = pkgs.writeText "default.vcl" config.services.varnish.config;
-  varnish_ = "${pkgs.varnish}/sbin/varnishd -a ${config.services.varnish.http_address} -f /etc/varnish.vcl -n ${config.services.varnish.stateDir} -u varnish -s malloc,${toString cacheMemory}M";
+  varnish_ = "${pkgs.varnish}/sbin/varnishd -a ${config.services.varnish.http_address} -f /etc/current-config/varnish.vcl -n ${config.services.varnish.stateDir} -u varnish -s malloc,${toString cacheMemory}M";
 
 in
 
@@ -56,17 +56,18 @@ in
     systemd.services.varnish = {
       # XXX: needs to be migrated to varnish service
       after = [ "network.target" ];
+      path = [ pkgs.varnish pkgs.procps pkgs.gawk ];
       preStart = lib.mkAfter ''
         install -d -o ${toString config.ids.uids.varnish} -g service -m 02775 /etc/local/varnish
       '';
       reloadIfChanged = true;
       restartTriggers = [ configFile ];
       reload = ''
-        if ${pkgs.procps}/bin/pgrep -a varnish | grep  -Fq '${varnish_}'
+        if pgrep -a varnish | grep  -Fq '${varnish_}'
         then
-          config=$(readlink -e /etc/varnish.vcl)
-          ${pkgs.varnish}/bin/varnishadm vcl.load $config $config &&
-            ${pkgs.varnish}/bin/varnishadm vcl.use $config
+          config=$(readlink -e /etc/current-config/varnish.vcl)
+          varnishadm vcl.load $config $config &&
+            varnishadm vcl.use $config
         else
           echo "Binary or parameters changed. Restarting."
           systemctl restart varnish
@@ -87,7 +88,7 @@ in
         Put your configuration into `default.vcl`.
       '';
       "local/varnish/default.vcl.example".text = vcl_example;
-      "varnish.vcl".source = configFile;
+      "current-config/varnish.vcl".source = configFile;
     };
 
     services.telegraf.inputs = {
