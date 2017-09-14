@@ -61,8 +61,8 @@ let
     [[servers.group_mappings]]
     group_dn = "*"
     org_role = ""
-
   '';
+  grafanaJsonDashboardPath = "${config.services.grafana.dataDir}/dashboards";
 
 in
 {
@@ -89,6 +89,19 @@ in
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
       };
+
+      prometheusMetricRelabel = mkOption {
+        type = types.listOf types.attrs;
+        default = [];
+        description = "Prometheus metric relabel configuration.";
+      };
+
+      dashboardsRepository = mkOption {
+        type = types.str;
+        default = "https://github.com/flyingcircusio/grafana.git";
+        description = "Dashboard git repository.";
+      };
+
     };
 
     flyingcircus.roles.statshostproxy = {
@@ -208,6 +221,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -222,6 +236,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
       ];
 
@@ -249,6 +264,8 @@ in
           AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
           LOG_LEVEL = "debug";
           LOG_FILTERS = "ldap:debug";
+          DASHBOARDS_JSON_ENABLED = "true";
+          DASHBOARDS_JSON_PATH = "${grafanaJsonDashboardPath}";
         };
       };
 
@@ -305,6 +322,43 @@ in
 
       networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
       networking.firewall.allowedUDPPorts = [ 2003 ];
+
+      # Provide FC dashboards, and update them automatically.
+      systemd.services.fc-grafana-load-dashboards = {
+        description = "Update grafana dashboards.";
+        restartIfChanged = false;
+        after = [ "network.target" "grafana.service" ];
+        wantedBy = [ "grafana.service" ];
+        serviceConfig = {
+          User = "grafana";
+          Type = "oneshot";
+        };
+        path = [ pkgs.git pkgs.coreutils ];
+        environment = {
+          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+        };
+        script = ''
+          if [ -d ${grafanaJsonDashboardPath} -a -d ${grafanaJsonDashboardPath}/.git ];
+          then
+            cd ${grafanaJsonDashboardPath}
+            git pull
+          else
+            rm -rf ${grafanaJsonDashboardPath}
+            git clone ${cfgStatsGlobal.dashboardsRepository} ${grafanaJsonDashboardPath}
+          fi
+        '';
+      };
+
+      systemd.timers.fc-grafana-load-dashboards = {
+        description = "Timer for updading the grafana dashboards";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          Unit = "fc-grafana-load-dashboards.service";
+          OnUnitActiveSec = "1h";
+          # Not yet supported by our systemd version.
+          # RandomSec = "3m";
+        };
+      };
 
     })
 

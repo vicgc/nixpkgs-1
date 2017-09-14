@@ -30,7 +30,8 @@ in
 
   };
 
-  config = mkIf cfg.enable {
+  config = mkMerge [
+  (mkIf cfg.enable {
 
     services.varnish.enable = true;
     services.varnish.http_address =
@@ -65,5 +66,35 @@ in
       }];
     };
 
-  };
+  })
+
+  {
+    flyingcircus.roles.statshost.prometheusMetricRelabel = [
+      { source_labels = ["__name__"];
+       regex = "(varnish_client_req|varnish_fetch)_(.+)";
+       replacement = "\${2}";
+       target_label = "status";
+      }
+      { source_labels = ["__name__"];
+       regex = "(varnish_client_req|varnish_fetch)_(.+)";
+       replacement = "\${1}";
+       target_label = "__name__";
+      }
+
+      # Relabel
+      { source_labels = ["__name__"];
+       regex = "varnish_(\\w+)_(.+)__(\\d+)__(.+)";
+       replacement = "\${1}";
+       target_label = "backend";
+      }
+      { source_labels = ["__name__"];
+       regex = "varnish_(\1\w+)_(.+)__(\\d+)__(.+)";
+       replacement = "varnish_\${4}";
+       target_label = "__name__";
+      }
+    ];
+  }
+
+  ];
+
 }
