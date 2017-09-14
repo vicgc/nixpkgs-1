@@ -95,8 +95,8 @@ in
       path = [ pkgs.haproxy ];
       script = ''
         exec ${pkgs.prometheus-haproxy-exporter}/bin/haproxy_exporter \
-          -web.listen-address localhost:9127 \
-          -haproxy.scrape-uri=unix:${statsSocket}
+          --web.listen-address localhost:9127 \
+          --haproxy.scrape-uri=unix:${statsSocket}
       '';
       serviceConfig = {
         User = "nobody";
