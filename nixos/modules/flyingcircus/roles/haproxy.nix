@@ -5,7 +5,7 @@ let
   fclib = import ../lib;
 
   haproxyCfgContent = fclib.configFromFile /etc/local/haproxy/haproxy.cfg example;
-  haproxyCfg = pkgs.writeText "haproxy.conf" haproxyCfgContent;
+  haproxyCfg = pkgs.writeText "haproxy.conf" config.services.haproxy.config;
   statsSocket = "/run/haproxy_admin.sock";
 
   example = ''
