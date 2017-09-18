@@ -366,7 +366,7 @@ in
       };
 
       systemd.timers.fc-grafana-load-dashboards = {
-        description = "Timer for updading the grafana dashboards";
+        description = "Timer for updating the grafana dashboards";
         wantedBy = [ "timers.target" ];
         timerConfig = {
           Unit = "fc-grafana-load-dashboards.service";
