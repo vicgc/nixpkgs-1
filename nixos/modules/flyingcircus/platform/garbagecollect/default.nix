@@ -25,8 +25,8 @@ let
     failed=0
     while read user home; do
       sudo -u $user -H -- \
-        fc-userscan -v -S -s 1 -c $home/.cache/fc-userscan.cache \
-        -z '*.egg,*.jar,*.war' -E ${./userscan.exclude} \
+        fc-userscan -v -S -s 2 -c $home/.cache/fc-userscan.cache \
+        -z '*.egg' -E ${./userscan.exclude} \
         $home || failed=1
     done < <(getent passwd | awk -F: '$4 == ${humanGid} || $4 == ${serviceGid} \
               { print $1 " " $6 }')
