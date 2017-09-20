@@ -54,7 +54,7 @@ in
     services.varnish.config = varnishCfg;
     services.varnish.stateDir = "/var/spool/varnish/${config.networking.hostName}";
     systemd.services.varnish = {
-      # XXX: needs to be migrated to varnish service
+      # XXX: needs to be migrated to upstream varnish service
       after = [ "network.target" ];
       path = [ pkgs.varnish pkgs.procps pkgs.gawk ];
       preStart = lib.mkAfter ''
@@ -102,36 +102,37 @@ in
         stats = ["all"];
       }];
     };
-
   })
 
   {
     flyingcircus.roles.statshost.prometheusMetricRelabel = [
-      { source_labels = ["__name__"];
-       regex = "(varnish_client_req|varnish_fetch)_(.+)";
-       replacement = "\${2}";
-       target_label = "status";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(varnish_client_req|varnish_fetch)_(.+)";
+        replacement = "\${2}";
+        target_label = "status";
       }
-      { source_labels = ["__name__"];
-       regex = "(varnish_client_req|varnish_fetch)_(.+)";
-       replacement = "\${1}";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(varnish_client_req|varnish_fetch)_(.+)";
+        replacement = "\${1}";
+        target_label = "__name__";
       }
 
       # Relabel
-      { source_labels = ["__name__"];
-       regex = "varnish_(\\w+)_(.+)__(\\d+)__(.+)";
-       replacement = "\${1}";
-       target_label = "backend";
+      {
+        source_labels = [ "__name__" ];
+        regex = "varnish_(\\w+)_(.+)__(\\d+)__(.+)";
+        replacement = "\${1}";
+        target_label = "backend";
       }
-      { source_labels = ["__name__"];
-       regex = "varnish_(\1\w+)_(.+)__(\\d+)__(.+)";
-       replacement = "varnish_\${4}";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "varnish_(\1\w+)_(.+)__(\\d+)__(.+)";
+        replacement = "varnish_\${4}";
+        target_label = "__name__";
       }
     ];
   }
-
   ];
-
 }

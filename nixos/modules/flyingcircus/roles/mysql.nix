@@ -294,51 +294,54 @@ in
 
   {
     flyingcircus.roles.statshost.prometheusMetricRelabel = [
-
-      { source_labels = ["__name__"];
-       regex = "(mysql_commands)_(.+)";
-       replacement = "\${2}";
-       target_label = "command";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_commands)_(.+)";
+        replacement = "\${2}";
+        target_label = "command";
       }
-      { source_labels = ["__name__"];
-       regex = "(mysql_commands)_(.+)";
-       replacement = "\${1}_total";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_commands)_(.+)";
+        replacement = "\${1}_total";
+        target_label = "__name__";
       }
-
-      { source_labels = ["__name__"];
-       regex = "(mysql_handler)_(.+)";
-       replacement = "\${2}";
-       target_label = "handler";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_handler)_(.+)";
+        replacement = "\${2}";
+        target_label = "handler";
       }
-      { source_labels = ["__name__"];
-       regex = "(mysql_handler)_(.+)";
-       replacement = "mysql_handlers_total";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_handler)_(.+)";
+        replacement = "mysql_handlers_total";
+        target_label = "__name__";
       }
-
-      { source_labels = ["__name__"];
-       regex = "(mysql_innodb_rows)_(.+)";
-       replacement = "\${2}";
-       target_label = "operation";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_innodb_rows)_(.+)";
+        replacement = "\${2}";
+        target_label = "operation";
       }
-      { source_labels = ["__name__"];
-       regex = "(mysql_innodb_rows)_(.+)";
-       replacement = "mysql_innodb_row_ops_total";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_innodb_rows)_(.+)";
+        replacement = "mysql_innodb_row_ops_total";
+        target_label = "__name__";
       }
-
-      { source_labels = ["__name__"];
-       regex = "(mysql_innodb_buffer_pool_pages)_(.+)";
-       replacement = "\${2}";
-       target_label = "state";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_innodb_buffer_pool_pages)_(.+)";
+        replacement = "\${2}";
+        target_label = "state";
       }
-      { source_labels = ["__name__"];
-       regex = "(mysql_innodb_buffer_pool_pages)_(.+)";
-       replacement = "mysql_buffer_pool_pages";
-       target_label = "__name__";
+      {
+        source_labels = [ "__name__" ];
+        regex = "(mysql_innodb_buffer_pool_pages)_(.+)";
+        replacement = "mysql_buffer_pool_pages";
+        target_label = "__name__";
       }
-
     ];
   }
   ];

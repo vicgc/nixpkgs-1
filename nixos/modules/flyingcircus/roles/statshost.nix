@@ -384,7 +384,6 @@ in
       services.collectdproxy.location.statshost = cfgStatsGlobal.hostName;
       services.collectdproxy.location.listen_addr = config.networking.hostName;
       networking.firewall.allowedUDPPorts = [ 2003 ];
-
     })
   ];
 }
