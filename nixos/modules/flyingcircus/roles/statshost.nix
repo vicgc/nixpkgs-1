@@ -33,6 +33,14 @@ let
     (fclib.current_memory config 256) * 1024
     * cfgStatsGlobal.prometheusHeapMemoryPercentage;
 
+  # It's common to have stathost and loghost on the same node. Each should
+  # use half of the memory then. A general approach for this kind of
+  # multi-service would be nice.
+  heapCorrection =
+    if config.flyingcircus.roles.loghost.enable
+    then 50
+    else 100;
+
   statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
     null
@@ -108,7 +116,7 @@ in
 
       prometheusHeapMemoryPercentage = mkOption {
         type = types.int;
-        default = 66;
+        default = 66 * heapCorrection / 100;
         description = "How much RAM should go to prometheus heap.";
       };
 
