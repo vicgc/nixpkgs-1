@@ -8,19 +8,19 @@ with lib;
 let
   cfg = config.flyingcircus;
 
-  enableTimer =
-    !(attrByPath [ "parameters" "production" ] true cfg.enc) ||
-    cfg.agent.collect-garbage;
+  isStaging = !(attrByPath [ "parameters" "production" ] true cfg.enc);
+  enableTimer = isStaging || cfg.agent.collect-garbage;
 
-  collectCmd = optionalString
-    cfg.agent.collect-garbage
-    "nice -n19 nix-collect-garbage --delete-older-than 3d";
+  collectCmd = if cfg.agent.collect-garbage
+    then "nice -n19 nix-collect-garbage --delete-older-than 3d"
+    else "echo 'nix-collect-garbage disabled (feature switch)'";
 
   humanGid = toString config.ids.gids.users;
   serviceGid = toString config.ids.gids.service;
   stamp = "/var/lib/fc-collect-garbage.stamp";
 
   script = ''
+    sleep $[ $RANDOM % 60 ]
     started=$(date +%s)
     failed=0
     while read user home; do
@@ -35,7 +35,6 @@ let
       echo "ERROR: fc-userscan failed"
       exit 1
     else
-      : nix-collect-garbage enabled depending on feature flag
       ${collectCmd}
     fi
     stopped=$(date +%s)
@@ -45,8 +44,16 @@ let
 in {
   options = {
     flyingcircus.agent = {
-      collect-garbage = mkEnableOption
-        "automatic scanning for Nix store references and garbage collection";
+      collect-garbage = mkOption {
+        default =
+          # incremental roll-out
+          isStaging && (attrByPath [ "parameters" "id" ] 999999 cfg.enc) < 4500;
+        description = ''
+          Whether to enable automatic scanning for Nix store references and
+          garbage collection.
+        '';
+        type = types.bool;
+      };
     };
   };
 
@@ -54,6 +61,7 @@ in {
     {
       systemd.services.fc-collect-garbage = {
         description = "Scan users for Nix store references and collect garbage";
+        restartIfChanged = false;
         serviceConfig.Type = "oneshot";
         path = with pkgs; [ fcuserscan gawk nix glibc sudo ];
         environment = { LANG = "en_US.utf8"; };
