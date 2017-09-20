@@ -17,17 +17,21 @@ let
   promFlags =
     if cfgStatsRG.enable
     then [
-      "-storage.local.retention 1400h"
+      "-storage.local.retention ${toString (cfgStatsGlobal.prometheusRetention * 24)}h"
       "-storage.local.series-file-shrink-ratio 0.3"
-      "-storage.local.memory-chunks 1048576"
+      "-storage.local.target-heap-size=${toString prometheusHeap}"
+      "-storage.local.chunk-encoding-version=2"
     ]
     else [  # Proxy only
       "-storage.local.retention 24h"
       "-storage.local.series-file-shrink-ratio 0.1"
-      "-storage.local.memory-chunks 131072"  # Find out useful value.
+      "-storage.local.target-heap-size=${toString (256*1024*1024)}"
     ];
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+  prometheusHeap =
+    (fclib.current_memory config 256) * 1024
+    * cfgStatsGlobal.prometheusHeapMemoryPercentage;
 
   statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
@@ -61,8 +65,8 @@ let
     [[servers.group_mappings]]
     group_dn = "*"
     org_role = ""
-
   '';
+  grafanaJsonDashboardPath = "${config.services.grafana.dataDir}/dashboards";
 
 in
 {
@@ -89,6 +93,31 @@ in
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
       };
+
+      prometheusMetricRelabel = mkOption {
+        type = types.listOf types.attrs;
+        default = [];
+        description = "Prometheus metric relabel configuration.";
+      };
+
+      dashboardsRepository = mkOption {
+        type = types.str;
+        default = "https://github.com/flyingcircusio/grafana.git";
+        description = "Dashboard git repository.";
+      };
+
+      prometheusHeapMemoryPercentage = mkOption {
+        type = types.int;
+        default = 66;
+        description = "How much RAM should go to prometheus heap.";
+      };
+
+      prometheusRetention = mkOption {
+        type = types.int;
+        default = 70;
+        description = "How long to keep data in *days*.";
+      };
+
     };
 
     flyingcircus.roles.statshostproxy = {
@@ -208,6 +237,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -222,6 +252,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
+          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
         }
       ];
 
@@ -249,6 +280,8 @@ in
           AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
           LOG_LEVEL = "debug";
           LOG_FILTERS = "ldap:debug";
+          DASHBOARDS_JSON_ENABLED = "true";
+          DASHBOARDS_JSON_PATH = "${grafanaJsonDashboardPath}";
         };
       };
 
@@ -268,7 +301,7 @@ in
             }
 
             location /grafana/ {
-                proxy_pass http://localhost:3001/;
+                proxy_pass http://127.0.0.1:3001/;
             }
 
           '';
@@ -306,6 +339,43 @@ in
       networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
       networking.firewall.allowedUDPPorts = [ 2003 ];
 
+      # Provide FC dashboards, and update them automatically.
+      systemd.services.fc-grafana-load-dashboards = {
+        description = "Update grafana dashboards.";
+        restartIfChanged = false;
+        after = [ "network.target" "grafana.service" ];
+        wantedBy = [ "grafana.service" ];
+        serviceConfig = {
+          User = "grafana";
+          Type = "oneshot";
+        };
+        path = [ pkgs.git pkgs.coreutils ];
+        environment = {
+          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+        };
+        script = ''
+          if [ -d ${grafanaJsonDashboardPath} -a -d ${grafanaJsonDashboardPath}/.git ];
+          then
+            cd ${grafanaJsonDashboardPath}
+            git pull
+          else
+            rm -rf ${grafanaJsonDashboardPath}
+            git clone ${cfgStatsGlobal.dashboardsRepository} ${grafanaJsonDashboardPath}
+          fi
+        '';
+      };
+
+      systemd.timers.fc-grafana-load-dashboards = {
+        description = "Timer for updating the grafana dashboards";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          Unit = "fc-grafana-load-dashboards.service";
+          OnUnitActiveSec = "1h";
+          # Not yet supported by our systemd version.
+          # RandomSec = "3m";
+        };
+      };
+
     })
 
     # collectd proxy
@@ -314,7 +384,6 @@ in
       services.collectdproxy.location.statshost = cfgStatsGlobal.hostName;
       services.collectdproxy.location.listen_addr = config.networking.hostName;
       networking.firewall.allowedUDPPorts = [ 2003 ];
-
     })
   ];
 }

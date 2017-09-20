@@ -3,8 +3,8 @@
 
 buildGoPackage rec {
   name = "telegraf-${version}";
-  version = "1.3.1";
-  rev = "f93615672b02a41d9bc867bd92bf31c1d777989b";
+  version = "1.3.5";
+  rev = "7192e68b2423997177692834f53cdf171aee1a88";
 
   goPackagePath = "github.com/influxdata/telegraf";
   excludedPackages = "test";
@@ -12,7 +12,7 @@ buildGoPackage rec {
   src = fetchgit {
     inherit rev;
     url = "https://github.com/influxdata/telegraf";
-    sha256 = "0aq001ck07xarqsj2jv87qmad8bf9s0jzf12jrcny829625r10mw";
+    sha256 = "087fq6ycdbrfrngg8rvalf1kd3n70zkinmjlsv10b7gmprvmh573";
   };
 
   goDeps = ./deps.nix;

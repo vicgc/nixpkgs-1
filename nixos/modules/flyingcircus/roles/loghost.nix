@@ -294,7 +294,7 @@ in
       };
 
       systemd.timers.graylog-update-geolite = {
-        description = "Timer for updading the geolite db for graylog";
+        description = "Timer for updating the geolite db for graylog";
         wantedBy = [ "timers.target" ];
         timerConfig = {
           Unit = "graylog-update-geolite.service";

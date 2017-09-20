@@ -94,12 +94,12 @@ in
 
     # FCIO: Use reload instead of restart.
     systemd.services.nginx =
-      let nginx_ = "${nginx}/bin/nginx -c /etc/nginx.conf -p ${cfg.stateDir}";
+      let nginx_ = "${nginx}/bin/nginx -c /etc/current-config/nginx.conf -p ${cfg.stateDir}";
       in {
       description = "Nginx Web Server";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      path = [ nginx ];
+      path = [ nginx pkgs.procps];
       reloadIfChanged = true;
       restartTriggers = [ configFile ];
       preStart =
@@ -110,7 +110,7 @@ in
         '';
       # Is nginx is already running with a fixed config file location?
       reload = ''
-        if ${pkgs.procps}/bin/pgrep -a nginx | grep -Fq 'master process ${nginx_}'
+        if pgrep -a nginx | grep -Fq 'master process ${nginx_}'
         then
           ${nginx_} -t && ${nginx_} -s reload
         else
@@ -127,7 +127,7 @@ in
     };
 
     # FCIO
-    environment.etc."nginx.conf".source = configFile;
+    environment.etc."current-config/nginx.conf".source = configFile;
 
     users.extraUsers = optionalAttrs (cfg.user == "nginx") (singleton
       { name = "nginx";
