@@ -137,6 +137,7 @@ in rec {
   openssl = openssl_1_0_2;
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
+  osrm-backend = pkgs.callPackage ./osrm-backend { };
 
   pcre = pkgs.callPackage ./pcre.nix { };
   pcre-cpp = pcre.override { variant = "cpp"; };
