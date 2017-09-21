@@ -163,7 +163,8 @@ in rec {
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
 
-  prometheus = pkgs_17_03.prometheus;
+  prometheus = pkgs_17_09.prometheus;
+  prometheus-haproxy-exporter = pkgs_17_09.prometheus-haproxy-exporter;
 
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;

@@ -4,7 +4,9 @@ let
   cfg = config.flyingcircus;
   fclib = import ../lib;
 
-  haproxyCfg = fclib.configFromFile /etc/local/haproxy/haproxy.cfg example;
+  haproxyCfgContent = fclib.configFromFile /etc/local/haproxy/haproxy.cfg example;
+  haproxyCfg = pkgs.writeText "haproxy.conf" config.services.haproxy.config;
+  statsSocket = "/run/haproxy_admin.sock";
 
   example = ''
     # haproxy configuration example - copy to haproxy.cfg and adapt.
@@ -16,6 +18,7 @@ let
         group haproxy
         maxconn 4096
         log localhost local2
+        stats socket ${statsSocket} mode 660 group nogroup level operator
 
     defaults
         mode http
@@ -54,14 +57,41 @@ in
 
   };
 
-  config = mkIf config.flyingcircus.roles.haproxy.enable {
+  config = mkMerge [
+
+  (mkIf config.flyingcircus.roles.haproxy.enable {
 
     services.haproxy.enable = true;
-    services.haproxy.config = haproxyCfg;
-    system.activationScripts.haproxy = ''
-      install -d -o ${toString config.ids.uids.haproxy} -g service -m 02775 \
-        /etc/local/haproxy
-    '';
+    services.haproxy.config = haproxyCfgContent;
+
+   # FCIO
+    systemd.services.haproxy = let
+      haproxy_ = "${pkgs.haproxy}/sbin/haproxy-systemd-wrapper -f /etc/current-config/haproxy.cfg -p /run/haproxy.pid";
+      verifyConfig = "${pkgs.haproxy}/sbin/haproxy -c -q -f /etc/current-config/haproxy.cfg";
+      in {
+      reloadIfChanged = true;
+      restartTriggers = [ haproxyCfg ];
+      reload = ''
+        if ${pkgs.procps}/bin/pgrep -f '${haproxy_}'
+        then
+          ${verifyConfig} && ${pkgs.coreutils}/bin/kill -USR2 $MAINPID
+        else
+          echo "Binary or parameters changed. Restarting."
+          systemctl restart haproxy
+        fi
+      '';
+      preStart = ''
+        install -d -o ${toString config.ids.uids.haproxy} -g service -m 02775 \
+          /etc/local/haproxy
+        ${verifyConfig};
+      '';
+      serviceConfig = {
+        ExecStart = lib.mkOverride 90 haproxy_;
+        KillMode = "mixed";
+        Restart = "always";
+      };
+
+    };
 
     environment.etc = {
       "local/haproxy/README.txt".text = ''
@@ -71,19 +101,50 @@ in
         an example configuration here.
       '';
       "local/haproxy/haproxy.cfg.example".text = example;
-      "haproxy.cfg" = {
-        source = /etc/local/haproxy/haproxy.cfg;
-        enable = cfg.compat.gentoo.enable;
-      };
-      "haproxy" = {
-        source = /etc/local/haproxy;
-        enable = cfg.compat.gentoo.enable;
-      };
+
+      "current-config/haproxy.cfg".source = haproxyCfg;
     };
 
     flyingcircus.syslog.separateFacilities = {
       local2 = "/var/log/haproxy.log";
     };
-  };
 
+    systemd.services.prometheus-haproxy-exporter = {
+      description = "Prometheus exporter for haproxy metrics";
+      wantedBy = [ "multi-user.target" ];
+      path = [ pkgs.haproxy ];
+      script = ''
+        exec ${pkgs.prometheus-haproxy-exporter}/bin/haproxy_exporter \
+          --web.listen-address localhost:9127 \
+          --haproxy.scrape-uri=unix:${statsSocket}
+      '';
+      serviceConfig = {
+        User = "nobody";
+        Restart = "always";
+        PrivateTmp = true;
+        WorkingDirectory = /tmp;
+        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+      };
+    };
+
+    services.telegraf.inputs = {
+      prometheus  = [{
+        urls = ["http://localhost:9127/metrics"];
+      }];
+    };
+  })
+
+  {
+    flyingcircus.roles.statshost.prometheusMetricRelabel = [
+      # Remove _counter and _gauge postfixes which telegraf adds. See
+      # https://github.com/influxdata/telegraf/issues/2950
+      {
+        source_labels = [ "__name__" ];
+        regex = "haproxy_(.+)_(counter|gauge)";
+        replacement = "haproxy_\${1}";
+        target_label = "__name__";
+      }
+    ];
+  }
+  ];
 }

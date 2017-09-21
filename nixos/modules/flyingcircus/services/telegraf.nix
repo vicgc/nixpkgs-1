@@ -6,7 +6,7 @@ let
   cfg = config.services.telegraf;
 
   telegrafConfig = { inputs = cfg.inputs; } // cfg.extraConfig;
-  configFile = pkgs.runCommand "config.toml" {
+  configFile = pkgs.runCommand "telegraf-config.toml" {
     buildInputs = [ pkgs.remarshal ];
   } ''
     remarshal -if json -of toml \
@@ -65,6 +65,7 @@ in {
       description = "Telegraf Agent";
       wantedBy = [ "multi-user.target" ];
       after = [ "network-interfaces.target" ];
+      path = [ pkgs.net_snmp ];
       serviceConfig = {
         ExecStart=''${cfg.package}/bin/telegraf ${startupOptions}'';
         ExecReload="${pkgs.coreutils}/bin/kill -HUP $MAINPID";

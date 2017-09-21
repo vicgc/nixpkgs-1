@@ -4,13 +4,13 @@ with rustPlatform;
 
 buildRustPackage rec {
   name = "fc-userscan-${version}";
-  version = "0.2.0";
+  version = "0.3.1";
 
   src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "userscan";
     rev = version;
-    sha256 = "0gv4fqbv52yy3mkdvbbiv9ldfbs0238sh8hkh10rh3sy0rwl59ac";
+    sha256 = "1qb1z1gvmjwslany2134rlg8fhn3f62ivry0hqqw2bf6ydqvlqv1";
   };
 
   cargoDepsSha256 = "0ddzxyn2ykmflxc4hw11vn7b7nk9l7bi83l4idx1m3qz0ywydcqc";
