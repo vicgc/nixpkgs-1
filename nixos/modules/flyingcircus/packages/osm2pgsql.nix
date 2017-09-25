@@ -6,10 +6,10 @@
 
 stdenv.mkDerivation rec {
   name = "osm2pgsql-${version}";
-  version = "0.90.0";
+  version = "0.92.1";
   src = fetchurl {
     url = "https://github.com/openstreetmap/osm2pgsql/archive/${version}.tar.gz";
-    sha256 = "1n2gxy4awzayildq3yn1q78gyy4phkrjf4rmxhpqpkdj9b2m7gyf";
+    sha256 = "142k08q6mv63zvbcscfc9m1xnnlpfflb3jkdiyvx93m3m92a64h9";
   };
 
   buildInputs = [

@@ -1,22 +1,14 @@
 {stdenv, fetchFromGitHub, cmake, luabind, libosmpbf, stxxl, tbb, boost, expat, protobuf, bzip2, zlib, substituteAll}:
 
 stdenv.mkDerivation rec {
-  name = "osrm-backend-4.5.0";
+  name = "osrm-backend-5.11.0";
 
   src = fetchFromGitHub {
     rev = "v5.11.0";
     owner  = "Project-OSRM";
     repo   = "osrm-backend";
-    sha256 = "19add1llvsrysyk1q48dpmh75qcbibfjlszndrysk11yh62hdvsz";
+    sha256 = "1d5c3p7z4m3dg7pwgq3lk6hqdz3l0lc077nf533m3ds3a5gys2vq";
   };
-
-  patches = [
-    ./4.5.0-openmp.patch
-    ./4.5.0-gcc-binutils.patch
-    (substituteAll {
-      src = ./4.5.0-default-profile-path.template.patch;
-    })
-  ];
 
   buildInputs = [ cmake luabind libosmpbf stxxl tbb boost expat protobuf bzip2 zlib ];
 

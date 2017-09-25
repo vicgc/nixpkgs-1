@@ -80,6 +80,8 @@ let
       qt4
       ssmtp
       wkhtmltopdf
+      osrm-backend
+      osm2pgsql
       ;
   };
 
