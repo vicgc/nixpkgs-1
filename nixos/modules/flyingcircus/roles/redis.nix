@@ -13,10 +13,10 @@ let
       (pkgs.runCommand "redis.password" {}
       "${pkgs.apg}/bin/apg -a 1 -M lnc -n 1 -m 32 > $out"));
 
-  password =
-    if cfg.password == null
+  password = removeSuffix "\n"
+    (if cfg.password == null
     then (fclib.configFromFile /etc/local/redis/password generatedPassword)
-    else cfg.password;
+    else cfg.password);
 
 in
 {
@@ -83,6 +83,11 @@ in
       "net.core.somaxconn" = 512;
     };
 
+    services.telegraf.inputs = {
+      redis = [{
+        servers = ["tcp://:${password}@localhost:${toString config.services.redis.port}"];
+      }];
+    };
   };
 
 }
