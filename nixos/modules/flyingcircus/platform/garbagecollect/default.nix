@@ -47,7 +47,7 @@ in {
       collect-garbage = mkOption {
         default =
           # incremental roll-out
-          isStaging && (attrByPath [ "parameters" "id" ] 999999 cfg.enc) < 4500;
+          isStaging && (attrByPath [ "parameters" "id" ] 999999 cfg.enc) < 5000;
         description = ''
           Whether to enable automatic scanning for Nix store references and
           garbage collection.
