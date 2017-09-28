@@ -109,6 +109,14 @@ let
         (s: s.service == "elasticsearch-node")
         config.flyingcircus.enc_services);
 
+    # It's common to have stathost and loghost on the same node. Each should
+    # use half of the memory then. A general approach for this kind of
+    # multi-service would be nice.
+    heapCorrection =
+      if config.flyingcircus.roles.statshost-master.enable
+      then 50
+      else 100;
+
 in
 {
 
@@ -138,6 +146,13 @@ in
           cluster. If null, a random password will be generated.
         '';
       };
+
+      heapPercentage = mkOption {
+        type = types.int;
+        default = 15 * heapCorrection / 100;
+        description = "How much RAM should go to graylog heap.";
+      };
+
     };
 
   };
@@ -202,8 +217,8 @@ in
           concatStringsSep "," esNodes;
         javaHeap = ''${toString
           (fclib.max [
-            ((fclib.current_memory config 1024) * 15 / 100)
-            1024
+            ((fclib.current_memory config 1024) * cfg.heapPercentage / 100)
+            768
             ])}m'';
         extraConfig = ''
           trusted_proxies 127.0.0.1/8
@@ -223,7 +238,7 @@ in
         enable = true;
         dataDir = "/var/lib/elasticsearch";
         clusterName = "graylog";
-        heapPercentage = 35;
+        heapPercentage = 35 * heapCorrection / 100;
         esNodes = esNodes;
       };
 

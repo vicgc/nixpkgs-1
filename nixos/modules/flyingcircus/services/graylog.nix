@@ -154,7 +154,7 @@ in
       };
 
       extraConfig = mkOption {
-        type = types.str;
+        type = types.lines;
         default = "";
         description = "Any other configuration options you might want to add";
       };
