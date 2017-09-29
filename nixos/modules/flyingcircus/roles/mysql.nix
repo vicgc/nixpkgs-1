@@ -295,8 +295,9 @@ in
   {
     flyingcircus.roles.statshost.prometheusMetricRelabel = [
       {
-        source_labels = [ "__name__" ];
-        regex = "(mysql_commands)_(.+)";
+        source_labels = [ "__name__" "command" ];
+        # Only if there is no command set.
+        regex = "(mysql_commands)_(.+);$";
         replacement = "\${2}";
         target_label = "command";
       }
