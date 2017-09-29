@@ -33,7 +33,7 @@ python.mkDerivation {
   ];
 
   checkPhase = ''
-    export PYTHONPATH=build/lib/vulnix:$PYTHONPATH
+    export PYTHONPATH=build/lib:$PYTHONPATH
     py.test build/lib/vulnix
   '';
 
