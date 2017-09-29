@@ -2,10 +2,10 @@
 
 let
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.2.2";
+  version = "1.3.0";
   src = fetchurl {
-    url = "https://pypi.python.org/packages/90/c9/ebef9243334a99edb8598061efae0f00d7a199b01bea574a84e31e06236d/vulnix-${version}.tar.gz";
-    sha256 = "1ia9plziwach0bxnlcd33q30kcsf8sv0nf2jc78gsmrqnxjabr12";
+    url = https://pypi.python.org/packages/d1/90/c91e8f3607d01e267f1fd85872c9410aa230856ebc1c175fad1aaf20095c/vulnix-1.3.0.tar.gz;
+    sha256 = "18l5va4jlfsrghz4dknqa8yw6chr74vhhld3ziv034vm5aganbyk";
   };
 
 in
@@ -33,8 +33,8 @@ python.mkDerivation {
   ];
 
   checkPhase = ''
-    export PYTHONPATH=src:$PYTHONPATH
-    py.test
+    export PYTHONPATH=build/lib/vulnix:$PYTHONPATH
+    py.test build/lib/vulnix
   '';
 
   meta = {
