@@ -67,6 +67,14 @@ in {
         environment = { LANG = "en_US.utf8"; };
         inherit script;
       };
+
+      environment.etc."nixos/garbagecollect-protect-references".text = ''
+        # The following store paths will be needed on every evaluation but are
+        # not referenced anywhere else. We mention them here to protect them
+        # from garbage collection.
+        ${pkgs.pkgs_17_03_src}
+        ${pkgs.pkgs_17_09_src}
+      '';
     }
 
     (mkIf enableTimer {
