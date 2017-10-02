@@ -36,14 +36,11 @@ mkIf (params ? location && params ? resource_group) {
     LoadPlugin syslog
     LoadPlugin vmem
     LoadPlugin write_graphite
+    LoadPlugin tail
 
     <LoadPlugin uptime>
       Interval 360
     </LoadPlugin>
-
-    <Plugin "syslog">
-        LogLevel info
-    </Plugin>
 
     <LoadPlugin df>
       Interval 360
