@@ -77,23 +77,6 @@ in {
 
     (mkIf enableTimer {
 
-      systemd.timers.fc-collect-garbage = {
-        description = "Timer for fc-collect-garbage";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnStartupSec = "49m";
-          OnUnitInactiveSec = "1d";
-          AccuracySec = "1h";
-        };
-      };
-
-      services.logrotate.config = ''
-        ${log} {
-          monthly
-          rotate 6
-        }
-      '';
-
       flyingcircus.services.sensu-client.checks.fc-collect-gabage = {
         notification = "nix-collect-garbage stamp recent";
         command = ''
@@ -117,6 +100,30 @@ in {
       #     </File>
       #   </Plugin>
       # '';
+
+      services.logrotate.config = ''
+        ${log} {
+          monthly
+          rotate 6
+        }
+      '';
+
+      # remove if applied on every VM
+      system.activationScripts.fc-collect-garbage = ''
+        if [[ -e /var/lib/fc-collect-garbage.stamp ]]; then
+          mv /var/lib/fc-collect-garbage.stamp ${log}
+        fi
+      '';
+
+      systemd.timers.fc-collect-garbage = {
+        description = "Timer for fc-collect-garbage";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnStartupSec = "49m";
+          OnUnitInactiveSec = "1d";
+          AccuracySec = "1h";
+        };
+      };
 
     })
   ];
