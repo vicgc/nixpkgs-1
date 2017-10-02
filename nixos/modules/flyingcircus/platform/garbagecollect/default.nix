@@ -17,10 +17,10 @@ let
 
   humanGid = toString config.ids.gids.users;
   serviceGid = toString config.ids.gids.service;
-  stamp = "/var/lib/fc-collect-garbage.stamp";
+  log = "/var/log/fc-collect-garbage.log";
 
   script = ''
-    sleep $[ $RANDOM % 60 ]
+    sleep $[ $RANDOM % 30 ]
     started=$(date +%s)
     failed=0
     while read user home; do
@@ -38,16 +38,14 @@ let
       ${collectCmd}
     fi
     stopped=$(date +%s)
-    echo $((stopped - started)) > ${stamp}
+    echo "$(date -Is) time=$((stopped - started))" >> ${log}
   '';
 
 in {
   options = {
     flyingcircus.agent = {
       collect-garbage = mkOption {
-        default =
-          # incremental roll-out
-          isStaging && (attrByPath [ "parameters" "id" ] 999999 cfg.enc) < 5000;
+        default = isStaging;
         description = ''
           Whether to enable automatic scanning for Nix store references and
           garbage collection.
@@ -89,13 +87,36 @@ in {
         };
       };
 
+      services.logrotate.config = ''
+        ${log} {
+          monthly
+          rotate 6
+        }
+      '';
+
       flyingcircus.services.sensu-client.checks.fc-collect-gabage = {
         notification = "nix-collect-garbage stamp recent";
         command = ''
-          ${pkgs.nagiosPluginsOfficial}/bin/check_file_age -f ${stamp} \
-          -w 216000 -c 432000 && echo "| time=$(<${stamp})s;;;0"
+          ${pkgs.nagiosPluginsOfficial}/bin/check_file_age \
+            -f ${log} -w 216000 -c 432000
         '';
       };
+
+      # XXX work in progress
+      # services.collectd.extraConfig = mkAfter ''
+      #   <Plugin "tail">
+      #     <File "${log}">
+      #       Instance "fc_collect_garbage"
+      #       Interval 20
+      #       <Match>
+      #         Regex "\\<time=([0-9]+)"
+      #         DSType "GaugeLast"
+      #         Type "duration"
+      #         Instance "time"
+      #       </Match>
+      #     </File>
+      #   </Plugin>
+      # '';
 
     })
   ];
