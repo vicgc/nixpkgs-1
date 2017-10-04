@@ -147,6 +147,11 @@ let
           Optional http login credentials for metrics scraping.
         '';
       };
+      proxy_url = mkOption {
+        type = types.nullOr types.str;
+        description = "Optional proxy URL.";
+        default = null;
+      };
       dns_sd_configs = mkOption {
         type = types.listOf promTypes.dns_sd_config;
         default = [];
