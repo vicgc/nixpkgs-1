@@ -30,8 +30,8 @@ let
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
   prometheusHeap =
-    (fclib.current_memory config 256) * 1024
-    * cfgStatsGlobal.prometheusHeapMemoryPercentage;
+    (fclib.current_memory config 256) * 1024 * 1024
+    * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
 
   # It's common to have stathost and loghost on the same node. Each should
   # use half of the memory then. A general approach for this kind of
