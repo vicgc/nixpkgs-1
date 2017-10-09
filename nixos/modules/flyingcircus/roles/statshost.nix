@@ -33,6 +33,24 @@ let
     (fclib.current_memory config 256) * 1024 * 1024
     * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
 
+  customRelabelConfig = builtins.fromJSON
+    (builtins.readFile customRelabelConfigFile);
+  customRelabelConfigFile = pkgs.runCommand "metric-relabel.json" {
+    buildInputs = [ pkgs.remarshal ];
+  } ''
+    if [ -e /etc/local/statshost/metric-relabel.yaml ]; then
+      remarshal -if yaml -of json \
+      < ${/etc/local/statshost/metric-relabel.yaml} \
+      > $out
+    else
+      echo '[]' > $out
+    fi
+  '';
+
+  prometheusMetricRelabel =
+    cfgStatsGlobal.prometheusMetricRelabel ++ customRelabelConfig;
+
+
   # It's common to have stathost and loghost on the same node. Each should
   # use half of the memory then. A general approach for this kind of
   # multi-service would be nice.
@@ -245,7 +263,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
+          metric_relabel_configs = prometheusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -260,7 +278,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
+          metric_relabel_configs = prometheusMetricRelabel;
         }
       ];
 
