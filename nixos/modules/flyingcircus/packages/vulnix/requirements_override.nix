@@ -14,6 +14,10 @@ self: super: {
     buildInputs = old.buildInputs ++ [ self."setuptools-scm" ];
   });
 
+  "pytest" = python.overrideDerivation super."pytest" (old: {
+    buildInputs = old.buildInputs ++ [ self."setuptools-scm" ];
+  });
+
   "PyYAML" = python.overrideDerivation super."PyYAML" (old: {
     propagatedBuildInputs = old.propagatedBuildInputs ++ [ pkgs.libyaml ];
   });
