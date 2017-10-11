@@ -2,12 +2,12 @@
 , pythonPackages }:
 
 stdenv.mkDerivation rec {
-  version = "4.0.3";
+  version = "4.0.5";
   name = "varnish-${version}";
 
   src = fetchurl {
-    url = "http://repo.varnish-cache.org/source/${name}.tar.gz";
-    sha256 = "01l2iypajkdanxpbvzfxm6vs4jay4dgw7lmchqidnivz15sa3fcl";
+    url = "http://varnish-cache.org/_downloads/${name}.tgz";
+    sha256 = "1zqazfkz890p4rxfd4vzg4ipyikzlf40bdfb883w8fidj0rzl3yr";
   };
 
   buildInputs = [ pcre libxslt groff ncurses pkgconfig readline python
