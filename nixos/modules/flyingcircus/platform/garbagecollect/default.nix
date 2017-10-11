@@ -84,21 +84,21 @@ in {
         '';
       };
 
-      # XXX work in progress
-      # services.collectd.extraConfig = mkAfter ''
-      #   <Plugin "tail">
-      #     <File "${log}">
-      #       Instance "fc_collect_garbage"
-      #       Interval 20
-      #       <Match>
-      #         Regex "\\<time=([0-9]+)"
-      #         DSType "GaugeLast"
-      #         Type "duration"
-      #         Instance "time"
-      #       </Match>
-      #     </File>
-      #   </Plugin>
-      # '';
+      # XXX interval
+      services.collectd.extraConfig = mkAfter ''
+        <Plugin "tail">
+          <File "${log}">
+            Instance "garbagecollect"
+            Interval 20
+            <Match>
+              Regex "\\<time=([0-9]+)"
+              DSType "GaugeLast"
+              Type "duration"
+              Instance "time"
+            </Match>
+          </File>
+        </Plugin>
+      '';
 
       services.logrotate.config = ''
         ${log} {
