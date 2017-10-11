@@ -1,11 +1,11 @@
 { stdenv, fetchurl, fetchpatch, libxml2, findXMLCatalogs }:
 
 stdenv.mkDerivation rec {
-  name = "libxslt-1.1.29";
+  name = "libxslt-1.1.31";
 
   src = fetchurl {
     url = "http://xmlsoft.org/sources/${name}.tar.gz";
-    sha256 = "1klh81xbm9ppzgqk339097i39b7fnpmlj8lzn8bpczl3aww6x5xm";
+    sha256 = "1ddh81xbm9ppzgqk339097i39b7fnpmlj8lzn8bpczl3aww6x5xm";
   };
 
   patches = stdenv.lib.optional stdenv.isSunOS ./patch-ah.patch;
