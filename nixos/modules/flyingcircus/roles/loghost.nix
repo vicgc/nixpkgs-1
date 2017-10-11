@@ -59,15 +59,16 @@ let
 
   mkPassword = identifier:
     removeSuffix "\n" (readFile
-      (pkgs.runCommand identifier {}
+      (pkgs.runCommand identifier { preferLocalBuild = true; }
         "${pkgs.apg}/bin/apg -a 1 -M lnc -n 1 -m 32 > $out")
       );
 
   mkSha2 = text:
     removeSuffix "\n" (readFile
-      (pkgs.runCommand "dummy" { inherit text; }
-        "echo -n $text | sha256sum | cut -f1 -d \" \" > $out")
-      );
+    (pkgs.runCommand "mkSha2" {
+      inherit text;
+      passAsFile = [ "text" ];
+    } "sha256sum < $textPath | cut -f1 -d \" \" > $out"));
 
   logstashSSLHelper = with pkgs; writeScriptBin "logstash_ssl_import" ''
     #!${stdenv.shell}

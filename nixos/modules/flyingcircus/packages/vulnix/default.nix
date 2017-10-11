@@ -2,10 +2,10 @@
 
 let
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.3.0";
+  version = "1.3.2";
   src = fetchurl {
-    url = https://pypi.python.org/packages/d1/90/c91e8f3607d01e267f1fd85872c9410aa230856ebc1c175fad1aaf20095c/vulnix-1.3.0.tar.gz;
-    sha256 = "18l5va4jlfsrghz4dknqa8yw6chr74vhhld3ziv034vm5aganbyk";
+    url = https://pypi.python.org/packages/a9/66/f3e435c6d74f61afc944e29630a73e10b11e2a7e4f4ecd3e117518823127/vulnix-1.3.2.tar.gz;
+    sha256 = "19mzxbqb5kjas7yk6hc99sb97sg10bkh1m55d8hn194ra3sryxmi";
   };
 
 in
@@ -16,10 +16,11 @@ python.mkDerivation {
   buildInputs = [
     python.packages."flake8"
     python.packages."pytest"
-    python.packages."pytest-capturelog"
+    python.packages."pytest-catchlog"
     python.packages."pytest-codecheckers"
     python.packages."pytest-cov"
     python.packages."pytest-timeout"
+    python.packages."urllib3"
   ];
 
   propagatedBuildInputs = [
@@ -33,8 +34,8 @@ python.mkDerivation {
   ];
 
   checkPhase = ''
-    export PYTHONPATH=build/lib:$PYTHONPATH
-    py.test build/lib/vulnix
+    export PYTHONPATH=src:$PYTHONPATH
+    py.test src/vulnix
   '';
 
   meta = {

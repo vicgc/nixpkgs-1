@@ -3,6 +3,7 @@
 { config, lib, pkgs, ... }:
 
 with lib;
+with builtins;
 
 let
   fclib = import ../lib;
@@ -30,8 +31,23 @@ let
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
   prometheusHeap =
-    (fclib.current_memory config 256) * 1024
-    * cfgStatsGlobal.prometheusHeapMemoryPercentage;
+    (fclib.current_memory config 256) * 1024 * 1024
+    * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
+
+  customRelabelPath = "/etc/local/statshost/metric-relabel.yaml";
+  customRelabelConfig =
+    if pathExists customRelabelPath
+    then fromJSON (readFile customRelabelJSON)
+    else [];
+  # the filename to path conversion is tricky to get right
+  customRelabelJSON =
+    pkgs.runCommand "metric-relabel.json" {
+      buildInputs = [ pkgs.remarshal ];
+      preferLocalBuild = true;
+    } "remarshal -if yaml -of json < ${/. + customRelabelPath} > $out";
+
+  prometheusMetricRelabel =
+    cfgStatsGlobal.prometheusMetricRelabel ++ customRelabelConfig;
 
   # It's common to have stathost and loghost on the same node. Each should
   # use half of the memory then. A general approach for this kind of
@@ -216,8 +232,8 @@ in
     # RG-specific statshost. Prometheus
     (mkIf prometheus {
 
-      environment.etc."local/statshost/scrape-rg.json".text = builtins.toJSON [{
-        targets = builtins.sort builtins.lessThan (lib.unique
+      environment.etc."local/statshost/scrape-rg.json".text = toJSON [{
+        targets = sort lessThan (lib.unique
           (map
             (host: "${host.name}.fcio.net:9126")
             config.flyingcircus.enc_addresses.srv));
@@ -245,7 +261,7 @@ in
             files = ["/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
+          metric_relabel_configs = prometheusMetricRelabel;
         }
         { job_name = "fedrate";
           scrape_interval = "15s";
@@ -260,7 +276,7 @@ in
             files = ["/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
+          metric_relabel_configs = prometheusMetricRelabel;
         }
       ];
 
