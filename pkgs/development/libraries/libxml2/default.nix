@@ -6,11 +6,11 @@ assert pythonSupport -> python != null;
 
 stdenv.mkDerivation (rec {
   name = "libxml2-${version}";
-  version = "2.9.4";
+  version = "2.9.6";
 
   src = fetchurl {
     url = "http://xmlsoft.org/sources/${name}.tar.gz";
-    sha256 = "0g336cr0bw6dax1q48bblphmchgihx9p1pjmxdnrd6sh3qci3fgz";
+    sha256 = "1g7byn6y0yw17rl74gs89xnxrpwj424938rf8qfqh3i4lz63i44b";
   };
 
   outputs = [ "out" "doc" ];
