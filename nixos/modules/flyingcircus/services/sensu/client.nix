@@ -241,6 +241,7 @@ in {
         pkgs.lm_sensors
         pkgs.nagiosPluginsOfficial
         pkgs.sensu
+        pkgs.sysstat
       ];
       serviceConfig = {
         User = "sensuclient";
@@ -274,6 +275,11 @@ in {
       ssh = {
         notification = "SSH server is not responding properly";
         command = "check_ssh localhost";
+        interval = 300;
+      };
+      steal = {
+        notification = "CPU has high amount of `steal` ";
+        command = "${pkgs.fcsensuplugins}/bin/check_cpu";
         interval = 300;
       };
       ntp_time = {
