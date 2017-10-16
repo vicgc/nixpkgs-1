@@ -9,8 +9,8 @@ let
   pkgs_17_09_src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "nixpkgs";
-    rev = "6c6b9666e7de7c11d709e45554689f3f32c0632e";
-    sha256 = "0ckmq48w6na1lz8m747z0fxn35aiad9dk3nq6bk5d7bq0sqq0nlc";
+    rev = "c0f9781698dbd5fefee7dafccb04c34c76fec01a";
+    sha256 = "1hbhpbxka0kf3976mh71vwpwr9mcfg3savi7ixk2n57n588dc1i2";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
