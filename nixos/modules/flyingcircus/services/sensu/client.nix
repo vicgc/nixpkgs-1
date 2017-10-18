@@ -289,9 +289,14 @@ in {
         notification = "Internet (Google) is not available";
         command = "check_ping -w 100,5% -c 200,10% -H google.com -6";
       };
+      # Signal for 30 minutes that it was not OK for the VM to reboot. We may
+      # need something to counter this on planned reboots. 30 minutes is enough
+      # for status pages to pick this up. After that, we'll leave it in "warning"
+      # for 1 day so that regular support can spot the issue even if it didn't
+      # cause an alarm, but have it visible for context.
       uptime = {
         notification = "Host was down";
-        command = "check_uptime";
+        command = "check_uptime  -u minutes -c @:30 -w @:1440";
         interval = 300;
       };
       systemd_units = {
