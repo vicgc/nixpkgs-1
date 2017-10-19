@@ -207,6 +207,8 @@ in rec {
     });
   vulnix = pkgs.callPackage ./vulnix { };
 
+  wkhtmltopdf = pkgs_17_09.wkhtmltopdf;
+
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
 
   yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs7; };
