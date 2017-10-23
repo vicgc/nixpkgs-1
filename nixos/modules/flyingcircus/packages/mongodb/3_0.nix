@@ -2,40 +2,38 @@
 , zlib, libyamlcpp, sasl, openssl, libpcap, wiredtiger
 }:
 
-# Note:
-# The command line tools are written in Go as part of a different package (mongodb-tools)
-
 with stdenv.lib;
 
-let version = "3.2.12";
+let version = "3.0.5";
     system-libraries = [
-      #"pcre" -- not compatible with newer pcre versions
-      #"asio" -- XXX use package?
-      #"wiredtiger"
+      # "pcre" -- not compatible with newer versions of pcre
+      "wiredtiger"
       "boost"
       "snappy"
       "zlib"
-      #"valgrind" -- mongodb only requires valgrind.h, which is vendored in the source.
-      #"stemmer"  -- not nice to package yet (no versioning, no makefile, no shared libs).
+      # "v8"
+      # "stemmer" -- not nice to package yet (no versioning, no makefile, no shared libs)
       "yaml"
     ] ++ optionals stdenv.isLinux [ "tcmalloc" ];
     buildInputs = [
       sasl boost gperftools snappy
       zlib libyamlcpp sasl openssl libpcap
-    ]; # ++ optional stdenv.is64bit wiredtiger;
+    ] ++ optional stdenv.is64bit wiredtiger;
 
     other-args = concatStringsSep " " ([
+      # these are opt-in, lol
+      "--cc-use-shell-environment"
+      "--cxx-use-shell-environment"
+
+      "--c++11=on"
       "--ssl"
       #"--rocksdb" # Don't have this packaged yet
       "--wiredtiger=${if stdenv.is64bit then "on" else "off"}"
-      "--js-engine=mozjs"
+      "--js-engine=v8-3.25"
       "--use-sasl-client"
       "--disable-warnings-as-errors"
-      "VARIANT_DIR=nixos" # Needed so we don't produce argument lists that are too long for gcc / ld
-      "CC=$CC"
-      "CXX=$CXX"
-      "CCFLAGS=\"${concatStringsSep " " (map (input: "-I${input}/include") buildInputs)}\""
-      "LINKFLAGS=\"${concatStringsSep " " (map (input: "-L${input}/lib") buildInputs)}\""
+      "--variant-dir=nixos" # Needed so we don't produce argument lists that are too long for gcc / ld
+      "--extrapath=${concatStringsSep "," buildInputs}"
     ] ++ map (lib: "--use-system-${lib}") system-libraries);
 
 in stdenv.mkDerivation rec {
@@ -43,17 +41,11 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "http://downloads.mongodb.org/src/mongodb-src-r${version}.tar.gz";
-    sha256 = "01nkdkgswi61ps01q63jdk4blqs66zsrp4wj1wzqmgls7a3ysv20";
+    sha256 = "1nvzbxgyjsp72w4fvfd8zxpj38zv0whn5p53jv9v2rdaj5wnmc85";
   };
 
   nativeBuildInputs = [ scons ];
   inherit buildInputs;
-
-  # When not building with the system valgrind, the build should use the
-  # vendored header file - regardless of whether or not we're using the system
-  # tcmalloc - so we need to lift the include path manipulation out of the
-  # conditional.
-  patches = [ ./valgrind-include.patch ];
 
   postPatch = ''
     # fix environment variable reading
@@ -84,7 +76,7 @@ in stdenv.mkDerivation rec {
     homepage = http://www.mongodb.org;
     license = licenses.agpl3;
 
-    maintainers = with maintainers; [ bluescreen303 offline wkennington cstrahan ];
+    maintainers = with maintainers; [ bluescreen303 offline wkennington ];
     platforms = platforms.unix;
   };
 }

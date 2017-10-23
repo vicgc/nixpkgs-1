@@ -92,12 +92,10 @@ in rec {
   mailx = pkgs.callPackage ./mailx.nix { };
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = mongodb_3_0;
-  mongodb_3_0 = pkgs.callPackage ../../../../pkgs/servers/nosql/mongodb {
-    pcre = pcre-cpp;
+  mongodb_3_0 = pkgs.callPackage ./mongodb/3_0.nix {
     sasl = pkgs.cyrus_sasl;
   };
   mongodb_3_2 = pkgs.callPackage ./mongodb {
-    pcre = pcre-cpp;
     sasl = pkgs.cyrus_sasl;
   };
 
