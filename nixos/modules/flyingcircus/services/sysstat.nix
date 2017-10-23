@@ -51,6 +51,7 @@ in {
       description = "Run system activity accounting tool on a regular basis";
       wantedBy = [ "timers.target" ];
       after = [ "sysstat.service" ];
+
       timerConfig = {
         OnStartupSec = "15s";
         OnUnitActiveSec = "1h";
