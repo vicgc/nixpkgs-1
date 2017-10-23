@@ -5,7 +5,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "http://xmlsoft.org/sources/${name}.tar.gz";
-    sha256 = "1ddh81xbm9ppzgqk339097i39b7fnpmlj8lzn8bpczl3aww6x5xm";
+    sha256 = "1azk48vf91nfajhm7k9cz3zrvh0aaq85ph37gqkl84c0ddmyj9fv";
   };
 
   patches = stdenv.lib.optional stdenv.isSunOS ./patch-ah.patch;
