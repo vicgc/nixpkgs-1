@@ -53,7 +53,7 @@ let
             refresh_interval = "10m";
           }
         ];
-        metric_relabel_configs = cfgStatsGlobal.prometheusMetricRelabel;
+        metric_relabel_configs = prometheusMetricRelabel;
       } // relayNode)
       relayNodes;
 
