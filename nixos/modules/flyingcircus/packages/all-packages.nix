@@ -9,8 +9,8 @@ let
   pkgs_17_09_src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "nixpkgs";
-    rev = "c0f9781698dbd5fefee7dafccb04c34c76fec01a";
-    sha256 = "1hbhpbxka0kf3976mh71vwpwr9mcfg3savi7ixk2n57n588dc1i2";
+    rev = "3489ac406550ee2de26f1470b7303bc86ff39659";
+    sha256 = "081m4n9r9wc59lnjnbhk66qzhsrdr7iy9k8swd24iy6czynqzw5f";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
@@ -76,8 +76,8 @@ in rec {
   kibana = pkgs.callPackage ./kibana.nix { };
 
   libevent = pkgs.callPackage ./libevent.nix { };
-
   libidn = pkgs.callPackage ./libidn.nix { };
+  libreoffice = pkgs_17_09.libreoffice;
 
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
@@ -90,6 +90,7 @@ in rec {
   mc = pkgs.callPackage ./mc.nix { };
   mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
+  mailutils = pkgs_17_09.mailutils;
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = mongodb_3_0;
   mongodb_3_0 = pkgs.callPackage ./mongodb/3_0.nix {
@@ -190,6 +191,7 @@ in rec {
   rustStable = rustPlatform;
   rustUnstable = rustPlatform;
 
+  samba = pkgs_17_09.samba;
   sensu = pkgs.callPackage ./sensu { };
 
   telegraf = pkgs.callPackage ./telegraf {
