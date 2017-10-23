@@ -2,10 +2,10 @@
 
 let
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.3.2";
+  version = "1.3.3";
   src = fetchurl {
-    url = https://pypi.python.org/packages/a9/66/f3e435c6d74f61afc944e29630a73e10b11e2a7e4f4ecd3e117518823127/vulnix-1.3.2.tar.gz;
-    sha256 = "19mzxbqb5kjas7yk6hc99sb97sg10bkh1m55d8hn194ra3sryxmi";
+    url = https://pypi.python.org/packages/b8/11/16478573b2f341b84fb6357785511d33551f4515ef6c3661a79cf04da786/vulnix-1.3.3.tar.gz;
+    sha256 = "1fhlgvp78np8i2wab6q6ypgl1bd4d1vlvip4j51fs8226qpyd7y2";
   };
 
 in
