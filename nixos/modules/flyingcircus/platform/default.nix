@@ -233,19 +233,6 @@ in
       "z /srv 0755 root root"
     ];
 
-    systemd.services.nix-collect-garbage = {
-      serviceConfig = { Type = "oneshot"; };
-      script = "nix-collect-garbage --delete-older-than 30d";
-      path = [ pkgs.nix ];
-      # XXX reenable until #23752 is solved
-      enable = false;
-      # startAt =
-      #   let
-      #     minute = fclib.mod (lib.attrByPath [ "parameters" "id" ] 0 enc) 60;
-      #   in
-      #   "05:${toString minute}";
-    };
-
     time.timeZone =
       if lib.hasAttrByPath ["parameters" "timezone"] cfg.enc
       then cfg.enc.parameters.timezone
