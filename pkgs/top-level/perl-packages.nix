@@ -12145,6 +12145,11 @@ let self = _self // overrides; _self = with self; {
     SKIP_SAX_INSTALL = 1;
     buildInputs = [ pkgs.libxml2 ];
     propagatedBuildInputs = [ XMLSAX ];
+
+    # https://rt.cpan.org/Public/Bug/Display.html?id=122958
+    preCheck = ''
+      rm t/32xpc_variables.t t/48_reader_undef_warning_on_empty_str_rt106830.t
+    '';
   };
 
   XMLLibXMLSimple = buildPerlPackage {
@@ -12190,13 +12195,18 @@ let self = _self // overrides; _self = with self; {
     makeMakerFlags = "EXPATLIBPATH=${pkgs.expat}/lib EXPATINCPATH=${pkgs.expat}/include";
   };
 
-  XMLXPath = buildPerlPackage {
-    name = "XML-XPath-1.13";
+  XMLXPath = buildPerlPackage rec {
+    name = "XML-XPath-1.37";
     src = fetchurl {
-      url = mirror://cpan/authors/id/M/MS/MSERGEANT/XML-XPath-1.13.tar.gz;
-      sha256 = "0xjmfwda7m3apj7yrjzmkm4sjwnz4bqyaynzgcwqhx806kgw4j9a";
+      url = "mirror://cpan/authors/id/M/MA/MANWAR/${name}.tar.gz";
+      sha256 = "b8ae1196184f794528a9727988dce944ecec7155e6ee1c433b17e12737a22725";
     };
-    propagatedBuildInputs = [XMLParser];
+    buildInputs = [ PathTiny ];
+    propagatedBuildInputs = [ XMLParser ];
+    meta = {
+      description = "Modules for parsing and evaluating XPath statements";
+      license = stdenv.lib.licenses.artistic2;
+    };
   };
 
   XMLXPathEngine = buildPerlPackage {

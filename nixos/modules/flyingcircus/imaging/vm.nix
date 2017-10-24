@@ -29,7 +29,7 @@ with lib;
               mv closure xchg/
             '';
           postVM = ''
-              ${pkgs.bzip2}/bin/bzip2 $out/image.qcow2
+              ${pkgs.bzip2}/bin/bzip2 -1 $out/image.qcow2
             '';
           memSize = 1024;
           buildInputs = [ pkgs.utillinux pkgs.perl ];

@@ -6,26 +6,16 @@
 let
   fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
 
-  pkgs_17_03_src = fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs";
-    rev = "d76cd1a28bed265b76193aaceee620f65ef24987";
-    sha256 = "1ykpw4h3hycwwnpvwkph8lsjkbcma9hgs8qn9i8f45ay67ndcn63";
-  };
-  pkgs_17_03 = import pkgs_17_03_src {};
-
   pkgs_17_09_src = fetchFromGitHub {
-    owner = "NixOS";
+    owner = "flyingcircusio";
     repo = "nixpkgs";
-    rev = "6bd53c487d5e523ff4fd8c6cacaa7180caed02d7";
-    sha256 = "14101r4chf2is0j52c7r4h9ynm18x69xgka20n9zw9x18093mga3";
+    rev = "3489ac406550ee2de26f1470b7303bc86ff39659";
+    sha256 = "081m4n9r9wc59lnjnbhk66qzhsrdr7iy9k8swd24iy6czynqzw5f";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
-  # keep these in our own list to avoid frequent re-fetches after garbage
-  # collection
-  inherit pkgs_17_03_src pkgs_17_09_src;
+  inherit pkgs_17_09_src;
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
@@ -47,8 +37,8 @@ in rec {
   curl = pkgs.callPackage ./curl rec {
     fetchurl = stdenv.fetchurlBoot;
     zlibSupport = true;
-    sslSupport = zlibSupport;
-    scpSupport = zlibSupport;
+    sslSupport = true;
+    scpSupport = true;
   };
 
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
@@ -66,7 +56,7 @@ in rec {
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
 
-  grafana = pkgs_17_03.grafana;
+  grafana = pkgs_17_09.grafana;
   graylog = pkgs.callPackage ./graylog.nix { };
 
   http-parser = pkgs.callPackage ./http-parser {
@@ -78,7 +68,7 @@ in rec {
   };
   imagemagickBig = pkgs.callPackage ./ImageMagick { };
 
-  iptables = pkgs_17_03.iptables;
+  iptables = pkgs_17_09.iptables;
 
   influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
@@ -86,8 +76,8 @@ in rec {
   kibana = pkgs.callPackage ./kibana.nix { };
 
   libevent = pkgs.callPackage ./libevent.nix { };
-
   libidn = pkgs.callPackage ./libidn.nix { };
+  libreoffice = pkgs_17_09.libreoffice;
 
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
@@ -100,14 +90,13 @@ in rec {
   mc = pkgs.callPackage ./mc.nix { };
   mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
+  mailutils = pkgs_17_09.mailutils;
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = mongodb_3_0;
-  mongodb_3_0 = pkgs.callPackage ../../../../pkgs/servers/nosql/mongodb {
-    pcre = pcre-cpp;
+  mongodb_3_0 = pkgs.callPackage ./mongodb/3_0.nix {
     sasl = pkgs.cyrus_sasl;
   };
   mongodb_3_2 = pkgs.callPackage ./mongodb {
-    pcre = pcre-cpp;
     sasl = pkgs.cyrus_sasl;
   };
 
@@ -121,7 +110,7 @@ in rec {
       modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
     };
 
-  nix = pkgs_17_03.nix;
+  nix = pkgs_17_09.nix;
 
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
     nodejs4 nodejs6 nodejs7;
@@ -159,7 +148,7 @@ in rec {
     php56
     php70;
 
-  php70Packages = pkgs_17_03.php70Packages;
+  php70Packages = pkgs_17_09.php70Packages;
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
@@ -177,12 +166,10 @@ in rec {
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
 
-  remarshal = pkgs_17_03.remarshal;
-
-  ripgrep = pkgs.callPackage ./ripgrep.nix { };
+  remarshal = pkgs_17_09.remarshal;
+  ripgrep = pkgs_17_09.ripgrep;
 
   rust = pkgs.callPackage ./rust/default.nix { };
-
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
   makeRustPlatform = rust: lib.fix (self:
     let
@@ -204,6 +191,7 @@ in rec {
   rustStable = rustPlatform;
   rustUnstable = rustPlatform;
 
+  samba = pkgs_17_09.samba;
   sensu = pkgs.callPackage ./sensu { };
 
   telegraf = pkgs.callPackage ./telegraf {

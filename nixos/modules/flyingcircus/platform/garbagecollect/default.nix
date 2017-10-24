@@ -12,7 +12,7 @@ let
   enableTimer = isStaging || cfg.agent.collect-garbage;
 
   collectCmd = if cfg.agent.collect-garbage
-    then "nice -n19 nix-collect-garbage --delete-older-than 3d"
+    then "nix-collect-garbage --delete-older-than 3d --max-freed 104857600"
     else "echo 'nix-collect-garbage disabled (feature switch)'";
 
   humanGid = toString config.ids.gids.users;
@@ -70,7 +70,6 @@ in {
         # The following store paths will be needed on every evaluation but are
         # not referenced anywhere else. We mention them here to protect them
         # from garbage collection.
-        ${pkgs.pkgs_17_03_src}
         ${pkgs.pkgs_17_09_src}
       '';
     }

@@ -14,20 +14,12 @@ let
   cfgProxyGlobal = config.flyingcircus.roles.statshostproxy;
   cfgProxyRG = config.flyingcircus.roles.statshost-relay;
 
-  prometheus = cfgStatsRG.enable || cfgProxyRG.enable;
-  promFlags =
-    if cfgStatsRG.enable
-    then [
-      "-storage.local.retention ${toString (cfgStatsGlobal.prometheusRetention * 24)}h"
-      "-storage.local.series-file-shrink-ratio 0.3"
-      "-storage.local.target-heap-size=${toString prometheusHeap}"
-      "-storage.local.chunk-encoding-version=2"
-    ]
-    else [  # Proxy only
-      "-storage.local.retention 24h"
-      "-storage.local.series-file-shrink-ratio 0.1"
-      "-storage.local.target-heap-size=${toString (256*1024*1024)}"
-    ];
+  promFlags = [
+    "-storage.local.retention ${toString (cfgStatsGlobal.prometheusRetention * 24)}h"
+    "-storage.local.series-file-shrink-ratio 0.3"
+    "-storage.local.target-heap-size=${toString prometheusHeap}"
+    "-storage.local.chunk-encoding-version=2"
+  ];
   prometheusListenAddress =
     "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
   prometheusHeap =
@@ -48,6 +40,22 @@ let
 
   prometheusMetricRelabel =
     cfgStatsGlobal.prometheusMetricRelabel ++ customRelabelConfig;
+
+  relayNodes =
+    fclib.jsonFromFile "/etc/local/statshost/relays.json" "[]";
+
+  relayConfig = map
+    (relayNode: {
+        scrape_interval = "15s";
+        file_sd_configs = [
+          {
+            files = [ "/var/cache/statshost-relay-${relayNode.job_name}.json" ];
+            refresh_interval = "10m";
+          }
+        ];
+        metric_relabel_configs = prometheusMetricRelabel;
+      } // relayNode)
+      relayNodes;
 
   # It's common to have stathost and loghost on the same node. Each should
   # use half of the memory then. A general approach for this kind of
@@ -229,15 +237,17 @@ in
         "${cfgStatsGlobal.hostName}:2003";
     })
 
-    # RG-specific statshost. Prometheus
-    (mkIf prometheus {
-
-      environment.etc."local/statshost/scrape-rg.json".text = toJSON [{
-        targets = sort lessThan (lib.unique
+    (mkIf (cfgStatsRG.enable || cfgProxyRG.enable) {
+      environment.etc."local/statshost/scrape-rg.json".text = builtins.toJSON [{
+        targets = builtins.sort builtins.lessThan (lib.unique
           (map
             (host: "${host.name}.fcio.net:9126")
             config.flyingcircus.enc_addresses.srv));
       }];
+    })
+
+    # RG-specific statshost. Prometheus
+    (mkIf cfgStatsRG.enable {
 
       services.prometheus.enable = true;
       services.prometheus.extraFlags = promFlags;
@@ -246,24 +256,26 @@ in
         { job_name = "prometheus";
           scrape_interval = "5s";
           static_configs = [{
-            targets = [prometheusListenAddress];
+            targets = [ prometheusListenAddress ];
             labels = {
               host = config.networking.hostName;
             };
           }];
         }
-        { job_name = "static";
+        {
+          job_name = config.flyingcircus.enc.parameters.resource_group;
           scrape_interval = "15s";
           # We use a file sd here. Static config would restart prometheus for
           # each change. This way prometheus picks up the change automatically
           # and without restart.
           file_sd_configs = [{
-            files = ["/etc/local/statshost/scrape-*.json" ];
+            files = [ "/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
           metric_relabel_configs = prometheusMetricRelabel;
         }
-        { job_name = "fedrate";
+        {
+          job_name = "fedrate";
           scrape_interval = "15s";
           metrics_path = "/federate";
           honor_labels = true;
@@ -273,22 +285,74 @@ in
             ];
           };
           file_sd_configs = [{
-            files = ["/etc/local/statshost/federate-*.json" ];
+            files = [ "/etc/local/statshost/federate-*.json" ];
             refresh_interval = "10m";
           }];
           metric_relabel_configs = prometheusMetricRelabel;
         }
-      ];
+
+      ] ++ relayConfig;
+
+      # Update relayed nodes.
+      systemd.services.fc-prometheus-update-relayed-nodes = {
+        description = "Update prometheus proxy relayed nodes.";
+        restartIfChanged = false;
+        after = [ "network.target" ];
+        wantedBy = [ "prometheus.service" ];
+        serviceConfig = {
+          User = "root";
+          Type = "oneshot";
+        };
+        path = [ pkgs.curl pkgs.coreutils ];
+        script = concatStringsSep "\n" (map
+          (relayNode: ''
+            curl -o /var/cache/statshost-relay-${relayNode.job_name}.json \
+              ${relayNode.proxy_url}/scrapeconfig.json
+          '')
+          relayNodes);
+      };
+
+      systemd.timers.fc-prometheus-update-relayed-nodes = {
+        description = "Timer for updating relayed targets";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          Unit = "fc-prometheus-update-relayed-nodes";
+          OnUnitActiveSec = "11m";
+          # Not yet supported by our systemd version.
+          # RandomSec = "3m";
+        };
+      };
+
 
       flyingcircus.services.sensu-client.checks = {
         prometheus = {
           notification = "Prometheus http port alive";
           command = ''
-            check_http -H ${config.networking.hostName} -p 9090 \
-              -u /metrics
+            check_http -H ${config.networking.hostName} -p 9090 -u /metrics
           '';
         };
       };
+
+    })
+
+    (mkIf cfgProxyRG.enable {
+
+      flyingcircus.roles.nginx.enable = true;
+      flyingcircus.roles.nginx.httpConfig = ''
+        server {
+          listen ${prometheusListenAddress};
+          error_log /tmp/error.log debug;
+
+          location = /scrapeconfig.json {
+            alias /etc/local/statshost/scrape-rg.json;
+          }
+
+          location / {
+              resolver ${concatStringsSep " " config.networking.nameservers};
+              proxy_pass http://$http_host$request_uri$is_args$args;
+          }
+        }
+      '';
 
     })
 

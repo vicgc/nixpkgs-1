@@ -283,11 +283,11 @@ in {
       };
       internet_uplink_ipv4 = {
         notification = "Internet (Google) is not available";
-        command = "check_ping  -w 100,5% -c 200,10% -H google.com  -4";
+        command = "check_ping -w 100,5% -c 200,10% -H google.com -4";
       };
       internet_uplink_ipv6 = {
         notification = "Internet (Google) is not available";
-        command = "check_ping  -w 100,5% -c 200,10% -H google.com  -6";
+        command = "check_ping -w 100,5% -c 200,10% -H google.com -6";
       };
       uptime = {
         notification = "Host was down";
