@@ -9,7 +9,6 @@ let
   cfg = config.flyingcircus;
 
   isStaging = !(attrByPath [ "parameters" "production" ] true cfg.enc);
-  enableTimer = isStaging || cfg.agent.collect-garbage;
 
   collectCmd = if cfg.agent.collect-garbage
     then "nix-collect-garbage --delete-older-than 3d --max-freed 104857600"
@@ -45,7 +44,7 @@ in {
   options = {
     flyingcircus.agent = {
       collect-garbage = mkOption {
-        default = isStaging;
+        default = true;
         description = ''
           Whether to enable automatic scanning for Nix store references and
           garbage collection.
@@ -74,7 +73,7 @@ in {
       '';
     }
 
-    (mkIf enableTimer {
+    (mkIf cfg.agent.collect-garbage {
 
       flyingcircus.services.sensu-client.checks.fc-collect-garbage = {
         notification = "nix-collect-garbage stamp recent";
@@ -103,11 +102,9 @@ in {
         } ];
       };
 
-      # remove if applied on every VM
+      # remove after 2018-01-25
       system.activationScripts.fc-collect-garbage = ''
-        if [[ -e /var/lib/fc-collect-garbage.stamp ]]; then
-          mv /var/lib/fc-collect-garbage.stamp ${log}
-        fi
+        rm -f /var/lib/fc-collect-garbage.stamp
       '';
 
       systemd.timers.fc-collect-garbage = {
