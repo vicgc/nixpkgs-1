@@ -20,8 +20,7 @@ import ../../../tests/make-test.nix ({ pkgs, ... }:
         imports = [
           ./setup.nix
           ../platform
-          ../services/agent.nix
-          ../services/sensu/client.nix
+          ../services
           ../static
         ];
 

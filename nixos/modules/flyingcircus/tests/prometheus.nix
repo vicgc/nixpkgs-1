@@ -1,15 +1,14 @@
 import ../../../tests/make-test.nix ({lib, pkgs, ... }:
 {
+  name = "prometheus";
   machine =
     { config, ... }:
     {
       imports = [
-        ../platform
-        ../services/agent.nix
-        ../services/prometheus
-        ../services/sensu/client.nix
-        ../static
         ./setup.nix
+        ../platform
+        ../services
+        ../static
       ];
 
       config.services.prometheus.enable = true;

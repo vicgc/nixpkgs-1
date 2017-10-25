@@ -15,10 +15,10 @@ let
 
         imports = [
           ./setup.nix
-          ../static/default.nix
-          ../roles/default.nix
-          ../services/default.nix
-          ../platform/default.nix
+          ../platform
+          ../roles
+          ../services
+          ../static
         ];
 
         flyingcircus.roles.${version}.enable = true;
