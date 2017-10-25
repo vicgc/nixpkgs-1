@@ -38,7 +38,7 @@ let
       ${collectCmd}
     fi
     stopped=$(date +%s)
-    echo "$(date -Is) time=$((stopped - started))" >> ${log}
+    echo "$(date -R) time=$((stopped - started))s" >> ${log}
   '';
 
 in {
@@ -76,7 +76,7 @@ in {
 
     (mkIf enableTimer {
 
-      flyingcircus.services.sensu-client.checks.fc-collect-gabage = {
+      flyingcircus.services.sensu-client.checks.fc-collect-garbage = {
         notification = "nix-collect-garbage stamp recent";
         command = ''
           ${pkgs.nagiosPluginsOfficial}/bin/check_file_age \
@@ -84,28 +84,24 @@ in {
         '';
       };
 
-      # XXX work in progress
-      # services.collectd.extraConfig = mkAfter ''
-      #   <Plugin "tail">
-      #     <File "${log}">
-      #       Instance "fc_collect_garbage"
-      #       Interval 20
-      #       <Match>
-      #         Regex "\\<time=([0-9]+)"
-      #         DSType "GaugeLast"
-      #         Type "duration"
-      #         Instance "time"
-      #       </Match>
-      #     </File>
-      #   </Plugin>
-      # '';
-
       services.logrotate.config = ''
         ${log} {
           monthly
           rotate 6
         }
       '';
+
+      services.telegraf.inputs = {
+        logparser = [ {
+          files = [ "/var/log/fc-collect-garbage.log" ];
+          grok = {
+            patterns = [
+              "%{DATESTAMP_RFC2822:timestamp} time=%{DURATION:time:duration}"
+            ];
+            measurement = "fc_collect_garbage";
+          };
+        } ];
+      };
 
       # remove if applied on every VM
       system.activationScripts.fc-collect-garbage = ''
