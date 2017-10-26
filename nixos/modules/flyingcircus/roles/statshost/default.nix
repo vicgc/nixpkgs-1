@@ -6,7 +6,7 @@ with lib;
 with builtins;
 
 let
-  fclib = import ../lib;
+  fclib = import ../../lib;
 
   # For details, see the option description below
   cfgStatsGlobal = config.flyingcircus.roles.statshost;
@@ -121,7 +121,6 @@ in
 
       hostName = mkOption {
         type = types.str;
-        default = "stats.flyingcircus.io";
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
       };
@@ -250,6 +249,27 @@ in
     # RG-specific statshost. Prometheus
     (mkIf cfgStatsRG.enable {
 
+      environment.etc = {
+        "local/statshost/metric-relabel.yaml.example".text = ''
+          - source_labels: [ "__name__" ]
+            regex: "re.*expr"
+            action: drop
+          - source_labels: [ "__name__" ]
+            regex: "old_(.*)"
+            replacement: "new_''${1}"
+        '';
+        "local/statshost/relays.json.example".text = ''
+          [
+            {
+              "job_name": "otherproject",
+              "proxy_url": "http://statshost-relay-otherproject.fcio.net:9090"
+            }
+          ]
+        '';
+        "local/statshost/README.txt".text =
+          import ./README.nix { inherit config; };
+      };
+
       services.prometheus.enable = true;
       services.prometheus.extraFlags = promFlags;
       services.prometheus.listenAddress = prometheusListenAddress;
@@ -293,6 +313,11 @@ in
         }
 
       ] ++ relayConfig;
+
+      system.activationScripts.statshost = {
+        text = "install -d -g service -m 2775 /etc/local/statshost";
+        deps = [];
+      };
 
       # Update relayed nodes.
       systemd.services.fc-prometheus-update-relayed-nodes = {
