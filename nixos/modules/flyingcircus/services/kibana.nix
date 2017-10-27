@@ -144,6 +144,7 @@ in {
         ExecStart = "${cfg.package}/bin/kibana --config ${cfgFile}";
         User = "kibana";
         WorkingDirectory = cfg.dataDir;
+        Restart = "always";
       };
     };
 
