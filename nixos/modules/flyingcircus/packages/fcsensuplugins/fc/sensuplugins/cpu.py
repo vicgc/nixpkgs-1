@@ -9,15 +9,20 @@ The main feature of this check is:
 Could be / should be adapted to a plugin library at some point.
 """
 
+import argparse
 import logging
+import os
 import subprocess
 import sys
 
 _log = logging.getLogger('nagiosplugin')
 
 
-def get_data():
-    output = subprocess.check_output(['mpstat', '5', '6']).decode('ascii')
+def get_data(mpstat):
+    output = subprocess.check_output([
+        mpstat, '5', '6'],
+        env={'LANG': 'en_US.utf8', 'PATH': os.environ['PATH']}
+    ).decode('ascii')
     headings = []
     fields = []
     for line in output.splitlines():
@@ -32,7 +37,11 @@ def get_data():
 
 
 def main():
-    data = get_data()
+    p = argparse.ArgumentParser()
+    p.add_argument('--mpstat', metavar='PATH', help='mpstat binary',
+                   default='mpstat')
+    args = p.parse_args()
+    data = get_data(args.mpstat)
     if '%steal' not in data:
         print('UNKNOWN - did not find %steal data')
         sys.exit(3)
