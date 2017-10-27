@@ -123,6 +123,7 @@ in
         type = types.str;
         description = "HTTP host name for the stats frontend. Must be set.";
         example = "stats.example.com";
+        default = config.networking.hostName;
       };
 
       prometheusMetricRelabel = mkOption {
