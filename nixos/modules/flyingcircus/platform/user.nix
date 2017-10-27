@@ -136,17 +136,15 @@ in
       # Allow unrestricted access to super admins
       %admins ALL=(ALL) PASSWD: ALL
 
-      ## Cmnd alias specification
-      Cmnd_Alias  REBOOT = ${pkgs.systemd}/bin/systemctl reboot, \
-            ${pkgs.systemd}/bin/systemctl poweroff
-
+      # Allow sudo-srv users to become service user.
       %sudo-srv ALL=(%service) ALL
-      %sudo-srv ALL=(root) REBOOT
 
       # Allow applying config and restarting services to service users
       Cmnd_Alias  SYSTEMCTL = ${pkgs.systemd}/bin/systemctl
       %sudo-srv ALL=(root) SYSTEMCTL
       %service  ALL=(root) SYSTEMCTL
+
+
     '';
 
     system.activationScripts.fcio-homedirpermissions = lib.stringAfter [ "users" ]
