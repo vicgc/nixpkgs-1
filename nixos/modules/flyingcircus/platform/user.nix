@@ -144,6 +144,10 @@ in
       %sudo-srv ALL=(root) SYSTEMCTL
       %service  ALL=(root) SYSTEMCTL
 
+      # Allow iotop to anaylyze disk io.
+      Cmnd_Alias  IOTOP = ${pkgs.iotop}/bin/iotop
+      %sudo-srv ALL=(root) IOTOP
+      %service  ALL=(root) IOTOP
 
     '';
 
