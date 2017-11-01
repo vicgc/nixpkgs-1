@@ -1,5 +1,6 @@
 { stdenv, fetchurl, erlang, python, libxml2, libxslt, xmlto
-, docbook_xml_dtd_45, docbook_xsl, zip, unzip, rsync}:
+, docbook_xml_dtd_45, docbook_xsl, zip, unzip, rsync
+}:
 
 stdenv.mkDerivation rec {
   name = "rabbitmq-server-${version}";
@@ -7,7 +8,7 @@ stdenv.mkDerivation rec {
   version = "3.6.12";
 
   src = fetchurl {
-    url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${name}.tar.xz";
+    url = "https://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${name}.tar.xz";
     sha256 = "1faqnk6cn7xhn2hx3ayqxwbfnl3dybcipx2h02m6fqdfbbnsirf8";
   };
 

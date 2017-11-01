@@ -24,6 +24,13 @@ let
   };
 
 in {
+  options = {
+    services.rabbitmq.pluginPackages = mkOption {
+      default = [];
+      type = types.listOf types.package;
+      description = "Packages to add as plugin.";
+    };
+  };
 
   config = mkIf cfg.enable {
     systemd.services.rabbitmq.environment = {
