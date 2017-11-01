@@ -58,7 +58,6 @@ in {
     };
   };
 
-
   ###### implementation
   config = mkIf config.services.telegraf.enable {
     systemd.services.telegraf = {
@@ -70,7 +69,7 @@ in {
         ExecStart=''${cfg.package}/bin/telegraf ${startupOptions}'';
         ExecReload="${pkgs.coreutils}/bin/kill -HUP $MAINPID";
         User = "telegraf";
-        Restart = "on-failure";
+        Restart = "always";
       };
     };
 

@@ -32,6 +32,7 @@ in
      ./nginx.nix
      ./postgresql.nix
      ./powerdns.nix
+     ./rabbitmq.nix
      ./redis.nix
      ./sensuserver.nix
      ./servicecheck.nix

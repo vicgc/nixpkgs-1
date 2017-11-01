@@ -179,7 +179,7 @@ in {
       install -d -o sensuclient -g service -m 775 /var/tmp/sensu
       install -d /run/current-config/sensu ${local_sensu_configuration}
       rm -rf /run/current-config/sensu/*
-      (cat ${client_json} | ${pkgs.perlPackages.JSONPP}/bin/json_pp > /run/current-config/sensu/client.json) || ln -sf  ${client_json} /run/current-config/sensu/client.json
+      (cat ${client_json} | ${perlPackages.JSONPP}/bin/json_pp > /run/current-config/sensu/client.json) || ln -sf  ${client_json} /run/current-config/sensu/client.json
       ln -fs ${local_sensu_configuration} /run/current-config/sensu/local.d
     '';
     environment.etc."local/sensu-client/README.txt".text = ''
@@ -223,8 +223,8 @@ in {
     # needs to be adjusted, when we fix issue https://github.com/flyingcircusio/vulnix/issues/13
     security.sudo.extraConfig = ''
        # Sensu sudo rules
-       Cmnd_Alias VULNIX_DIR = ${pkgs.coreutils}/bin/install -o sensuclient -g sensuclient -d /var/cache/vulnix
-       Cmnd_Alias VULNIX_CMD = ${pkgs.vulnix}/bin/vulnix
+       Cmnd_Alias VULNIX_DIR = ${coreutils}/bin/install -o sensuclient -g sensuclient -d /var/cache/vulnix
+       Cmnd_Alias VULNIX_CMD = ${vulnix}/bin/vulnix
 
        %sensuclient ALL=(root) VULNIX_DIR
        %sensuclient ALL=(root) VULNIX_CMD
@@ -235,12 +235,13 @@ in {
       after = [ "network-interfaces.target" ];
 
       path = [
-        pkgs.bash
-        pkgs.coreutils
-        pkgs.glibc
-        pkgs.lm_sensors
-        pkgs.nagiosPluginsOfficial
-        pkgs.sensu
+        bash
+        coreutils
+        glibc
+        lm_sensors
+        nagiosPluginsOfficial
+        sensu
+        sysstat
       ];
       serviceConfig = {
         User = "sensuclient";
@@ -276,6 +277,13 @@ in {
         command = "check_ssh localhost";
         interval = 300;
       };
+      cpu_steal = {
+        notification = "CPU has high amount of `%steal` ";
+        command = ''
+          ${fcsensuplugins}/bin/check_cpu_steal --mpstat ${sysstat}/bin/mpstat
+        '';
+        interval = 600;
+      };
       ntp_time = {
         notification = "Clock is skewed";
         command = "check_ntp_time -H 0.de.pool.ntp.org";
@@ -289,23 +297,28 @@ in {
         notification = "Internet (Google) is not available";
         command = "check_ping -w 100,5% -c 200,10% -H google.com -6";
       };
+      # Signal for 30 minutes that it was not OK for the VM to reboot. We may
+      # need something to counter this on planned reboots. 30 minutes is enough
+      # for status pages to pick this up. After that, we'll leave it in "warning"
+      # for 1 day so that regular support can spot the issue even if it didn't
+      # cause an alarm, but have it visible for context.
       uptime = {
         notification = "Host was down";
-        command = "check_uptime";
+        command = "check_uptime  -u minutes -c @:30 -w @:1440";
         interval = 300;
       };
       systemd_units = {
-        notification = "SystemD has failed units";
+        notification = "systemd has failed units";
         command = "check-failed-units.rb -m logrotate.service";
       };
       disk = {
         notification = "Disk usage too high";
-        command = "${pkgs.fcsensuplugins}/bin/check_disk -v -w 90 -c 95";
+        command = "${fcsensuplugins}/bin/check_disk -v -w 90 -c 95";
         interval = 300;
       };
       writable = {
         notification = "Disks are writable";
-        command = "${pkgs.fcsensuplugins}/bin/check_writable /tmp/.sensu_writable /var/tmp/sensu/.sensu_writable";
+        command = "${fcsensuplugins}/bin/check_writable /tmp/.sensu_writable /var/tmp/sensu/.sensu_writable";
         interval = 60;
         ttl = 120;
         warnIsCritical = true;
@@ -320,12 +333,12 @@ in {
       };
       journal = {
         notification = "Journal errors in the last 10 minutes";
-        command = "${pkgs.fcsensuplugins}/bin/check_journal -v https://bitbucket.org/flyingcircus/fc-logcheck-config/raw/tip/nixos-journal.yaml";
+        command = "${fcsensuplugins}/bin/check_journal -v https://bitbucket.org/flyingcircus/fc-logcheck-config/raw/tip/nixos-journal.yaml";
         interval = 600;
       };
       journal_file = {
         notification = "Journal file too small.";
-        command = "${pkgs.fcsensuplugins}/bin/check_journal_file";
+        command = "${fcsensuplugins}/bin/check_journal_file";
       };
 
       vulnix = {
@@ -335,7 +348,7 @@ in {
           whitelist = https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml;
         in
           "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
-          "${pkgs.vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
+          "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
           "-w ${whitelist}";
         interval = 6 * 3600;
       };

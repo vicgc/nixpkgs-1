@@ -151,6 +151,11 @@ in
           Type = "oneshot";
           ExecStart = "${pkg}/bin/freshclam";
           PrivateTmp = "yes";
+          # We monitor systemd process status for alerting, but this really
+          # isn't critical to wake up people. We'll catch errors when the
+          # file age check for the database update goes critical.
+          # The list is taken from the freshclam manpage.
+          SuccessExitStatus = [ 40 50 51 52 53 54 55 56 57 58 59 60 61 62 ];
         };
       };
 
