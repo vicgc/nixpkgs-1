@@ -20,7 +20,13 @@
      ./sensu/client.nix
      ./sensu/server.nix
      ./sensu/uchiwa.nix
-     ./sysstat.nix
      ./telegraf.nix
     ];
+
+  # get rid of sadc logs as we have a better metrics infrastructure now
+  # remove this after 2018-02-01
+  system.activationScripts.sysstat = {
+    text = "rm -rf /var/log/sa";
+    deps = [];
+  };
 }
