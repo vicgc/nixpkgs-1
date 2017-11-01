@@ -19,8 +19,6 @@
   inherit (import ./mysql.nix { inherit system hydraJob; })
     mysql_5_5 mysql_5_6 mysql_5_7;
 
-  no_systemd_cycles = hydraJob (import ./no_systemd_cycles.nix { inherit system; }) ;
-
   oraclejava = hydraJob (import ./oraclejava.nix { inherit system; });
 
   pdftk = hydraJob (import ./pdftk.nix { inherit system; });
