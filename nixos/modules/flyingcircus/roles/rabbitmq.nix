@@ -50,18 +50,19 @@ in
     '';
 
     environment.etc."local/rabbitmq/README.txt".text = ''
-      RabbitMQ (${pkgs.rabbitmq_server.version}) is running on this machine.
+        RabbitMQ (${pkgs.rabbitmq_server.version}) is running on this machine.
 
-      If you need to set non-default configuration options, you can put a
-      file called rabbitmq.config into this directory. The content of this
-      file will be added the configuration of the RabbitMQ-service.
+        If you need to set non-default configuration options, you can put a
+        file called rabbitmq.config into this directory. The content of this
+        file will be added the configuration of the RabbitMQ-service.
 
-      To access rabbitmqctl and other management tools, change into rabbitmq's
-      user and run your command(s). Example:
+        To access rabbitmqctl and other management tools, change into rabbitmq's
+        user and run your command(s). Example:
 
-      $ sudo -iu rabbitmq
-      % rabbitmqctl status
-    '';
+        $ sudo -iu rabbitmq
+        % rabbitmqctl status
+
+      '';
   };
 
 }
