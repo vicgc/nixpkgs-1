@@ -4,6 +4,7 @@
 # - maintenance / consistency check
 # - listening on SRV interface
 
+with builtins;
 with lib;
 
 let
@@ -24,9 +25,11 @@ let
     then removeSuffix "\n" (builtins.readFile root_password_file)
     else "";
 
+  isCnf = path: t: hasSuffix ".cnf" path;
+
   localConfig =
     if pathExists /etc/local/mysql
-    then "!includedir ${/etc/local/mysql}"
+    then "!includedir ${filterSource isCnf /etc/local/mysql}"
     else "";
 
   package =
@@ -228,6 +231,27 @@ in
           __EOT__
           fi
         '';
+
+    environment.etc."local/mysql/README.txt".text = ''
+      MySQL (${package.name}) is running on this machine.
+
+      You can find the password for the mysql root user in the file `mysql.passwd`.
+      Service users can read the password file.
+
+      To connect as root, run:
+
+      $ mysql -h localhost -uroot -p$(< /etc/local/mysql/mysql.passwd)
+
+      This directory (/etc/local/mysql) is included in the mysql configuration.
+      To set custom options, add a `local.cnf` (or any other *.cnf) file here, and
+      run `sudo fc-manage --build`.
+
+      ATTENTION: Changes in this directory will restart MySQL to activate the
+      new configuration.
+
+      For more information, see our documentation at
+      https://flyingcircus.io/doc/guide/platform_nixos/mysql.html.
+    '';
 
     systemd.services.mysql-maintenance = {
       description = "Timed MySQL maintenance tasks";
