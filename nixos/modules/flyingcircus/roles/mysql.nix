@@ -4,6 +4,7 @@
 # - maintenance / consistency check
 # - listening on SRV interface
 
+with builtins;
 with lib;
 
 let
@@ -24,9 +25,11 @@ let
     then removeSuffix "\n" (builtins.readFile root_password_file)
     else "";
 
+  isCnf = path: t: hasSuffix ".cnf" path;
+
   localConfig =
     if pathExists /etc/local/mysql
-    then "!includedir ${/etc/local/mysql}"
+    then "!includedir ${filterSource isCnf /etc/local/mysql}"
     else "";
 
   package =
