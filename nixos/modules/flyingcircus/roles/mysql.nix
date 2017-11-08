@@ -25,7 +25,7 @@ let
     then removeSuffix "\n" (builtins.readFile root_password_file)
     else "";
 
-  isCnf = path: t: hasSuffix ".cnf" path;
+  isCnf = path: t: path == root_password_file || (hasSuffix ".cnf" path);
 
   localConfig =
     if pathExists /etc/local/mysql
