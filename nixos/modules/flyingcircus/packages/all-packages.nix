@@ -19,6 +19,7 @@ in rec {
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
+  bundlerApp = pkgs_17_09.bundlerApp;
   busybox = pkgs.callPackage ./busybox { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
@@ -42,6 +43,7 @@ in rec {
   };
 
   dnsmasq = pkgs.callPackage ./dnsmasq.nix { };
+  docsplit = pkgs.callPackage ./docsplit { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
   elasticsearch = pkgs.callPackage ./elasticsearch { };
@@ -57,6 +59,7 @@ in rec {
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
 
   grafana = pkgs_17_09.grafana;
+  graphicsmagick = pkgs_17_09.graphicsmagick;
   graylog = pkgs.callPackage ./graylog.nix { };
 
   http-parser = pkgs.callPackage ./http-parser {
