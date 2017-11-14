@@ -29,40 +29,50 @@ import requests
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
+log = logging.getLogger('fc-graylog')
+
 
 @click.command()
 @click.option('-u', '--user', default='admin', show_default=True)
 @click.option('-p', '--password', default='admin', show_default=True)
+@click.option('--input')
+@click.option('--raw-path')
+@click.option('--raw-data')
 @click.argument('api')
-@click.argument('input_conf')
-@click.argument('sso_conf')
-def main(user, password, api, input_conf, sso_conf):
+def main(user, password, api, input, raw_path, raw_data):
     """Configure a Graylog input node."""
-    s = requests.Session()
-    s.auth = (user, password)
+    graylog = requests.Session()
+    graylog.auth = (user, password)
 
-    # autoconfigure sso-plugin
-    data = json.loads(sso_conf)
-    r = s.put(api + '/plugins/org.graylog.plugins.auth.sso/config', json=data)
-    r.raise_for_status()
+    if input:
+        # check if there is input with this name currently configured,
+        # if so return
+        data = json.loads(input)
+        log.info('Checking intput: %s', data['title'])
+        response = graylog.get(api + '/system/cluster/node')
+        response.raise_for_status()
+        data['node'] = response.json()['node_id']
+        response = graylog.get(api + '/system/inputs')
+        response.raise_for_status()
+        for _input in response.json()['inputs']:
+            if _input['title'] == data['title']:
+                log.info(
+                    'Graylog input already configured. Updating: %s',
+                    data['title'])
+                response = graylog.put(
+                    api + '/system/inputs/%s' % _input['id'], json=data)
+                response.raise_for_status()
+                break
+        else:
+            response = graylog.post(api + '/system/inputs', json=data)
+            response.raise_for_status()
+            log.info('Graylog input configured: %s', data['title'])
 
-    # check if there is input with this name currently configured, if so return
-    data = json.loads(input_conf)
-    r = s.get(api + '/system/cluster/node')
-    r.raise_for_status()
-    data['node'] = r.json()['node_id']
-    r = s.get(api + '/system/inputstates')
-    r.raise_for_status()
-    for _input in r.json()['states']:
-        if _input['message_input']['title'] == data['title']:
-            logging.info('Graylog input already configured. No run needed.')
-            return None
-
-    # create input for UDP
-    r = s.post(api + '/system/inputs', json=data)
-    r.raise_for_status()
-    logging.info('Graylog input configured.')
-    # return r.json()['id']
+    if raw_path and raw_data:
+        log.info('Update %s', raw_path)
+        data = json.loads(raw_data)
+        response = graylog.put(api + raw_path, json=data)
+        response.raise_for_status()
 
 
 if __name__ == '__main__':
