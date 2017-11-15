@@ -6,7 +6,15 @@ let
   # XXX: We choose the first IP of ethsrv here, as the service is not capable
   #      of handling more than one IP.
   listen_address = builtins.elemAt ( fclib.listenAddresses config "ethsrv" ) 0;
-  extra_config = (fclib.configFromFile /etc/local/rabbitmq/rabbitmq.config "");
+  extraConfig = (fclib.configFromFile /etc/local/rabbitmq/rabbitmq.config "");
+
+  # Derive password for telegraf.
+  telegrafPassword = builtins.hashString
+    "sha256" (concatStrings [
+      config.flyingcircus.enc.parameters.directory_password
+      config.networking.hostName
+      "telegraf"
+    ]);
 
 in
 {
@@ -28,7 +36,7 @@ in
     services.rabbitmq.enable = true;
     services.rabbitmq.listenAddress = listen_address;
     services.rabbitmq.plugins = [ "rabbitmq_management" ];
-    services.rabbitmq.config = extra_config;
+    services.rabbitmq.config = extraConfig;
 
     users.extraUsers.rabbitmq = {
       shell = "/run/current-system/sw/bin/bash";
@@ -63,6 +71,61 @@ in
         % rabbitmqctl status
 
       '';
+
+    systemd.services.fc-rabbitmq-settings = {
+      description = "Prepare rabbitmq for operation in FC.";
+      requires = [ "rabbitmq.service" ];
+      after = [ "rabbitmq.service" ];
+      wantedBy = [ "multi-user.target" ];
+      path = [ pkgs.rabbitmq_server pkgs.curl ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "rabbitmq";
+        RemainAfterExit = true;
+      };
+
+      script =
+        let
+          curl = ''
+            curl -s -H "content-type:application/json" \
+          '';
+          api = "http://localhost:15672/api";
+        in ''
+          # Delete user guest, if it's there with default password, and
+          # administrator privileges.
+          ${curl} -XDELETE -u guest:guest ${api}/users/guest >/dev/null
+
+          # Create user for telegraf, it it does not exist
+          ${curl} -u fc-telegraf:${telegrafPassword} -f \
+            ${api}/overview >/dev/null || \
+              rabbitmqctl add_user fc-telegraf ${telegrafPassword}
+
+          rabbitmqctl set_user_tags fc-telegraf monitoring || true
+          for vhost in $(rabbitmqctl list_vhosts -q); do
+            rabbitmqctl set_permissions fc-telegraf -p "$vhost" "" "" ".*"
+          done
+        '';
+    };
+
+    systemd.timers.fc-rabbitmq-settings = {
+      description = "Timer for preparing rabbitmq regularly.";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        Unit = "fc-rabbitmq-settings";
+        OnUnitActiveSec = "1h";
+        AccuracySec = "10m";
+      };
+    };
+
+    services.telegraf.inputs = {
+      rabbitmq = [{
+        url = "http://${config.networking.hostName}:15672";
+        username = "fc-telegraf";
+        password = telegrafPassword;
+        nodes = [ "rabbit@${config.networking.hostName}" ];
+      }];
+    };
+
   };
 
 }
