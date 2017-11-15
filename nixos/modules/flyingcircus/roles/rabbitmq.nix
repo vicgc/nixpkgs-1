@@ -75,7 +75,7 @@ in
     systemd.services.fc-rabbitmq-settings = {
       description = "Prepare rabbitmq for operation in FC.";
       requires = [ "rabbitmq.service" ];
-      after = ["rabbitmq.service" ];
+      after = [ "rabbitmq.service" ];
       wantedBy = [ "multi-user.target" ];
       path = [ pkgs.rabbitmq_server pkgs.curl ];
       serviceConfig = {
