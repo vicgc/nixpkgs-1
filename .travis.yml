@@ -1,5 +1,5 @@
 language: nix
-script: nix-build -Q  --option binary-cache-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= flyingcircus.io-1:Rr9CwiPv8cdVf3EQu633IOTb6iJKnWbVfCC8x8gVz2o= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" --option binary-caches "https://cache.nixos.org https://hydra.flyingcircus.io" -I nixpkgs=. nixos/release-flyingcircus.nix -A tested --show-trace
+script: nix-build -Q  --option binary-cache-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= flyingcircus.io-1:Rr9CwiPv8cdVf3EQu633IOTb6iJKnWbVfCC8x8gVz2o= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" --option binary-caches "https://cache.nixos.org https://hydra.flyingcircus.io" -I nixpkgs=. nixos/release-flyingcircus.nix -A nixpkgs --show-trace
 cache:
   directories:
   - /nix/store
