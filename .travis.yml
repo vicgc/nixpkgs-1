@@ -1,6 +1,2 @@
-language: python
-python: "3.4"
-sudo: required
-before_install: ./maintainers/scripts/travis-nox-review-pr.sh nix
-install: ./maintainers/scripts/travis-nox-review-pr.sh nox
-script: ./maintainers/scripts/travis-nox-review-pr.sh build
+language: nix
+script: nix-build -I nixpkgs=. nixos/release-flyingcircus.nix -A tested  --show-trace
