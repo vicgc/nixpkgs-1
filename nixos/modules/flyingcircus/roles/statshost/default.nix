@@ -368,7 +368,8 @@ in
       flyingcircus.roles.nginx.httpConfig = ''
         server {
           listen ${prometheusListenAddress};
-          error_log /tmp/error.log debug;
+          access_log /var/log/nginx/loghost_access.log;
+          error_log /var/log/nginx/loghost_error.log;
 
           location = /scrapeconfig.json {
             alias /etc/local/statshost/scrape-rg.json;
