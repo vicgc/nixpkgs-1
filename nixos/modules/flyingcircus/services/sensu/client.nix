@@ -309,7 +309,7 @@ in {
       };
       systemd_units = {
         notification = "systemd has failed units";
-        command = "check-failed-units.rb -m logrotate.service";
+        command = "check-failed-units.rb -m logrotate.service -m fc-collect-garbage.service";
       };
       disk = {
         notification = "Disk usage too high";
