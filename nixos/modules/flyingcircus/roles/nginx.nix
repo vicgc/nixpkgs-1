@@ -188,6 +188,7 @@ in
 
     services.logrotate.config = ''
         /var/log/nginx/*access*log
+        /var/log/nginx/*error*log
         /var/log/nginx/performance.log
         {
             rotate 92
