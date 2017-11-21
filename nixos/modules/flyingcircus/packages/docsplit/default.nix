@@ -1,11 +1,21 @@
-{ lib, bundlerApp, ruby, pkgs, stdenv, libreoffice, ... }:
+{ lib
+, bundlerApp
+, ruby
+, libreoffice
+, file
+, graphicsmagick
+, poppler_utils
+, pdftk
+, jre
+, makeWrapper
+, ... }:
 
 bundlerApp {
   pname = "docsplit";
   ruby = ruby;
   gemdir = ./.;
   exes = [ "docsplit" ];
-  postBuild = with pkgs; ''
+  postBuild = ''
     # this is somewhat of a hack as bundlerApp defines its own set of wrappers
     source ${makeWrapper}/nix-support/setup-hook
 
