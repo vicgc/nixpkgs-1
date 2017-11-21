@@ -7,13 +7,13 @@
 { stdenv, fetchFromGitHub, git }:
 
 stdenv.mkDerivation {
-  name = "rustRegistry-2017-08-30";
+  name = "rustRegistry-2017-11-20";
 
   src = fetchFromGitHub {
     owner = "rust-lang";
     repo = "crates.io-index";
-    rev = "b43a7b91fc9b6230ba40078c326b1222ca9e67d8";
-    sha256 = "0m9kbgxvmbd56fqiz9qr7hlwiki9d6w2c4dr304zf1fjsav7b2gb";
+    rev = "2936c8e";
+    sha256 = "1x7sgaw19fqvxqx82bwzn20i6x0nmkrzl294zv0a23n4n7vkplny";
   };
   phases = [ "unpackPhase" "installPhase" ];
   installPhase = ''
