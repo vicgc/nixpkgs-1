@@ -11,13 +11,13 @@ BASEURL="https://static.rust-lang.org/dist"
 DATE=$1
 VERSION=$2
 
-if [[ -z  $DATE ]]
+if [[ -z $DATE ]]
 then
     echo "No date supplied"
     exit -1
 fi
 
-if [[ -z  $VERSION ]]
+if [[ -z $VERSION ]]
 then
     echo "No version supplied"
     exit -1
