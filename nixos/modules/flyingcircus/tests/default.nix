@@ -1,6 +1,8 @@
 { pkgs, lib, system, hydraJob }:
 
 {
+  docsplit = hydraJob (import ./docsplit { inherit system; });
+
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
   haproxy = hydraJob (import ./haproxy.nix { inherit system; }) ;
