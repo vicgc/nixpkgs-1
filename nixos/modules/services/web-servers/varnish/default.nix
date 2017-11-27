@@ -42,6 +42,7 @@ with lib;
     systemd.services.varnish = {
       description = "Varnish";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
       preStart = ''
         mkdir -p ${cfg.stateDir}
         chown -R varnish:varnish ${cfg.stateDir}
