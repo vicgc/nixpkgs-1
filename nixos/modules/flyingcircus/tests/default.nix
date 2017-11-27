@@ -5,15 +5,15 @@
 
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
-  haproxy = hydraJob (import ./haproxy.nix { inherit system; }) ;
+  haproxy = hydraJob (import ./haproxy.nix { inherit system; });
 
-  login = hydraJob (import ./login.nix { inherit system; }) ;
+  login = hydraJob (import ./login.nix { inherit system; });
 
   mariadb = hydraJob (import ./mariadb.nix { inherit system; });
 
-  memcached = hydraJob (import ./memcached.nix { inherit system; }) ;
+  memcached = hydraJob (import ./memcached.nix { inherit system; });
 
-  mongodb = hydraJob (import ./mongodb { inherit system; }) ;
+  mongodb = hydraJob (import ./mongodb { inherit system; });
 
   inherit (import ./nodejs.nix { inherit system hydraJob; })
     nodejs_4 nodejs_6 nodejs_7;
@@ -41,6 +41,7 @@
   rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
 
   sensuserver = hydraJob (import ./sensu.nix { inherit system; });
+  systemdCycles = hydraJob (import ./systemd_cycles.nix { inherit system; });
 
   users = hydraJob (import ./users { inherit system; });
 }
