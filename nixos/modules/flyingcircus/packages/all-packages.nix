@@ -208,6 +208,11 @@ in rec {
     (old: {
       buildFlags = "localstatedir=/var/spool";
     });
+  virtualbox = pkgs_17_09.virtualbox;
+  # The guest additions need to use the kernel we're actually building so we
+  # have to callPackage them instead of using the pre-made package.
+  virtualboxGuestAdditions = pkgs_17_09.callPackage "${pkgs_17_09_src}/pkgs/applications/virtualization/virtualbox/guest-additions" { kernel = linux; };
+
   vulnix = pkgs.callPackage ./vulnix { };
 
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
