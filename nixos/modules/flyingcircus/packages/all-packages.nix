@@ -87,8 +87,15 @@ in rec {
     kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
   };
   linuxPackages = linuxPackages_4_4;
-  linuxPackages_4_4 = pkgs.recurseIntoAttrs
-    (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
+  linuxPackages_4_4 = 
+    # This is hacky, but works for now. linuxPackagesFor is intended to
+    # automatically customize for each kernel but making that overridable
+    # is beyond my comprehension right now.
+    let 
+      default_pkgs = pkgs.recurseIntoAttrs
+      (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
+    in 
+      lib.overrideExisting default_pkgs { inherit virtualbox virtualboxGuestAdditions; };
 
   mc = pkgs.callPackage ./mc.nix { };
   mariadb = pkgs.callPackage ./mariadb.nix { };
@@ -211,8 +218,7 @@ in rec {
   virtualbox = pkgs_17_09.virtualbox;
   # The guest additions need to use the kernel we're actually building so we
   # have to callPackage them instead of using the pre-made package.
-  virtualboxGuestAdditions = pkgs_17_09.callPackage "${pkgs_17_09_src}/pkgs/applications/virtualization/virtualbox/guest-additions" { kernel = linux; };
-
+  virtualboxGuestAdditions = pkgs_17_09.callPackage "${pkgs_17_09_src}/pkgs/applications/virtualization/virtualbox/guest-additions" { kernel = linux_4_4; };
   vulnix = pkgs.callPackage ./vulnix { };
 
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };

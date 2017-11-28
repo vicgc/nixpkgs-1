@@ -23,29 +23,40 @@ with lib;
       pkgs.runCommand "flyingcircus-image"
         { preVM =
             ''
+              set -x 
               mkdir $out
               diskImage=$out/image.qcow2
-              ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 $diskImage "30G"
+              ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 -o preallocation=metadata,compat=1.1,lazy_refcounts=on $diskImage "30G"
               mv closure xchg/
+
+              # Copy all paths in the closure to the filesystem.
+              # We package them up to speed up the whole process instead of 
+              # doing it file-by-file.
+              storePaths=$(${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} xchg/closure)
+              time ${pkgs.gnutar}/bin/tar c $storePaths | ${pkgs.lz4}/bin/lz4 --no-frame-crc  > xchg/store.tar.lz4
             '';
           postVM = ''
-              ${pkgs.bzip2}/bin/bzip2 -1 $out/image.qcow2
+              set -x 
+              time ${pkgs.lz4}/bin/lz4 --no-frame-crc $diskImage $diskImage.lz4
+              rm $diskImage
             '';
-          memSize = 1024;
-          buildInputs = [ pkgs.utillinux pkgs.perl ];
+          memSize = 2048;
+          QEMU_OPTS = "-smp 8";
+          buildInputs = [ pkgs.utillinux pkgs.perl pkgs.lz4 pkgs.gnutar pkgs.xfsprogs pkgs.gptfdisk ];
           exportReferencesGraph =
             [ "closure" config.system.build.toplevel ];
         }
         ''
+          set -x 
           # Create a root and bootloader partitions
-          ${pkgs.gptfdisk}/sbin/sgdisk /dev/vda -o
-          ${pkgs.gptfdisk}/sbin/sgdisk /dev/vda -a 8192 -n 1:8192:0 -c 1:root -t 1:8300
-          ${pkgs.gptfdisk}/sbin/sgdisk /dev/vda -n 2:2048:+1M -c 2:gptbios -t 2:EF02
+          sgdisk /dev/vda -o
+          sgdisk /dev/vda -a 8192 -n 1:8192:0 -c 1:root -t 1:8300
+          sgdisk /dev/vda -n 2:2048:+1M -c 2:gptbios -t 2:EF02
           . /sys/class/block/vda1/uevent
           mknod /dev/vda1 b $MAJOR $MINOR
 
           # Create an empty filesystem and mount it.
-          ${pkgs.xfsprogs}/sbin/mkfs.xfs -m crc=1,finobt=1 -L root /dev/vda1
+          mkfs.xfs -m crc=1,finobt=1 -L root /dev/vda1
           mkdir /mnt
           mount /dev/vda1 /mnt
 
@@ -55,11 +66,7 @@ with lib;
           mount --bind /dev /mnt/dev
           mount --bind /sys /mnt/sys
 
-          # Copy all paths in the closure to the filesystem.
-          storePaths=$(perl ${pkgs.pathsFromGraph} /tmp/xchg/closure)
-
-          mkdir -p /mnt/nix/store
-          ${pkgs.rsync}/bin/rsync -av $storePaths /mnt/nix/store/
+          time lz4 -d --no-frame-crc /tmp/xchg/store.tar.lz4 | tar x -C /mnt
 
           # Register the paths in the Nix database.
           printRegistration=1 perl ${pkgs.pathsFromGraph} /tmp/xchg/closure | \
