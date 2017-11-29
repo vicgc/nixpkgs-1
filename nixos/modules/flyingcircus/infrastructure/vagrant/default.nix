@@ -35,6 +35,11 @@ in
   # Enable guest additions.
   virtualisation.virtualbox.guest.enable = true;
 
+  # Disable the regular fc-manage agent: this would try to talk to the
+  # directory and perform VM resizes, etc. This won't work on vagrant, so we
+  # disable it.
+  flyingcircus.agent.enable = false;
+
   # Creates a "vagrant" users with password-less sudo access
   users.extraGroups = [
     { name = "admins"; }
