@@ -63,6 +63,7 @@ in
 
     systemd.services.dogstatsd = {
       serviceConfig = lib.mkForce {
+        enable = (localConfig != {});
         ExecStart = "${pkgs.dd-agent}/bin/dogstatsd";
         User = "datadog";
         Group = "datadog";
