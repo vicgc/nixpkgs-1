@@ -1,7 +1,6 @@
 { config, lib, pkgs, ... }:
 
 let
-
   cfg = config.flyingcircus;
   fclib = import ../lib;
 
@@ -31,6 +30,12 @@ let
       (lib.pathExists "/etc/local/postfix/master.cf")
       (lib.readFile /etc/local/postfix/master.cf))
   ];
+
+  # Postfix >=3.0 expects permissions not compatible with the old
+  # setuid-wrapper scheme #29181
+  fixWrapper =
+    let wrappers = config.security.wrapperDir;
+    in lib.stringAfter [ "setuid" ] "chmod 644 ${wrappers}/sendmail.real";
 
 in
 {
@@ -73,8 +78,8 @@ in
       services.postfix.extraMasterConf = lib.concatStringsSep "\n" masterCf;
 
       system.activationScripts.fcio-postfix = ''
-          install -d -o root -g service  -m 02775 /etc/local/postfix/
-        '';
+        install -d -o root -g service -m 02775 /etc/local/postfix
+      '';
 
       environment.etc."local/postfix/README.txt".text = ''
         Put your local postfix configuration here.
@@ -100,9 +105,10 @@ in
       environment.systemPackages = [ pkgs.mailutils ];
 
       security.sudo.extraConfig = ''
-        %sensuclient    ALL=(postfix) ${pkgs.nagiosPluginsOfficial}/bin/check_mailq
-
+        %sensuclient ALL=(postfix) ${pkgs.nagiosPluginsOfficial}/bin/check_mailq
       '';
+
+      system.activationScripts.setuid-sendmail = fixWrapper;
 
       flyingcircus.services.sensu-client.checks = {
 
@@ -129,25 +135,20 @@ in
 
     })
 
-    (lib.mkIf (!cfg.roles.mailserver.enable &&
-           mailoutService != null) {
-
+    (lib.mkIf (!cfg.roles.mailserver.enable && mailoutService != null) {
       networking.defaultMailServer.directDelivery = true;
       networking.defaultMailServer.hostName = mailoutService.address;
-
       networking.defaultMailServer.root = "admin@flyingcircus.io";
       # XXX change to fcio.net once #14970 is solved
       networking.defaultMailServer.domain = "gocept.net";
 
       # Other parts of nixos (cron, mail) expect a suidwrapper for sendmail.
       services.mail.sendmailSetuidWrapper = {
-        group = "root";
-        owner = "root";
-        permissions = "u+rx,g+x,o+x";
         program = "sendmail";
         setgid = false;
-        setuid = false; };
-
+        setuid = false;
+      };
+      system.activationScripts.setuid-sendmail = fixWrapper;
     })
   ];
 }

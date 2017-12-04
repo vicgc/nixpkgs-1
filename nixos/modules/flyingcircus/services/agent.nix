@@ -56,6 +56,23 @@ in {
         pkgs.fcmanage
       ];
 
+      systemd.tmpfiles.rules = [
+        "r! /reboot"
+        "d /var/spool/maintenance/archive - - - 90d"
+      ];
+
+      security.sudo.extraConfig = ''
+        # Allow applying config and restarting services to service users
+        Cmnd_Alias  FCMANAGE = ${pkgs.fcmanage}/bin/fc-manage --build
+        %sudo-srv ALL=(root) FCMANAGE
+        %service  ALL=(root) FCMANAGE
+      '';
+    }
+
+    (mkIf cfg.agent.enable {
+      # Do not include the service if the agent is not enabled. This allows
+      # deciding, i.e. for Vagrant, that the image should not start the
+      # general fc-manage service upon boot, which might fail.
       systemd.services.fc-manage = rec {
         description = "Flying Circus Management Task";
         restartIfChanged = false;
@@ -79,20 +96,6 @@ in {
         '';
       };
 
-      systemd.tmpfiles.rules = [
-        "r! /reboot"
-        "d /var/spool/maintenance/archive - - - 90d"
-      ];
-
-      security.sudo.extraConfig = ''
-        # Allow applying config and restarting services to service users
-        Cmnd_Alias  FCMANAGE = ${pkgs.fcmanage}/bin/fc-manage --build
-        %sudo-srv ALL=(root) FCMANAGE
-        %service  ALL=(root) FCMANAGE
-      '';
-    }
-
-    (mkIf cfg.agent.enable {
       systemd.timers.fc-manage = {
         description = "Timer for fc-manage";
         wantedBy = [ "timers.target" ];

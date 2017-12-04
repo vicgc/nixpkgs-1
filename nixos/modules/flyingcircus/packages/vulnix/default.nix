@@ -1,17 +1,18 @@
-{ pkgs, fetchurl }:
+{ pkgs, fetchurl, python3Packages }:
 
 let
+  pname = "vulnix";
+  version = "1.4.0";
   python = import ./requirements.nix { inherit pkgs; };
-  version = "1.3.3";
-  src = fetchurl {
-    url = https://pypi.python.org/packages/b8/11/16478573b2f341b84fb6357785511d33551f4515ef6c3661a79cf04da786/vulnix-1.3.3.tar.gz;
-    sha256 = "1fhlgvp78np8i2wab6q6ypgl1bd4d1vlvip4j51fs8226qpyd7y2";
+  src = python3Packages.fetchPypi {
+    inherit pname version;
+    sha256 = "19kfqxlrigrgwn74x06m70ar2fhyhic5kfmdanjwjcbaxblha3l8";
   };
 
 in
 python.mkDerivation {
   inherit version src;
-  name = "vulnix-${version}";
+  name = "${pname}-${version}";
 
   buildInputs = [
     python.packages."flake8"
