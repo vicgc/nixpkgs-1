@@ -87,14 +87,14 @@ in rec {
     kernelPatches = [ pkgs.kernelPatches.bridge_stp_helper ];
   };
   linuxPackages = linuxPackages_4_4;
-  linuxPackages_4_4 = 
+  linuxPackages_4_4 =
     # This is hacky, but works for now. linuxPackagesFor is intended to
     # automatically customize for each kernel but making that overridable
     # is beyond my comprehension right now.
-    let 
+    let
       default_pkgs = pkgs.recurseIntoAttrs
       (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
-    in 
+    in
       lib.overrideExisting default_pkgs { inherit virtualbox virtualboxGuestAdditions; };
 
   mc = pkgs.callPackage ./mc.nix { };
