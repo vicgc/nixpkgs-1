@@ -58,7 +58,7 @@ in rec {
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
 
-  grafana = pkgs_17_09.grafana;
+  grafana = pkgs_17_09.callPackage ./grafana { };
   graphicsmagick = pkgs_17_09.graphicsmagick;
   graylog = pkgs.callPackage ./graylog.nix { };
 
