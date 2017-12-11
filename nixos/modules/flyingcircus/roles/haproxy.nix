@@ -1,12 +1,11 @@
 { config, lib, pkgs, ... }: with lib;
 
 let
-  cfg = config.flyingcircus;
+  cfg = config.flyingcircus.roles.haproxy;
   fclib = import ../lib;
 
-  haproxyCfgContent = fclib.configFromFile /etc/local/haproxy/haproxy.cfg example;
+  haproxyCfgContent = fclib.configFromFile /etc/local/haproxy/haproxy.cfg cfg.haConfig;
   haproxyCfg = pkgs.writeText "haproxy.conf" config.services.haproxy.config;
-  statsSocket = "/run/haproxy_admin.sock";
 
   example = ''
     # haproxy configuration example - copy to haproxy.cfg and adapt.
@@ -18,7 +17,7 @@ let
         group haproxy
         maxconn 4096
         log localhost local2
-        stats socket ${statsSocket} mode 660 group nogroup level operator
+        stats socket ${cfg.statsSocket} mode 660 group nogroup level operator
 
     defaults
         mode http
@@ -51,6 +50,17 @@ in
         type = types.bool;
         default = false;
         description = "Enable the Flying Circus haproxy server role.";
+      };
+
+      haConfig = mkOption {
+        type = types.lines;
+        default = example;
+        description = "Full HAProxy configuration.";
+      };
+
+      statsSocket = mkOption {
+        type = types.string;
+        default = "/run/haproxy_admin.sock";
       };
 
     };
@@ -116,7 +126,7 @@ in
       script = ''
         exec ${pkgs.prometheus-haproxy-exporter}/bin/haproxy_exporter \
           --web.listen-address localhost:9127 \
-          --haproxy.scrape-uri=unix:${statsSocket}
+          --haproxy.scrape-uri=unix:${cfg.statsSocket}
       '';
       serviceConfig = {
         User = "nobody";

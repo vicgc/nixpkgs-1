@@ -21,6 +21,7 @@ in
      ./elasticsearch.nix
      ./external_net
      ./generic.nix
+     ./graylog.nix
      ./haproxy.nix
      ./java.nix
      ./loghost.nix

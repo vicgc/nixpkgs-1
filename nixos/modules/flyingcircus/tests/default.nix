@@ -5,6 +5,8 @@
 
   elasticsearch = hydraJob (import ./elasticsearch.nix { inherit system; });
 
+  graylog = hydraJob (import ./graylog.nix { inherit system; });
+
   haproxy = hydraJob (import ./haproxy.nix { inherit system; });
 
   login = hydraJob (import ./login.nix { inherit system; });
