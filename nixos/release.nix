@@ -234,6 +234,7 @@ in rec {
   tests.containers-tmpfs = callTest tests/containers-tmpfs.nix {};
   tests.containers-hosts = callTest tests/containers-hosts.nix {};
   tests.containers-macvlans = callTest tests/containers-macvlans.nix {};
+  tests.couchdb = callTest tests/couchdb.nix {};
   tests.docker = hydraJob (import tests/docker.nix { system = "x86_64-linux"; });
   tests.dovecot = callTest tests/dovecot.nix {};
   tests.dnscrypt-proxy = callTest tests/dnscrypt-proxy.nix { system = "x86_64-linux"; };
@@ -296,7 +297,9 @@ in rec {
   #tests.pam-oath-login = callTest tests/pam-oath-login.nix {}; # broken since 2017-05-31
   #tests.panamax = hydraJob (import tests/panamax.nix { system = "x86_64-linux"; });
   tests.peerflix = callTest tests/peerflix.nix {};
+  tests.php-pcre = callTest tests/php-pcre.nix {};
   tests.postgresql = callSubTests tests/postgresql.nix {};
+  tests.pgmanage = callTest tests/pgmanage.nix {};
   #tests.pgjwt = callTest tests/pgjwt.nix {};
   tests.printing = callTest tests/printing.nix {};
   tests.prometheus = callTest tests/prometheus.nix {};

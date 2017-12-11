@@ -6,10 +6,10 @@ rec {
 
   firefox = common rec {
     pname = "firefox";
-    version = "56.0.1";
+    version = "56.0.2";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${version}/source/firefox-${version}.source.tar.xz";
-      sha512 = "6a07de6bfb71ccdef04b0f2ced720e309d037dd89fe983178ac59ea972147360552e2b8e33d8caa476008cabf53a99003807b0e817150b7a39e0bc143d82b88f";
+      sha512 = "35f81e8163a254b7e134fc073acbcff63aa1025b9c6392377650a8f2d0a5f0c77211adb0ae3d8ac85f036bb387246934b8847f14a03fceb7fcbc5b3cf94c9392";
     };
 
     patches =
@@ -32,10 +32,10 @@ rec {
 
   firefox-esr = common rec {
     pname = "firefox-esr";
-    version = "52.4.0esr";
+    version = "52.5.2esr";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${version}/source/firefox-${version}.source.tar.xz";
-      sha512 = "be3be7f9dbf4bd0344d5d76f26d1a5090bb012154d25833d5cd58e5e707c080515b42ed751e1f7e58b15b96939d7da634cafb6e8aa9bb1627ff420836b802183";
+      sha512 = "bbc7dcc4cb392f06fe2e963a3b6372efcfbbcc1ca7218a3ef05885285fe00c9e87e0f8d307bd9363668327eb43542c0600443bd9e6744de64494b96dd00efa5a";
     };
 
     meta = firefox.meta // {
@@ -54,8 +54,7 @@ rec {
       unpackPhase = ''
         # fetchFromGitHub produces ro sources, root dir gets a name that
         # is too long for shebangs. fixing
-        cp -a $src .
-        mv *-src tor-browser
+        cp -a $src tor-browser
         chmod -R +w tor-browser
         cd tor-browser
 
@@ -106,9 +105,10 @@ in rec {
     # FIXME: fetchFromGitHub is not ideal, unpacked source is >900Mb
     src = fetchFromGitHub {
       owner = "SLNOS";
-      repo  = "tor-browser";
-      rev   = "tor-browser-45.8.0esr-6.5-2";
-      sha256 = "0vbcp1qlxjlph0dqibylsyvb8iah3lnzdxc56hllpvbn51vrp39j";
+      repo = "tor-browser";
+      # branch "tor-browser-45.8.0esr-6.5-2-slnos"
+      rev = "e4140ea01b9906934f0347e95f860cec207ea824";
+      sha256 = "0a1qk3a9a3xxrl56bp4zbknbchv5x17k1w5kgcf4j3vklcv6av60";
     };
   } // commonAttrs) {
     stdenv = overrideCC stdenv gcc5;
@@ -124,8 +124,9 @@ in rec {
     src = fetchFromGitHub {
       owner = "SLNOS";
       repo  = "tor-browser";
-      rev   = "tor-browser-52.3.0esr-7.0-1-slnos";
-      sha256 = "0szbf8gjbl4dnrb4igy4mq5858i1y6ki4skhdw63iqqdd8w9v4yv";
+      # branch "tor-browser-52.5.0esr-7.0-1-slnos";
+      rev   = "830ff8d622ef20345d83f386174f790b0fc2440d";
+      sha256 = "169mjkr0bp80yv9nzza7kay7y2k03lpnx71h4ybcv9ygxgzdgax5";
     };
   } // commonAttrs) {};
 

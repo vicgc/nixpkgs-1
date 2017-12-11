@@ -1170,7 +1170,7 @@ in {
     buildInputs = [ pkgs.lzma ];
 
     meta = {
-      describe = "Backport of Python 3.3's 'lzma' module for XZ/LZMA compressed files";
+      description = "Backport of Python 3.3's 'lzma' module for XZ/LZMA compressed files";
       homepage = https://github.com/peterjc/backports.lzma;
       license = licenses.bsd3;
     };
@@ -9287,28 +9287,7 @@ in {
     buildInputs = with self; [ nose ];
   };
 
-  ConfigArgParse = buildPythonPackage rec {
-    name = "ConfigArgParse-${version}";
-    version = "0.9.3";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/C/ConfigArgParse/ConfigArgParse-${version}.tar.gz";
-      sha256 = "0a984pvv7370yz7zbkl6s6i7yyl9myahx0m9jkjvg3hz5q8mf70l";
-    };
-
-    # no tests in tarball
-    doCheck = false;
-    propagatedBuildInputs = with self; [
-
-    ];
-    buildInputs = with self; [
-
-    ];
-
-    meta = with stdenv.lib; {
-      homepage = "https://github.com/zorro3/ConfigArgParse";
-    };
-  };
+  ConfigArgParse = callPackage ../development/python-modules/configargparse { };
 
   jsonschema = callPackage ../development/python-modules/jsonschema { };
 
@@ -10082,17 +10061,14 @@ in {
 
   hetzner = buildPythonPackage rec {
     name = "hetzner-${version}";
-    version = "0.7.5";
+    version = "0.8.0";
 
     src = pkgs.fetchFromGitHub {
       repo = "hetzner";
-      owner = "RedMoonStudios";
+      owner = "aszlig";
       rev = "v${version}";
-      sha256 = "1fw7i1z4a39i1ljd9qd4f5p1p3a4257jfglkdpw90xjwl7fdpq42";
+      sha256 = "04q2q2w2qkhfly8rfjg2h5pnh42gs18l6cmipqc37yf7qvkw3nd0";
     };
-
-    # not there yet, but coming soon.
-    doCheck = false;
 
     meta = {
       homepage = "https://github.com/RedMoonStudios/hetzner";
@@ -20377,7 +20353,7 @@ in {
     meta = {
       description = "Library to implement a well-behaved Unix daemon process";
       homepage = https://alioth.debian.org/projects/python-daemon/;
-      licenses =  [ licenses.gpl3Plus licenses.asl20 ];
+      license = [ licenses.gpl3Plus licenses.asl20 ];
     };
   };
 
@@ -23920,6 +23896,8 @@ EOF
     name = "carbon-${version}";
     version = graphiteVersion;
 
+    disabled = isPy3k;
+
     src = pkgs.fetchurl {
       url = "mirror://pypi/c/carbon/${name}.tar.gz";
       sha256 = "142smpmgbnjinvfb6s4ijazish4vfgzyd8zcmdkh55y051fkixkn";
@@ -23931,6 +23909,7 @@ EOF
       homepage = http://graphite.wikidot.com/;
       description = "Backend data caching and persistence daemon for Graphite";
       maintainers = with maintainers; [ rickynils offline ];
+      license = licenses.asl20;
     };
   };
 
