@@ -9,13 +9,16 @@ let
   pkgs_17_09_src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "nixpkgs";
-    rev = "3489ac406550ee2de26f1470b7303bc86ff39659";
-    sha256 = "081m4n9r9wc59lnjnbhk66qzhsrdr7iy9k8swd24iy6czynqzw5f";
+    rev = "3092d86";
+    sha256 = "07bc8rkyg49d1w5j7zfzf4aa15hgzrrkf6girv3616f29j6gcmin";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
   inherit pkgs_17_09_src;
+
+  # Security update - needed by qemu and others #26909
+  audiofile = pkgs_17_09.audiofile;
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
