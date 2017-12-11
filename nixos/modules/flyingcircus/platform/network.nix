@@ -237,6 +237,8 @@ in
       (hostsFromEncAddresses cfg.enc_addresses.srv);
 
     boot.kernel.sysctl = {
+      "net.ipv4.ip_nonlocal_bind" = "1";
+      "net.ipv6.ip_nonlocal_bind" = "1";
       "net.ipv4.ip_local_port_range" = "32768 60999";
       "net.ipv4.ip_local_reserved_ports" = "61000-61999";
       # work around CVE-2016-5696
