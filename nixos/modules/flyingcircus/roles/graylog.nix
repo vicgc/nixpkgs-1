@@ -8,7 +8,7 @@ let
   cfg = config.flyingcircus.roles.graylog;
   fclib = import ../lib;
 
-  listenOn = "${config.flyingcircus.enc.name}.${config.networking.domain}";
+  listenOn = "${config.networking.hostName}.${config.networking.domain}";
   serviceUser = "graylog";
 
 
