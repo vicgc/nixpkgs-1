@@ -206,7 +206,7 @@ in
 
         hostName = mkOption {
           type = types.nullOr types.str;
-          default = null;
+          default = "graylog.${config.flyingcircus.enc.parameters.resource_group}.fcio.net";
           description = "HTTP host name for the GL frontend.";
           example = "graylog.example.com";
         };
