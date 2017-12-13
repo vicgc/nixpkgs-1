@@ -12,7 +12,7 @@ let
   deprecatedBuildWithMaintenanceFlag =
     builtins.pathExists "/etc/local/build-with-maintenance";
 
-  channelAction =
+  defaultChannelAction =
     if deprecatedBuildWithMaintenanceFlag || cfg.agent.with-maintenance
     then "--channel-with-maintenance"
     else "--channel";
@@ -28,14 +28,30 @@ in {
 
       with-maintenance = mkOption {
         default = false;
-        description = "Perform NixOS updates in scheduled maintenance.";
+        description = "Perform channel updates in scheduled maintenance.";
         type = types.bool;
+      };
+
+      channelAction = mkOption {
+        type = types.str;
+        default = defaultChannelAction;
+        description = "Selects which channel update action gets run every 2h.";
+        example = "--channel";
       };
 
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --maintenance ${channelAction}";
-        description = "Steps to run by the agent.";
+        default = "--directory --system-state --maintenance";
+        description = ''
+          Steps to run by the agent (besides channelAction). Don't list
+          --channel or --build here (see channelAction).
+        '';
+      };
+
+      interval = mkOption {
+        type = types.int;
+        default = 120;
+        description = "Run channel updates every N minutes.";
       };
 
     };
@@ -59,6 +75,7 @@ in {
       systemd.tmpfiles.rules = [
         "r! /reboot"
         "d /var/spool/maintenance/archive - - - 90d"
+        "d /var/lib/fc-manage"
       ];
 
       security.sudo.extraConfig = ''
@@ -79,19 +96,34 @@ in {
         wants = [ "network.target" ];
         after = wants;
         serviceConfig.Type = "oneshot";
-        path = [ config.system.build.nixos-rebuild ];
+        path = with pkgs; [
+          fcmanage
+          xfsprogs
+          config.system.build.nixos-rebuild
+        ];
 
         # This configuration is stolen from NixOS' own automatic updater.
         environment = config.nix.envVars // {
           inherit (config.environment.sessionVariables) NIX_PATH SSL_CERT_FILE;
           HOME = "/root";
-          PATH = "/run/current-system/sw/sbin:/run/current-system/sw/bin";
           LANG = "en_US.utf8";
+          CHANNEL_ACTION = cfg.agent.channelAction;
         };
-        script = ''
+        script = let interval = toString cfg.agent.interval; in
+        ''
           failed=0
-          ${pkgs.fcmanage}/bin/fc-manage -E ${cfg.enc_path} ${cfg.agent.steps} || failed=$?
-          ${pkgs.fcmanage}/bin/fc-resize -E ${cfg.enc_path} || failed=$?
+          stamp=/var/lib/fc-manage/stamp-channel-update
+          if [[ -z "$(find $stamp -mmin -${interval})" ]]; then
+            DO_CHANNEL=$CHANNEL_ACTION
+          else
+            DO_CHANNEL="--build"
+          fi
+          fc-manage -E ${cfg.enc_path} $DO_CHANNEL \
+            ${cfg.agent.steps} || failed=$?
+          fc-resize -E ${cfg.enc_path} || failed=$?
+          if [[ "$DO_CHANNEL" != "--build" ]]; then
+            touch $stamp
+          fi
           exit $failed
         '';
       };
@@ -101,7 +133,7 @@ in {
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnStartupSec = "10s";
-          OnUnitActiveSec = "10m";
+          OnUnitInactiveSec = "10m";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
         };
