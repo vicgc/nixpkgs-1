@@ -45,7 +45,6 @@ nixos-rebuild switch
 nix-channel --remove next
 """
 
-
 class Channel:
 
     PHRASES = re.compile('would (\w+) the following units: (.*)$')
@@ -104,26 +103,24 @@ class Channel:
 
     def switch(self, build_options):
         """Build the "self" channel and switch system to it."""
-        self.load('nixos')
+        logging.info('Building {}'.format(self))
         subprocess.check_call(
             ['nixos-rebuild', '--no-build-output', 'switch'] + build_options)
 
     def prepare_maintenance(self):
-        print('>>>>>>>> building')
+        logging.info('Preparing maintenance')
         self.load('next')
         call = subprocess.Popen(
              ['nixos-rebuild',
-              '-I',
-              'nixpkgs=/nix/var/nix/profiles/per-user/root/channels/next',
+              '-I', 'nixpkgs=' + p.expanduser('~/.nix-defexpr/channels/next'),
               '--no-build-output',
               'dry-activate'],
              stderr=subprocess.PIPE)
         output = []
         for line in call.stderr.readlines():
             line = line.decode('UTF-8').strip()
-            print(line)
+            logging.warning(line)
             output.append(line)
-        print('<<<<<<<<< finished build.')
         changes = self.detect_changes(output)
         self.register_maintenance(changes)
 
@@ -161,6 +158,30 @@ class Channel:
             rm.add(fc.maintenance.Request(
                 fc.maintenance.lib.shellscript.ShellScriptActivity(script),
                 300, comment='\n'.join(msg)))
+
+
+class BuildState:
+    """Track if fc-manage was last run from a channel or local checkout."""
+
+    STATEDIR = "/var/lib/fc-manage"
+
+    def __init__(self):
+        self.dev_marker = p.join(self.STATEDIR, 'develop')
+
+    def set_dev(self):
+        if not p.exists(self.dev_marker):
+            os.makedirs(self.STATEDIR, exist_ok=True)
+            open(self.dev_marker, 'a').close()
+
+    def set_channel(self):
+        try:
+            os.unlink(self.dev_marker)
+        except OSError:
+            pass
+
+    @property
+    def is_dev(self):
+        return p.exists(self.dev_marker)
 
 
 def load_enc(enc_path):
@@ -209,7 +230,7 @@ def inplace_update(filename, data):
 def write_json(calls):
     """Writes JSON files from a list of (lambda, filename) pairs."""
     for lookup, target in calls:
-        print('Retrieving {} ...'.format(target))
+        logging.info('Retrieving {} ...'.format(target))
         try:
             data = lookup()
         except Exception:
@@ -252,7 +273,7 @@ def system_state():
 def update_inventory():
     if (not enc or not enc.get('parameters') or
             not enc['parameters'].get('directory_password')):
-        print('No directory password. Not updating inventory.')
+        logging.warning('No directory password. Not updating inventory.')
         return
     try:
         # For fc-manage all nodes need to talk about *their* environment which
@@ -260,7 +281,7 @@ def update_inventory():
         # ring 1 API.
         directory = connect(enc, 1)
     except socket.error:
-        print('No directory connection. Not updating inventory.')
+        logging.warning('No directory connection. Not updating inventory.')
         return
 
     write_json([
@@ -277,64 +298,67 @@ def update_inventory():
 
 def build_channel_with_maintenance(build_options):
     if not enc or not enc.get('parameters'):
-        print('No ENC data. Not building channel.')
+        logging.warning('No ENC data. Not building channel.')
         return
     # always rebuild current channel (ENC updates, activation scripts etc.)
     current_channel = Channel.current('nixos')
     if current_channel:
-        print('Rebuilding {}'.format(current_channel))
+        logging.info('Rebuilding {}'.format(current_channel))
         current_channel.switch(build_options)
     # scheduled update already present?
     if Channel.current('next'):
         rm = fc.maintenance.ReqManager()
         rm.scan()
         if rm.requests:
-            print('Channel update prebooked @ {}'.format(
+            logging.info('Channel update prebooked @ {}'.format(
                 list(rm.requests.values())[0].next_due))
             return
     # scheduled update available?
     next_channel = Channel(enc['parameters'].get('environment_url'))
     if next_channel and next_channel != current_channel:
-        print('Preparing switch from {} to {}.'.format(
+        logging.info('Preparing switch from {} to {}.'.format(
             current_channel, next_channel))
         next_channel.prepare_maintenance()
-        return
 
 
 def build_channel(build_options):
+    logging.info("Performing regular channel update.")
     try:
         if enc and enc.get('parameters'):
             channel = Channel(enc['parameters']['environment_url'])
         else:
             channel = Channel.current('nixos')
         if channel:
-            print('Building {}'.format(channel))
+            channel.load('nixos')
             channel.switch(build_options)
+            BuildState().set_channel()
     except Exception:
         logging.exception('Error switching channel')
+        sys.exit(1)
 
 
 def build_dev(build_options):
-    print('Rebuilding from development environment')
-    try:
-        subprocess.check_call(['nix-channel', '--remove', 'nixos'])
-    except Exception:
-        logging.exception('Error removing channel ')
+    logging.info("Building development checkout in /root/nixpkgs.")
     subprocess.check_call(
         ['nixos-rebuild', '-I', 'nixpkgs=/root/nixpkgs', 'switch'] +
         build_options)
+    BuildState().set_dev()
 
 
 def build(build_options):
-    current_channel = Channel.current('nixos')
-    if current_channel is None:
+    channel = Channel.current('nixos')
+    if BuildState().is_dev or not channel:
         build_dev(build_options)
     else:
-        build_channel(build_options)
+        try:
+            channel.switch(build_options)
+        except Exception:
+            logging.exception('Error switching channel')
+            sys.exit(1)
 
 
 def maintenance():
-    print('Performing scheduled maintenance')
+    logging.info('Performing scheduled maintenance')
     import fc.maintenance.reqmanager
     fc.maintenance.reqmanager.transaction()
 
@@ -348,7 +372,7 @@ def seed_enc(path):
 
 
 def exit_timeout(signum, frame):
-    print("Execution timed out. Exiting.")
+    logging.error("Execution timed out. Exiting.")
     sys.exit(1)
 
 
