@@ -75,7 +75,6 @@ in {
       systemd.tmpfiles.rules = [
         "r! /reboot"
         "d /var/spool/maintenance/archive - - - 90d"
-        "d /var/lib/fc-manage"
       ];
 
       security.sudo.extraConfig = ''
@@ -122,6 +121,7 @@ in {
             ${cfg.agent.steps} || failed=$?
           fc-resize -E ${cfg.enc_path} || failed=$?
           if [[ "$DO_CHANNEL" != "--build" ]]; then
+            mkdir -p /var/lib/fc-manage
             touch $stamp
           fi
           exit $failed
