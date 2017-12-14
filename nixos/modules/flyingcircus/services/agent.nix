@@ -112,6 +112,7 @@ in {
         ''
           failed=0
           stamp=/var/lib/fc-manage/stamp-channel-update
+          mkdir -p /var/lib/fc-manage
           if [[ -z "$(find $stamp -mmin -${interval})" ]]; then
             DO_CHANNEL=$CHANNEL_ACTION
           else
@@ -121,7 +122,6 @@ in {
             ${cfg.agent.steps} || failed=$?
           fc-resize -E ${cfg.enc_path} || failed=$?
           if [[ "$DO_CHANNEL" != "--build" ]]; then
-            mkdir -p /var/lib/fc-manage
             touch $stamp
           fi
           exit $failed
