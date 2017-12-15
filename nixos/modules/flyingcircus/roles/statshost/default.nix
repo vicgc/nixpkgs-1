@@ -394,8 +394,7 @@ in
         extraOptions = {
           AUTH_LDAP_ENABLED = "true";
           AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
-          LOG_LEVEL = "debug";
-          LOG_FILTERS = "ldap:debug";
+          LOG_LEVEL = "info";
           DASHBOARDS_JSON_ENABLED = "true";
           DASHBOARDS_JSON_PATH = "${grafanaJsonDashboardPath}";
         };
