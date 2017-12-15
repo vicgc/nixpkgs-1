@@ -74,14 +74,15 @@ let
   # write tests.
   preBuild = with pkgs; {
     inherit
+      firefox
       libreoffice
       libsodium
       openvpn
+      osm2pgsql
+      osrm-backend
       qt4
       ssmtp
       wkhtmltopdf
-      osrm-backend
-      osm2pgsql
       ;
   };
 

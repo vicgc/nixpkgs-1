@@ -60,6 +60,7 @@ in rec {
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
+  firefox = pkgs_17_09.firefox;
 
   grafana = pkgs_17_09.callPackage ./grafana { };
   graphicsmagick = pkgs_17_09.graphicsmagick;
