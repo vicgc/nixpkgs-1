@@ -393,6 +393,12 @@ def parse_args():
                    help='run scheduled maintenance')
     a.add_argument('-t', '--timeout', default=3600, type=int,
                    help='abort execution after <INT> seconds')
+    a.add_argument('-i', '--interval', default=120, type=int, metavar='INT',
+                   help='automatic mode: channel update every <INT> minutes')
+    a.add_argument('-f', '--stampfile', metavar='PATH',
+                   default='/var/lib/fc-manage/fc-manage.stamp',
+                   help='automatic mode: save last execution date to <PATH> '
+                   '(default: (%(default)s)')
 
     build = a.add_mutually_exclusive_group()
     build.add_argument('-c', '--channel', default=False, dest='build',
@@ -411,6 +417,10 @@ def parse_args():
                        action='store_const', const='build',
                        help='rebuild channel or local checkout whatever '
                        'is currently active')
+    build.add_argument('-a', '--automatic', default=False, dest='build',
+                       action='store_const', const='build_automatic',
+                       help='channel update every I minutes, local builds '
+                       'all other times (see also -i and -f)')
     a.add_argument('-v', '--verbose', action='store_true', default=False)
 
     args = a.parse_args()

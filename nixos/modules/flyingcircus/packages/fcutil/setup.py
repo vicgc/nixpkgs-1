@@ -11,6 +11,12 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 
+test_deps = [
+        'freezegun>=0.3',
+        'pytest>=3',
+]
+
+
 setup(
     name='fc.util',
     version='1.0',
@@ -27,4 +33,7 @@ setup(
     packages=['fc.util'],
     install_requires=[],
     zip_safe=False,
+    setup_requires=['pytest-runner'],
+    tests_require=test_deps,
+    extras_require={'test': test_deps},
 )
