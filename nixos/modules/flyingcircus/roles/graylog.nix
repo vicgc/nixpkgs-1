@@ -541,7 +541,7 @@ in
             timeout connect 5s
             timeout client 30s    # should be equal to server timeout
             timeout server 30s    # should be equal to client timeout
-            timeout queue 2
+            timeout queue 30s
 
         listen gelf-tcp-in
         ${listenConfig gelfTCPHAPort}
