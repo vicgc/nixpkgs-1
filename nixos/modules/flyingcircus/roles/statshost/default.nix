@@ -106,6 +106,12 @@ let
 
 in
 {
+
+  imports = [
+    ./location-relay.nix
+    ./rg-relay.nix
+  ];
+
   options = {
 
     # The following two roles are *system/global* roles for FC use.
@@ -366,28 +372,6 @@ in
           '';
         };
       };
-
-    })
-
-    (mkIf cfgProxyRG.enable {
-
-      flyingcircus.roles.nginx.enable = true;
-      flyingcircus.roles.nginx.httpConfig = ''
-        server {
-          listen ${prometheusListenAddress};
-          access_log /var/log/nginx/statshost_access.log;
-          error_log /var/log/nginx/statshost_error.log;
-
-          location = /scrapeconfig.json {
-            alias /etc/local/statshost/scrape-rg.json;
-          }
-
-          location / {
-              resolver ${concatStringsSep " " config.networking.nameservers};
-              proxy_pass http://$http_host$request_uri$is_args$args;
-          }
-        }
-      '';
 
     })
 

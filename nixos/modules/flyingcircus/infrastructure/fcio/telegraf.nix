@@ -38,10 +38,9 @@ mkIf (params ? location && params ? resource_group) {
   services.telegraf.extraConfig = {
     global_tags = globalTags;
     outputs = {
-      prometheus_client = [{
-        listen = "${lib.head(
-          fclib.listenAddressesQuotedV6 config "ethsrv")}:${port}";
-      }];
+      prometheus_client = map
+        (a: { listen = "${a}:${port}"; })
+        (fclib.listenAddressesQuotedV6 config "ethsrv");
     };
   };
   services.telegraf.inputs = {
@@ -100,6 +99,15 @@ mkIf (params ? location && params ? resource_group) {
       '';
     };
   };
+
+  networking.firewall.extraCommands =
+    let
+      statsHost = head
+        (fclib.listServiceAddresses config "statshostproxy-collector");
+    in ''
+      ip46tables -A nixos-fw -i ethsrv -s ${statsHost} \
+        -p tcp --dport ${port} -j nixos-fw-accept
+    '';
 
   flyingcircus.roles.statshost.prometheusMetricRelabel =
     let
