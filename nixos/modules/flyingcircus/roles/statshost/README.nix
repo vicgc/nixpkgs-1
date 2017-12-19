@@ -22,16 +22,18 @@ Statshost relays
 ----------------
 
 Create firewall rules for the masters' SRV addresses in
-`/etc/local/firewall/relay_prometheus` on each relay:
+`/etc/local/firewall/relay_prometheus` on each relay::
 
-ip46tables -I nixos-fw -s ${hostName}.fcio.net -p tcp --dport 9090 -j nixos-fw-accept
+    ip46tables -I nixos-fw -s ${hostName}.fcio.net -p tcp --dport 9090 -j nixos-fw-accept
 
 
 Prometheus metric relabelling
 =============================
 
-Custom relabel rules can be put into `/etc/local/statshost/metric-relabel.yaml`
-as YAML list (see example).
+Custom relabel rules can be put into:
+
+* `/etc/local/statshost/metric-relabel.yaml` for *all* jobs, and into
+* `/etc/local/statshost/metric-relabel.<jobname>.yaml` for only a specific job.
 
 See <https://prometheus.io/docs/operating/configuration/#%3Crelabel_config%3E>
 for documentation.
