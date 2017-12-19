@@ -27,16 +27,20 @@ let
     * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
 
   customRelabelPath = "/etc/local/statshost/metric-relabel.yaml";
-  customRelabelConfig =
-    if pathExists customRelabelPath
-    then fromJSON (readFile customRelabelJSON)
-    else [];
+  customRelabelConfig = relabelConfiguration customRelabelPath;
   # the filename to path conversion is tricky to get right
-  customRelabelJSON =
-    pkgs.runCommand "metric-relabel.json" {
+
+  customRelabelJSON = filename:
+    pkgs.runCommand "${baseNameOf filename}.json" {
       buildInputs = [ pkgs.remarshal ];
       preferLocalBuild = true;
-    } "remarshal -if yaml -of json < ${/. + customRelabelPath} > $out";
+    } "remarshal -if yaml -of json < ${/. + filename} > $out";
+
+  relabelConfiguration = filename:
+    if pathExists filename
+    then fromJSON (readFile (customRelabelJSON filename))
+    else [];
+
 
   prometheusMetricRelabel =
     cfgStatsGlobal.prometheusMetricRelabel ++ customRelabelConfig;
@@ -53,7 +57,10 @@ let
             refresh_interval = "10m";
           }
         ];
-        metric_relabel_configs = prometheusMetricRelabel;
+        metric_relabel_configs =
+          prometheusMetricRelabel ++
+          (relabelConfiguration
+            "/etc/local/statshost/metric-relabel.${relayNode.job_name}.yaml");
       } // relayNode)
       relayNodes;
 
@@ -284,7 +291,7 @@ in
             };
           }];
         }
-        {
+        rec {
           job_name = config.flyingcircus.enc.parameters.resource_group;
           scrape_interval = "15s";
           # We use a file sd here. Static config would restart prometheus for
@@ -294,7 +301,10 @@ in
             files = [ "/etc/local/statshost/scrape-*.json" ];
             refresh_interval = "10m";
           }];
-          metric_relabel_configs = prometheusMetricRelabel;
+          metric_relabel_configs =
+            prometheusMetricRelabel ++
+            (relabelConfiguration
+              "/etc/local/statshost/metric-relabel.${job_name}.yaml");
         }
         {
           job_name = "fedrate";
@@ -394,8 +404,7 @@ in
         extraOptions = {
           AUTH_LDAP_ENABLED = "true";
           AUTH_LDAP_CONFIG_FILE = toString grafanaLdapConfig;
-          LOG_LEVEL = "debug";
-          LOG_FILTERS = "ldap:debug";
+          LOG_LEVEL = "info";
           DASHBOARDS_JSON_ENABLED = "true";
           DASHBOARDS_JSON_PATH = "${grafanaJsonDashboardPath}";
         };
