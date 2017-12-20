@@ -24,6 +24,7 @@ py.buildPythonPackage rec {
   buildInputs = [
     py.mock
     py.pytest
+    py.pytest-runner
   ];
 
   propagatedBuildInputs = [

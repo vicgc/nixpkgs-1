@@ -28,6 +28,9 @@ in rec {
     name = "fc-util-${version}";
     version = "1.0";
     src = ./fcutil;
+    buildInputs = [
+      self.pytest-runner
+    ];
     doCheck = false;
   };
 
@@ -84,24 +87,34 @@ in rec {
     dontStrip = true;
   };
 
+  pytest-runner = buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "pytest-runner";
+    version = "3.0";
+    src = self.fetchPypi {
+      inherit pname version;
+      sha256 = "00v7pi09q60yx0l1kzyklnmr5bp597mir85a9gsi7bdfyly3lz0g";
+    };
+    propagatedBuildInputs = with self; [
+      pytest
+      setuptools_scm
+    ];
+    dontStrip = true;
+  };
+
   setuptools_scm = buildPythonPackage rec {
-    name = "setuptools_scm-${version}";
-    version = "1.11.1";
-    src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/84/aa/c693b5d41da513fed3f0ee27f1bf02a303caa75bbdfa5c8cc233a1d778c4/setuptools_scm-1.11.1.tar.gz";
-      md5 = "4d19b2bc9580016d991f665ac20e2e8f";
+    name = "${pname}-${version}";
+    pname = "setuptools_scm";
+    version = "1.15.6";
+    src = self.fetchPypi {
+      inherit pname version;
+      sha256 = "0pzvfmx8s20yrgkgwfbxaspz2x1g38qv61jpm0ns91lrb22ldas9";
     };
     buildInputs = with self; [ pip ];
     dontStrip = true;
     preBuild = ''
       ${python.interpreter} setup.py egg_info
     '';
-    meta = with pkgs.lib; {
-      homepage = https://bitbucket.org/pypa/setuptools_scm/;
-      description = "Handles managing your python package versions in scm metadata";
-      license = licenses.mit;
-      maintainers = with maintainers; [ jgeerds ];
-    };
   };
 
 }
