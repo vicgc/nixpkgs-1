@@ -28,6 +28,27 @@ fc-manage --directory
 Invoke `fc-manage --help` for a full list of options.
 
 
+Automatic mode
+--------------
+
+When "--automatic" is passed in addition to "--channel" or
+"--channel-with-maintenance", the channel update is run only every I minutes,
+where I is defined with the "--interval" option (default: 120 minutes). A
+persistent offset is generated randomly and saved to the timestamp file at
+`/var/lib/fc-manage/fc-manage.stamp`.
+
+Interval and offset together define points on the time axis which allow for one
+channel update run::
+
+  ------+------+------+------>
+          ^  ^   ^
+          |  |   `will do channel updates when invoked here
+          |  `won't do channel updates when invoked here
+          `mtime of the stamp file
+
+This way, fc-manage can run channel updates with a definied minimum interval
+independent of when it is triggered (be it by systemd or manually).
+
 Flying Circus integration
 -------------------------
 
@@ -38,6 +59,10 @@ flyingcircus.agent.enable
     Set to false to disable the timer (default: true). Note that you must run
     fc-manage at least once manually after resetting this options, else the
     change will not be picked up.
+
+flyingcircus.agent.with-maintenance
+    Build channel updates when they arrive, but defer activation to a scheduled
+    maintenance window. Maintenance is scheduled automatically.
 
 flyingcircus.agent.steps
     Controls the configuration steps which are run each time the timer triggers.

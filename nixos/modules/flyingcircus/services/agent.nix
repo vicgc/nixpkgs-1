@@ -12,7 +12,7 @@ let
   deprecatedBuildWithMaintenanceFlag =
     builtins.pathExists "/etc/local/build-with-maintenance";
 
-  defaultChannelAction =
+  channelAction =
     if deprecatedBuildWithMaintenanceFlag || cfg.agent.with-maintenance
     then "--channel-with-maintenance"
     else "--channel";
@@ -32,19 +32,14 @@ in {
         type = types.bool;
       };
 
-      channelAction = mkOption {
-        type = types.str;
-        default = defaultChannelAction;
-        description = "Selects which channel update action gets run every 2h.";
-        example = "--channel";
-      };
-
       steps = mkOption {
         type = types.str;
-        default = "--directory --system-state --maintenance";
+        default = ''
+          ${channelAction} --automatic --directory --system-state --maintenance
+        '';
         description = ''
-          Steps to run by the agent (besides channelAction). Don't list
-          --channel or --build here (see channelAction).
+          Steps to run by the agent (besides channel with/without maintenance
+          action).
         '';
       };
 
@@ -74,7 +69,9 @@ in {
 
       systemd.tmpfiles.rules = [
         "r! /reboot"
+        "r /var/lib/fc-manage/stamp-channel-update"
         "d /var/spool/maintenance/archive - - - 90d"
+        "d /var/lib/fc-manage"
       ];
 
       security.sudo.extraConfig = ''
@@ -106,24 +103,14 @@ in {
           inherit (config.environment.sessionVariables) NIX_PATH SSL_CERT_FILE;
           HOME = "/root";
           LANG = "en_US.utf8";
-          CHANNEL_ACTION = cfg.agent.channelAction;
         };
         script = let interval = toString cfg.agent.interval; in
         ''
           failed=0
-          stamp=/var/lib/fc-manage/stamp-channel-update
           mkdir -p /var/lib/fc-manage
-          if [[ -z "$(find $stamp -mmin -${interval})" ]]; then
-            DO_CHANNEL=$CHANNEL_ACTION
-          else
-            DO_CHANNEL="--build"
-          fi
-          fc-manage -E ${cfg.enc_path} $DO_CHANNEL \
-            ${cfg.agent.steps} || failed=$?
+          fc-manage -E ${cfg.enc_path} -i ${interval} ${cfg.agent.steps} \
+            || failed=$?
           fc-resize -E ${cfg.enc_path} || failed=$?
-          if [[ "$DO_CHANNEL" != "--build" ]]; then
-            touch $stamp
-          fi
           exit $failed
         '';
       };
