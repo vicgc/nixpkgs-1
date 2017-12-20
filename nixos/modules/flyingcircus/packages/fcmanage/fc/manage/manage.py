@@ -2,6 +2,7 @@
 
 from fc.util.directory import connect
 from fc.util.lock import locked
+from fc.util.spread import Spread
 import argparse
 import fc.maintenance
 import fc.maintenance.lib.shellscript
@@ -22,20 +23,11 @@ import tempfile
 
 # TODO
 #
-# - better integration with dev-checkouts, not killing them with the channel
-#   version
-# - better channel management
-#   + explicitly download nixpkgs from our hydra
-#   + keep a "current" version
-#   + keep the "next" version
-#   + validate the next version and decide whether to switch automatically
-#     or whether to create a maintenance window and let the current one stay
-#     for now, but keep updating ENC data.
-# - perform updates _without_ service restarts immediately?
 # - How do we cope for emergency updates where we need to update *now*? How can
 #   we force this?
 
 enc = {}
+spread = None
 
 ACTIVATE = """\
 set -e
@@ -300,6 +292,9 @@ def build_channel_with_maintenance(build_options):
     if not enc or not enc.get('parameters'):
         logging.warning('No ENC data. Not building channel.')
         return
+    global spread
+    if spread and not spread.is_due():
+        return build(build_options)
     # always rebuild current channel (ENC updates, activation scripts etc.)
     current_channel = Channel.current('nixos')
     if current_channel:
@@ -322,6 +317,9 @@ def build_channel_with_maintenance(build_options):
 
 
 def build_channel(build_options):
+    global spread
+    if spread and not spread.is_due():
+        return build(build_options)
     logging.info("Performing regular channel update.")
     try:
         if enc and enc.get('parameters'):
@@ -392,7 +390,17 @@ def parse_args():
     a.add_argument('-m', '--maintenance', default=False, action='store_true',
                    help='run scheduled maintenance')
     a.add_argument('-t', '--timeout', default=3600, type=int,
-                   help='abort execution after <INT> seconds')
+                   help='abort execution after <TIMEOUT> seconds')
+    a.add_argument('-i', '--interval', default=120, type=int, metavar='INT',
+                   help='automatic mode: channel update every <INT> minutes')
+    a.add_argument('-f', '--stampfile', metavar='PATH',
+                   default='/var/lib/fc-manage/fc-manage.stamp',
+                   help='automatic mode: save last execution date to <PATH> '
+                   '(default: (%(default)s)')
+    a.add_argument('-a', '--automatic', default=False, action='store_true',
+                   help='channel update every I minutes, local builds '
+                   'all other times (see also -i and -f). Must be used in '
+                   'conjunction with --channel or --channel-with-maintenance.')
 
     build = a.add_mutually_exclusive_group()
     build.add_argument('-c', '--channel', default=False, dest='build',
@@ -435,6 +443,11 @@ def transaction(args):
 
     # reload ENC data in case update_inventory changed something
     load_enc(args.enc_path)
+
+    if args.automatic:
+        global spread
+        spread = Spread(args.stampfile, args.interval * 60, 'Channel update')
+        spread.configure()
 
     if args.build:
         globals()[args.build](build_options)

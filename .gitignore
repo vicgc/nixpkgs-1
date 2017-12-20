@@ -26,6 +26,7 @@ pyvenv.cfg
 result
 result-*
 *.rs.bk
+share/
 *.sublime-workspace
 *.sw?
 tags

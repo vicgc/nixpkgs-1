@@ -16,7 +16,7 @@ let
 in
 py.buildPythonPackage rec {
   name = "fc-manage-${version}";
-  version = "1.0";
+  version = "2.1";
   namePrefix = "";
   dontStrip = true;
   src = ./.;
@@ -24,6 +24,7 @@ py.buildPythonPackage rec {
   buildInputs = [
     py.mock
     py.pytest
+    py.pytest-runner
   ];
 
   propagatedBuildInputs = [

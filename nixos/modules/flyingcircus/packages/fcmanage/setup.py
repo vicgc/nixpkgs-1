@@ -6,31 +6,17 @@ hydra server or from a local nixpkgs checkout.
 """
 
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
-import sys
 
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
+test_deps = [
+    'pytest',
+    'mock',
+]
 
 
 setup(
     name='fc.manage',
-    version='2.0',
+    version='2.1',
     description=__doc__,
     url='https://flyingcircus.io',
     author='Christian Theune, Christian Kauhaus, Christian Zagrodnick',
@@ -41,6 +27,7 @@ setup(
         'Environment :: Console',
         'License :: OSI Approved :: Zope Public License',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Topic :: System :: Systems Administration',
     ],
     packages=['fc.manage'],
@@ -50,9 +37,9 @@ setup(
         'requests',
         'click',
     ],
-    tests_require=['pytest', 'mock'],
-    extras_require={'test': ['pytest', 'mock']},
-    cmdclass={'test': PyTest},
+    tests_require=[test_deps],
+    setup_requires=['pytest-runner'],
+    extras_require={'test': test_deps},
     entry_points={
         'console_scripts': [
             'fc-manage=fc.manage.manage:main',
