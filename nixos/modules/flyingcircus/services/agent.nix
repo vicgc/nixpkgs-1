@@ -34,9 +34,8 @@ in {
 
       steps = mkOption {
         type = types.str;
-        default = ''
-          ${channelAction} --automatic --directory --system-state --maintenance
-        '';
+        default = "${channelAction} --automatic --directory --system-state \\
+          --maintenance";
         description = ''
           Steps to run by the agent (besides channel with/without maintenance
           action).
