@@ -108,8 +108,7 @@ in {
         ''
           failed=0
           mkdir -p /var/lib/fc-manage
-          fc-manage -E ${cfg.enc_path} -i ${interval} ${cfg.agent.steps} \
-            || failed=$?
+          fc-manage -E ${cfg.enc_path} -i ${interval} ${cfg.agent.steps} || failed=$?
           fc-resize -E ${cfg.enc_path} || failed=$?
           exit $failed
         '';
