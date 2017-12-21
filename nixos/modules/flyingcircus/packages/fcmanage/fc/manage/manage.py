@@ -28,6 +28,7 @@ import tempfile
 
 enc = {}
 spread = None
+logging.getLogger('requests').setLevel(logging.WARNING)
 
 ACTIVATE = """\
 set -e
