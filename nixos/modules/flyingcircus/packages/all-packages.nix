@@ -226,6 +226,7 @@ in rec {
   vulnix = pkgs.callPackage ./vulnix { };
 
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
+  xulrunner = pkgs_17_09.xulrunner;
 
   yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs7; };
 

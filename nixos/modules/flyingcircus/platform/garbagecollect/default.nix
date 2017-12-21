@@ -65,6 +65,10 @@ in {
         inherit script;
       };
 
+      systemd.tmpfiles.rules = [
+        "f ${log}"
+      ];
+
       environment.etc."nixos/garbagecollect-protect-references".text = ''
         # The following store paths will be needed on every evaluation but are
         # not referenced anywhere else. We mention them here to protect them
