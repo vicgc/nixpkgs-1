@@ -29,6 +29,7 @@
         go
         gptfdisk
         graphviz
+        htop
         imagemagick
         iotop
         kerberos
