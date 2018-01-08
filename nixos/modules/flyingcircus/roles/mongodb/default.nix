@@ -11,27 +11,34 @@ let
     fclib.listenAddresses config "lo" ++
     fclib.listenAddresses config "ethsrv";
 
-  local_config_path = /etc/local/mongodb/mongodb.conf;
+  local_config_path = /etc/local/mongodb/mongodb.yaml;
 
   local_config =
     if pathExists local_config_path
-    then builtins.readFile  local_config_path
+    then builtins.readFile local_config_path
     else "";
 
   # Use a completely own version of mongodb.conf (not resorting to NixOS
   # defaults). The stock version includes a hard-coded "syslog = true"
   # statement.
-  mongoCnf = pkgs.writeText "mongodb.conf" ''
-    bind_ip = ${mcfg.bind_ip}
-    ${optionalString mcfg.quiet "quiet = true"}
-    dbpath = ${mcfg.dbpath}
-    fork = true
-    pidfilepath = ${mcfg.pidFile}
-    ${optionalString (mcfg.replSetName != "") "replSet = ${mcfg.replSetName}"}
-    ipv6 = true
-    logpath = /var/log/mongodb/mongodb.log
-    logappend = true
-    logRotate = reopen
+  mongoCnf = pkgs.writeText "mongodb.yaml" ''
+    net.bindIp: "${mcfg.bind_ip}"
+    net.ipv6: true
+
+    ${optionalString mcfg.quiet "systemLog.quiet: true"}
+    systemLog.path: /var/log/mongodb/mongodb.log
+    systemLog.destination: file
+    systemLog.logAppend: true
+    systemLog.logRotate: reopen
+
+    storage.dbPath: ${mcfg.dbpath}
+
+    processManagement.fork: true
+    processManagement.pidFilePath: ${mcfg.pidFile}
+
+    ${optionalString (mcfg.replSetName != "") "replication.replSetName: ${mcfg.replSetName}"}
+
+    ${mcfg.extraConfig}
     ${local_config}
   '';
 
@@ -118,7 +125,7 @@ in
     '';
 
     environment.etc."local/mongodb/README.txt".text = ''
-      Put your local mongodb configuration into `mongodb.conf` here.
+      Put your local mongodb configuration into `mongodb.yaml` here.
       It will be joined with the basic config.
     '';
 
