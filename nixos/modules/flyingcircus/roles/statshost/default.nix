@@ -444,7 +444,7 @@ in
         in
         if cfgStatsGlobal.useSSL then ''
           server {
-          ${listenOnPort "ethfe" 80}
+              ${listenOnPort "ethfe" 80}
               server_name ${httpHost};
 
               location / {
@@ -453,7 +453,7 @@ in
           }
 
           server {
-          ${listenOnPort "ethfe" "443 ssl http2"}
+              ${listenOnPort "ethfe" "443 ssl http2"}
               ${common}
 
               ssl_certificate ${/etc/local/nginx/stats.crt};
@@ -464,7 +464,7 @@ in
         else
         ''
           server {
-          ${listenOnPort "ethfe" 80}
+              ${listenOnPort "ethfe" 80}
               ${common}
           }
         '';
