@@ -56,21 +56,6 @@ let
   };
 
 in {
-  nodejs4 = common rec {
-    version = "4.8.4";
-    src = fetchurl {
-      url = "http://nodejs.org/dist/v${version}/node-v${version}.tar.xz";
-      sha256 = "35fe633a48cbe93c79327161d9dc964ac9810f4ceb2ed8628487e6e14a15905b";
-    };
-  };
-
-  nodejs6 = common rec {
-    version = "6.11.1";
-    src = fetchurl {
-      url = "http://nodejs.org/dist/v${version}/node-v${version}.tar.gz";
-      sha256 = "0187d4e4ef00cee2b70b0ad0689100050654f26629775d097b145d0d8727f9a0";
-    };
-  };
 
   nodejs7 = common rec {
     version = "7.10.1";
