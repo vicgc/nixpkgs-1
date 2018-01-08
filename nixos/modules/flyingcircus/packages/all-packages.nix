@@ -126,8 +126,12 @@ in rec {
 
   nix = pkgs_17_09.nix;
 
+  nodejs4 = pkgs_17_09.nodejs-4_x;
+  nodejs6 = pkgs_17_09.nodejs-6_x;
+  nodejs8 = pkgs_17_09.nodejs-8_x;
+
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
-    nodejs4 nodejs6 nodejs7;
+    nodejs7;
 
   inherit (pkgs.callPackages ./openssl {
       fetchurl = pkgs.fetchurlBoot;
