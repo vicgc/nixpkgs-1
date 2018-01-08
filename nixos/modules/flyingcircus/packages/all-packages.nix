@@ -232,6 +232,6 @@ in rec {
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
   xulrunner = pkgs_17_09.xulrunner;
 
-  yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs8; };
+  yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs7; };
 
 }
