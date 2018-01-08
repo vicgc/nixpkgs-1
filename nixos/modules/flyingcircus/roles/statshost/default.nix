@@ -437,11 +437,14 @@ in
             }
 
           '';
+          listenOnPort = interface: port:
+            lib.concatMapStringsSep "\n    "
+                (addr: "listen ${addr}:${toString port};")
+                (fclib.listenAddressesQuotedV6 config interface);
         in
         if cfgStatsGlobal.useSSL then ''
           server {
-              listen *:80;
-              listen [::]:80;
+          ${listenOnPort "ethfe" 80}
               server_name ${httpHost};
 
               location / {
@@ -450,8 +453,7 @@ in
           }
 
           server {
-              listen *:443 ssl;
-              listen [::]:443 ssl;
+          ${listenOnPort "ethfe" "443 ssl http2"}
               ${common}
 
               ssl_certificate ${/etc/local/nginx/stats.crt};
@@ -462,8 +464,7 @@ in
         else
         ''
           server {
-              listen *:80;
-              listen [::]:80;
+          ${listenOnPort "ethfe" 80}
               ${common}
           }
         '';
