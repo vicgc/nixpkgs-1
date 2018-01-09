@@ -18,7 +18,7 @@
   mongodb = hydraJob (import ./mongodb { inherit system; });
 
   inherit (import ./nodejs.nix { inherit system hydraJob; })
-    nodejs_4 nodejs_6 nodejs_7;
+    nodejs_4 nodejs_6 nodejs_7 nodejs_8;
 
   inherit (import ./mysql.nix { inherit system hydraJob; })
     mysql_5_5 mysql_5_6 mysql_5_7;

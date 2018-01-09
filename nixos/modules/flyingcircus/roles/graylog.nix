@@ -341,7 +341,9 @@ in
 
       flyingcircus.roles.mongodb32.enable = true;
       services.mongodb.replSetName = replSetName;
-
+      services.mongodb.extraConfig = ''
+        storage.wiredTiger.engineConfig.cacheSizeGB: 1
+      '';
 
       systemd.services.graylog-config = {
         description = "Configure Graylog FCIO settings";
