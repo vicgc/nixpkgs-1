@@ -11,12 +11,15 @@ let
        # We try to be helpful to our users by only allowing calls to iptables
        # and comments.
        (lib.concatMapStringsSep "\n"
-          (line: assert lib.hasPrefix "#" line ||
+          (line: assert (lib.removePrefix " " line) == "" ||
+                        lib.hasPrefix "#" line ||
                         lib.hasPrefix "iptables" line ||
                         lib.hasPrefix "ip6tables" line ||
                         lib.hasPrefix "ip46tables" line;
-                 line)
-          (lib.splitString "\n" (builtins.readFile filename))) +
+                 line))
+           (map
+             fclib.stripString
+             (lib.splitString "\n" (builtins.readFile filename))) +
        "\n")
     (fclib.files "/etc/local/firewall");
 

@@ -9,10 +9,11 @@ let
   system = import ./system.nix { inherit lib fclib; };
   files = import ./files.nix { inherit lib fclib; };
   utils = import ./utils.nix { inherit lib; };
+  strings = import ./strings.nix { inherit lib; };
 
   fclib =
     { inherit network math system files utils; }
-    // network // math // system // files // utils;
+    // network // math // system // files // utils // strings;
 
 in
   fclib
