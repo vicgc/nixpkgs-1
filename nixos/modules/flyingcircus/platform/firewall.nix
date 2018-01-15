@@ -1,36 +1,54 @@
-{ config, lib, ... }:
+{ config, pkgs, lib, ... }:
+
+with builtins;
 
 let
   cfg = config.flyingcircus;
 
   fclib = import ../lib;
 
-  localRules = lib.concatMapStringsSep "\n"
-    (filename:
-       "# Local rules from ${filename}\n" +
-       # We try to be helpful to our users by only allowing calls to iptables
-       # and comments.
-       (lib.concatMapStringsSep "\n"
-          (line: assert (lib.removePrefix " " line) == "" ||
-                        lib.hasPrefix "#" line ||
-                        lib.hasPrefix "iptables" line ||
-                        lib.hasPrefix "ip6tables" line ||
-                        lib.hasPrefix "ip46tables" line;
-                 line))
-           (map
-             fclib.stripString
-             (lib.splitString "\n" (builtins.readFile filename))) +
-       "\n")
-    (fclib.files "/etc/local/firewall");
+  checkRules = pkgs.writeScript "check-iptables-local-rules.py" ''
+    #! ${pkgs.python3.interpreter}
+    import fileinput
+    import re
+    import shlex
+    import sys
+    R_ALLOWED = re.compile(r'^(#.*|ip[46]{0,2}tables .*)?$')
 
-    rgAddrs = map (e: e.ip) cfg.enc_addresses.srv;
-    rgRules = lib.optionalString
-      (lib.hasAttr "ethsrv" config.networking.interfaces)
-      (lib.concatMapStringsSep "\n"
-        (a:
-          "${fclib.iptables a} -A nixos-fw -i ethsrv " +
-          "-s ${fclib.stripNetmask a} -j nixos-fw-accept")
-        rgAddrs);
+    lastfile = None
+    for line in fileinput.input():
+      if fileinput.filename() != lastfile:
+        lastfile = fileinput.filename()
+        print("### {}".format(lastfile))
+      line = ' '.join(
+        shlex.quote(s) for s in shlex.split(line.strip(), comments=True))
+      m = R_ALLOWED.match(line)
+      if m:
+        if m.group(1):
+          print(m.group(1))
+      else:
+        print('ERROR: only iptable statements or comments allowed\n'
+              '{}: {}'.format(fileinput.filename(), line.strip()),
+              file=sys.stderr)
+        sys.exit(1)
+  '';
+
+  localRules =
+    pkgs.runCommand "firewall-local-rules" {} ''
+      ${checkRules} \
+        ${concatStringsSep " " (fclib.files "/etc/local/firewall")} \
+        </dev/null > $out
+    '';
+
+  rgAddrs = map (e: e.ip) cfg.enc_addresses.srv;
+  rgRules = lib.optionalString
+    (lib.hasAttr "ethsrv" config.networking.interfaces)
+    (lib.concatMapStringsSep "\n"
+      (a:
+        "${fclib.iptables a} -A nixos-fw -i ethsrv " +
+        "-s ${fclib.stripNetmask a} -j nixos-fw-accept")
+      rgAddrs);
+
 in
 {
   config = {
@@ -44,7 +62,8 @@ in
       in ''
         ${rg}
 
-        ${localRules}
+        # Local firewall rules
+        ${readFile localRules}
       '';
 
     system.activationScripts.local-firewall = ''
