@@ -46,6 +46,9 @@ in
       enable = true;
       heapPercentage = 15 * heapCorrection / 100;
       cluster = false;
+      esNodes = [
+        "http://${config.networking.hostName}.${config.networking.domain}:9200"
+      ];
     };
 
     flyingcircus.roles.elasticsearch = {
@@ -53,7 +56,6 @@ in
       dataDir = "/var/lib/elasticsearch";
       clusterName = "graylog";
       heapPercentage = 35 * heapCorrection / 100;
-      esNodes = config.flyingcircus.roles.graylog.esNodes;
     };
 
   };
