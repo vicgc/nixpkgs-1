@@ -24,8 +24,11 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out
     cp -r {graylog.jar,lib,bin,plugin,data} $out
-    cp ${src_logstash.outPath} $out/plugin/
-    cp ${src_slack.outPath} $out/plugin/
+    for plugin in ${src_logstash} ${src_slack}; do
+      target=`basename $plugin`
+      target=''${target#*-}
+      cp $plugin $out/plugin/$target
+    done
   '';
 
   meta = with stdenv.lib; {
