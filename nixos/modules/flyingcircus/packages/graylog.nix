@@ -13,6 +13,10 @@ stdenv.mkDerivation rec {
     url = "https://github.com/sivasamyk/graylog2-input-lumberjack/releases/download/v1.0.0/graylog2-input-lumberjack-1.0.0-rc1.jar";
     sha256 = "1854pvqw2ffgy7bhkk5savybwlvhlasxdpl1yph87znsyinzfrmr";
   };
+  src_slack = fetchurl {
+    url = "https://github.com/graylog-labs/graylog-plugin-slack/releases/download/3.0.1/graylog-plugin-slack-3.0.1.jar";
+    sha256 = "1x51iccasyls60kc0nfxmx3wl5b0f56i245fi2zkwv05vxayalfw";
+  };
 
   dontBuild = true;
   dontStrip = true;
@@ -21,6 +25,7 @@ stdenv.mkDerivation rec {
     mkdir -p $out
     cp -r {graylog.jar,lib,bin,plugin,data} $out
     cp ${src_logstash.outPath} $out/plugin/
+    cp ${src_slack.outPath} $out/plugin/
   '';
 
   meta = with stdenv.lib; {
