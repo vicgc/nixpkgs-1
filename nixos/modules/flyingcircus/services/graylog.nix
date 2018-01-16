@@ -17,10 +17,8 @@ let
     password_secret = ${cfg.passwordSecret}
     root_username = ${cfg.rootUsername}
     root_password_sha2 = ${cfg.rootPasswordSha2}
-    elasticsearch_cluster_name = ${cfg.elasticsearchClusterName}
-    elasticsearch_discovery_zen_ping_multicast_enabled = ${configBool cfg.elasticsearchDiscoveryZenPingMulticastEnabled}
-    elasticsearch_discovery_zen_ping_unicast_hosts = ${cfg.elasticsearchDiscoveryZenPingUnicastHosts}
-    elasticsearch_network_host = ${config.networking.hostName}.${config.networking.domain}
+    elasticsearch_hosts = ${concatStringsSep "," cfg.elasticsearchHosts}
+    elasticsearch_discovery_enabled = ${if cfg.elasticSearchDiscoveryEnabled then "true" else "false"}
     message_journal_dir = ${cfg.messageJournalDir}
     mongodb_uri = ${cfg.mongodbUri}
     web_listen_uri = ${cfg.webListenUri}
@@ -100,24 +98,20 @@ in
         '';
       };
 
-      elasticsearchClusterName = mkOption {
-        type = types.str;
-        example = "graylog";
-        description = "This must be the same as for your Elasticsearch cluster";
+      elasticsearchHosts = mkOption {
+        type = types.listOf types.string;
+        default = ["http://127.0.0.1:9200"];
+        description = ''
+          URIs of Elasticsearch hosts.
+        '';
       };
 
-      elasticsearchDiscoveryZenPingMulticastEnabled = mkOption {
+      elasticSearchDiscoveryEnabled = mkOption {
         type = types.bool;
         default = false;
-        description = "Whether to use elasticsearch multicast discovery";
-      };
-
-      elasticsearchDiscoveryZenPingUnicastHosts = mkOption {
-        type = types.str;
-        default = "127.0.0.1:9300";
         description = ''
-          Tells Graylogs Elasticsearch client how to find other cluster members.
-          See Elasticsearch documentation for details.
+          Enable automatic detection of ES nodes. You still need to configure
+          at least one in `elasticsearchHosts`.
         '';
       };
 

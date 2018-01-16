@@ -108,13 +108,6 @@ let
     fclib.listServiceAddresses config "loghost-server" ++
     fclib.listServiceAddresses config "graylog-server";
 
-  esNodes =
-    (map
-      (address: "${address}:9350")
-      glNodes)
-    ++
-      fclib.listServiceAddressesWithPort config "elasticsearch-node" 9300;
-
   replSetName = if cfg.cluster then "graylog" else "";
 
   isMaster =
@@ -169,7 +162,6 @@ in
 
       esNodes = mkOption {
         type = types.listOf types.string;
-        default = esNodes;
         description = "List of elasticsearch nodes";
       };
 
@@ -302,10 +294,8 @@ in
 
       services.graylog = {
         enable = true;
-        elasticsearchClusterName = "graylog";
         inherit passwordSecret rootPasswordSha2 webListenUri restListenUri;
-        elasticsearchDiscoveryZenPingUnicastHosts =
-          concatStringsSep "," cfg.esNodes;
+        elasticsearchHosts = cfg.esNodes;
         javaHeap = ''${toString
           (fclib.max [
             ((fclib.current_memory config 1024) * cfg.heapPercentage / 100)
@@ -382,16 +372,6 @@ in
             global = true;
           };
 
-          sso_configuration = {
-            default_group = "Admin";
-            auto_create_user = true;
-            username_header = "Remote-User";
-            fullname_header = "X-Graylog-Fullname";
-            email_header = "X-Graylog-Email";
-            require_trusted_proxies = true;
-            trusted_proxies = "";  # Disable SSO auth
-          };
-
           geodb_configuration = {
             enabled = true;
             db_type = "MAXMIND_CITY";
@@ -429,9 +409,6 @@ in
           ${configure_graylog_input syslog_udp_configuration}
           ${configure_graylog_input gelf_tcp_configuration}
 
-          ${configure_graylog
-              "/plugins/org.graylog.plugins.auth.sso/config"
-              sso_configuration}
           ${configure_graylog
             "/system/cluster_config/org.graylog.plugins.map.config.GeoIpResolverConfig"
             geodb_configuration}
