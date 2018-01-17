@@ -10,6 +10,8 @@ let
     then pkgs.elasticsearch2
     else if config.flyingcircus.roles.elasticsearch5.enable
     then pkgs.elasticsearch5
+    else if config.flyingcircus.roles.elasticsearch.enable  # migration
+    then pkgs.elasticsearch2
     else null;
 
   enabled = package != null;
@@ -52,6 +54,15 @@ in
 
     flyingcircus.roles.elasticsearch = {
 
+      # This option is there for migration. After the release is out, each
+      # node with the elasticsearch role needs to get the elasticsearch2 role
+      # instead. The option can be removed then.
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus elasticsearch2 role.";
+      };
+
       clusterName = mkOption {
         type = types.nullOr types.string;
         default = null;
@@ -85,7 +96,6 @@ in
 
 
     flyingcircus.roles.elasticsearch2 = {
-
       enable = mkOption {
         type = types.bool;
         default = false;
@@ -95,7 +105,6 @@ in
 
 
     flyingcircus.roles.elasticsearch5 = {
-
       enable = mkOption {
         type = types.bool;
         default = false;
