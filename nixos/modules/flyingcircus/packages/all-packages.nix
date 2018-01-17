@@ -81,7 +81,7 @@ in rec {
   influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
-  kibana = pkgs.callPackage ./kibana.nix { };
+  kibana = pkgs_17_09.kibana;
 
   libevent = pkgs.callPackage ./libevent.nix { };
   libidn = pkgs.callPackage ./libidn.nix { };
