@@ -1,6 +1,6 @@
-import ../../../tests/make-test.nix ({ ... }:
+import ../../../tests/make-test.nix ({ rolename, ... }:
 {
-  name = "elasticsearch";
+  name = rolename;
 
   nodes = {
     master =
@@ -16,7 +16,7 @@ import ../../../tests/make-test.nix ({ ... }:
         ];
 
         virtualisation.memorySize = 2048;
-        flyingcircus.roles.elasticsearch.enable = true;
+        flyingcircus.roles.${rolename}.enable = true;
 
       };
   };
