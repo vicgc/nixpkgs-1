@@ -24,7 +24,7 @@ in
       };
 
       elasticSearchUrl = lib.mkOption {
-        type = types.nullOr types.string;
+        type = types.nullOr types.str;
         default = null;  # XXX: auto-use a local ES?
         description = "URL to elasticsearch";
       };
