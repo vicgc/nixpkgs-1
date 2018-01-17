@@ -15,11 +15,7 @@ let
     import sys
     R_ALLOWED = re.compile(r'^(#.*|ip[46]{0,2}tables .*)?$')
 
-    lastfile = None
     for line in fileinput.input():
-      if fileinput.filename() != lastfile:
-        lastfile = fileinput.filename()
-        print("### {}".format(lastfile))
       line = ' '.join(
         shlex.quote(s) for s in shlex.split(line.strip(), comments=True))
       m = R_ALLOWED.match(line)
@@ -34,10 +30,13 @@ let
   '';
 
   localRules =
-    pkgs.runCommand "firewall-local-rules" {} ''
-      ${checkRules} \
-        ${concatStringsSep " " (fclib.files "/etc/local/firewall")} \
-        </dev/null > $out
+  pkgs.runCommand "firewall-local-rules"
+    {
+      inputs = concatStringsSep " "
+        (map readFile (fclib.files "/etc/local/firewall"));
+      passAsFile = [ "inputs" ];
+    } ''
+      ${checkRules} < $inputsPath > $out
     '';
 
   rgAddrs = map (e: e.ip) cfg.enc_addresses.srv;
