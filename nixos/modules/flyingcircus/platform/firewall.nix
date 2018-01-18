@@ -29,15 +29,14 @@ let
         sys.exit(1)
   '';
 
-  localRules =
-  pkgs.runCommand "firewall-local-rules"
-    {
-      inputs = concatStringsSep " "
-        (map readFile (fclib.files "/etc/local/firewall"));
-      passAsFile = [ "inputs" ];
-    } ''
-      ${checkRules} < $inputsPath > $out
-    '';
+  etcLocalFirewall = map readFile (fclib.files "/etc/local/firewall");
+  localRules = pkgs.runCommand "firewall-local-rules" {
+    inputs = concatStringsSep " " etcLocalFirewall;
+    passAsFile = [ "inputs" ];
+    preferLocalBuild = true;
+  } ''
+    ${checkRules} < $inputsPath > $out
+  '';
 
   rgAddrs = map (e: e.ip) cfg.enc_addresses.srv;
   rgRules = lib.optionalString
@@ -57,13 +56,11 @@ in
       let
         rg = lib.optionalString
           (rgRules != "")
-          "# Accept traffic within the same resource group.\n${rgRules}";
-      in ''
-        ${rg}
-
-        # Local firewall rules
-        ${readFile localRules}
-      '';
+          "# Accept traffic within the same resource group.\n${rgRules}\n\n";
+        local = lib.optionalString
+          (etcLocalFirewall != [])
+          "# Local firewall rules.\n${readFile localRules}";
+      in rg + local;
 
     system.activationScripts.local-firewall = ''
       # Enable firewall local configuration snippet place.
