@@ -24,11 +24,13 @@ in
       export PKG_CONFIG_PATH=$HOME/.nix-profile/lib/pkgconfig:/run/current-system/sw/lib/pkgconfig
       # user shell init, see
       # https://nixos.org/nixpkgs/manual/#sec-declarative-package-management
-      for i in $HOME/.nix-profile/etc/profile.d/*.sh; do
-        if [ -r $i ]; then
-          source $i
-        fi
-      done
+      if [[ -d $HOME/.nix-profile/etc/profile.d ]]; then
+        for i in $HOME/.nix-profile/etc/profile.d/*.sh; do
+          if [[ -r $i ]]; then
+            source $i
+          fi
+        done
+      fi
       unset i
     '' +
     (opt
