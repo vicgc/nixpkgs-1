@@ -6,11 +6,12 @@ let
   fclib = import ../lib;
 
   package =
-    if config.flyingcircus.roles.elasticsearch2.enable
-    then pkgs.elasticsearch2
-    else if config.flyingcircus.roles.elasticsearch5.enable
+    if config.flyingcircus.roles.elasticsearch5.enable
     then pkgs.elasticsearch5
-    else if config.flyingcircus.roles.elasticsearch.enable  # migration
+    else if config.flyingcircus.roles.elasticsearch2.enable
+    then pkgs.elasticsearch2
+    # XXX remove after finishing migration
+    else if config.flyingcircus.roles.elasticsearch.enable
     then pkgs.elasticsearch2
     else null;
 
