@@ -51,8 +51,8 @@ in
       ];
     };
 
+    flyingcircus.roles.elasticsearch2.enable = true;
     flyingcircus.roles.elasticsearch = {
-      enable = true;
       dataDir = "/var/lib/elasticsearch";
       clusterName = "graylog";
       heapPercentage = 35 * heapCorrection / 100;

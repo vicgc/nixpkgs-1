@@ -5,6 +5,18 @@ let
   cfg_service = config.services.elasticsearch;
   fclib = import ../lib;
 
+  package =
+    if config.flyingcircus.roles.elasticsearch5.enable
+    then pkgs.elasticsearch5
+    else if config.flyingcircus.roles.elasticsearch2.enable
+    then pkgs.elasticsearch2
+    # XXX remove after finishing migration
+    else if config.flyingcircus.roles.elasticsearch.enable
+    then pkgs.elasticsearch2
+    else null;
+
+  enabled = package != null;
+
   esNodes =
     if cfg.esNodes == null
     then map
@@ -40,12 +52,16 @@ in
 {
 
   options = {
+
     flyingcircus.roles.elasticsearch = {
 
+      # This option is there for migration. After the release is out, each
+      # node with the elasticsearch role needs to get the elasticsearch2 role
+      # instead. The option can be removed then.
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable the Flying Circus elasticsearch role.";
+        description = "Enable the Flying Circus elasticsearch2 role.";
       };
 
       clusterName = mkOption {
@@ -78,16 +94,41 @@ in
         default = null;
       };
     };
+
+
+    flyingcircus.roles.elasticsearch2 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus elasticsearch2 role.";
+      };
+    };
+
+
+    flyingcircus.roles.elasticsearch5 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the Flying Circus elasticsearch5 role.";
+      };
+    };
+
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf enabled {
 
     services.elasticsearch = {
       enable = true;
-      host = thisNode;
+      package = package;
+      listenAddress = thisNode;
       dataDir = cfg.dataDir;
       cluster_name = clusterName;
-      extraCmdLineOptions = [ "-Des.path.scripts=${cfg_service.dataDir}/scripts -Des.security.manager.enabled=false" ];
+      extraJavaOptions = [
+       "-Des.path.scripts=${cfg_service.dataDir}/scripts"
+       "-Des.security.manager.enabled=false"
+        "-Xms${toString esHeap}m"
+        "-Xmx${toString esHeap}m"
+      ];
       extraConf = ''
         node.name: ${config.networking.hostName}
         discovery.zen.ping.unicast.hosts: ${builtins.toJSON esNodes}
@@ -97,22 +138,25 @@ in
     };
 
     systemd.services.elasticsearch = {
-      environment = {
-        ES_HEAP_SIZE = "${toString esHeap}m";
-      };
       serviceConfig = {
-        LimitNOFILE = 65536;
         LimitMEMLOCK = "infinity";
       };
       preStart = mkAfter ''
         # Install scripts
         mkdir -p ${cfg_service.dataDir}/scripts
       '';
-    };
-
-    # System tweaks
-    boot.kernel.sysctl = {
-      "vm.max_map_count" = "262144";
+      postStart = let
+        url = "http://${thisNode}:9200/_cat/health";
+        in ''
+        # Wait until available for use
+        for count in {0..120}; do
+            ${pkgs.curl}/bin/curl -s ${url} && exit
+            echo "Trying to connect to ${url} for ''${count}s"
+            sleep 1
+        done
+        echo "No connection to ${url} for 120s, giving up"
+        exit 1
+      '';
     };
 
     system.activationScripts.fcio-elasticsearch = ''

@@ -24,6 +24,7 @@ in
      ./graylog.nix
      ./haproxy.nix
      ./java.nix
+     ./kibana.nix
      ./loghost.nix
      ./mailserver.nix
      ./memcached.nix

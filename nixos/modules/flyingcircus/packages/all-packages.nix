@@ -49,7 +49,8 @@ in rec {
   docsplit = pkgs.callPackage ./docsplit { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
-  elasticsearch = pkgs.callPackage ./elasticsearch { };
+  elasticsearch2 = pkgs_17_09.elasticsearch2;
+  elasticsearch5 = pkgs_17_09.elasticsearch5;
   electron = pkgs.callPackage ./electron.nix {
     gconf = pkgs.gnome.GConf;
   };
@@ -80,7 +81,7 @@ in rec {
   influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
-  kibana = pkgs.callPackage ./kibana.nix { };
+  kibana = pkgs_17_09.kibana;
 
   libevent = pkgs.callPackage ./libevent.nix { };
   libidn = pkgs.callPackage ./libidn.nix { };
