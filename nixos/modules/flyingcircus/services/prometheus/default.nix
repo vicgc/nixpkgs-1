@@ -13,7 +13,7 @@ let
   # Pretty-print JSON to a file
   writePrettyJSON = name: x:
     pkgs.runCommand name { } ''
-      echo '${builtins.toJSON x}' | ${pkgs.jq}/bin/jq . > $out
+      cat ${pkgs.writeText "config.json" (builtins.toJSON x)} | ${pkgs.jq}/bin/jq . > $out
     '';
 
   # This becomes the main config file
