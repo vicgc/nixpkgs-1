@@ -32,6 +32,7 @@
         htop
         imagemagick
         iotop
+        jq
         kerberos
         libjpeg
         libmemcached
