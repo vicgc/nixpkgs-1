@@ -65,8 +65,8 @@ let
         }
         ''
           mkdir -p $out/nix-support
-          echo "file raw $image/image.qcow2.bz2" >> $out/nix-support/hydra-build-products
-          ln -s $image/image.qcow2.bz2 $out/
+          echo "file raw $image/image.qcow2.lz4" >> $out/nix-support/hydra-build-products
+          ln -s $image/image.qcow2.lz4 $out/
         '');
 
   # Prebuild packages listed below since they will be needed on VMs but are not
