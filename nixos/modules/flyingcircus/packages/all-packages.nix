@@ -145,6 +145,9 @@ in rec {
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
     nodejs7;
 
+
+  openssh = pkgs_17_09.openssh;
+
   inherit (pkgs.callPackages ./openssl {
       fetchurl = pkgs.fetchurlBoot;
       cryptodevHeaders = pkgs.linuxPackages.cryptodev.override {
@@ -152,8 +155,12 @@ in rec {
         onlyHeaders = true;
       };
     })
-    openssl_1_0_2 openssl_1_1_0 openssl_1_0_1;
+    openssl_1_0_2 openssl_1_1_0 ;
   openssl = openssl_1_0_2;
+
+  # We don't want anyone to still use openssl 1.0.1 so I'm putting this in as
+  # a null value to break any dependency explicitly.
+  openssl_1_0_1 = null;
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
   osrm-backend = pkgs.callPackage ./osrm-backend { };

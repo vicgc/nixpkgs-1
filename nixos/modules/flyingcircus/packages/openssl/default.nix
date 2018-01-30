@@ -12,6 +12,7 @@ let
     name = "openssl-${version}${release}";
 
     src = fetchurl {
+      # Our curl doesn't yet support SSL, so ...
       url = "http://downloads.fcio.net/openssl/${name}.tar.gz";
       inherit sha256;
     };
@@ -102,22 +103,16 @@ let
 
 in {
 
-  openssl_1_0_1 = common {
-    version = "1.0.1";
-    release = "u";
-    sha256 = "0fb7y9pwbd76pgzd7xzqfrzibmc0vf03sl07f34z5dhm2b5b84j3";
-  };
-
   openssl_1_0_2 = common {
     version = "1.0.2";
-    release = "l";
-    sha256 = "037kvpisc6qh5dkppcwbm5bg2q800xh2hma3vghz8xcycmdij1yf";
+    release = "n";
+    sha256 = "1zm82pyq5a9jm10q6iv7d3dih3xwjds4x30fqph3k317byvsn2rp";
   };
 
   openssl_1_1_0 = common {
     version = "1.1.0";
-    release = "f";
-    sha256 = "0r97n4n552ns571diz54qsgarihrxvbn7kvyv8wjyfs9ybrldxqj";
+    release = "g";
+    sha256 = "1zm82pyq5a9jm10q6iv7d3dih3xwjds4x30fqph3k317byvsn2rp";
   };
 
 }
