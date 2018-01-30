@@ -343,7 +343,7 @@ in
         path = [ pkgs.curl pkgs.coreutils ];
         script = concatStringsSep "\n" (map
           (relayNode: ''
-            curl -o /var/cache/statshost-relay-${relayNode.job_name}.json \
+            curl -s -o /var/cache/statshost-relay-${relayNode.job_name}.json \
               ${relayNode.proxy_url}/scrapeconfig.json
           '')
           relayNodes);
