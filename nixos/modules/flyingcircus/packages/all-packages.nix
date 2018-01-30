@@ -211,7 +211,10 @@ in rec {
   rustUnstable = rustPlatform;
 
   samba = pkgs_17_09.samba;
+
   sensu = pkgs.callPackage ./sensu { };
+
+  subversion = pkgs_17_09.subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
     inherit (pkgs_17_09) buildGoPackage fetchgit;
