@@ -12,9 +12,10 @@ let
 
   # Pretty-print JSON to a file
   writePrettyJSON = name: x:
-    pkgs.runCommand name { } ''
-      echo '${builtins.toJSON x}' | ${pkgs.jq}/bin/jq . > $out
-    '';
+    with pkgs;
+    let
+      compactJSON = writeText "prometheus.json" (builtins.toJSON x);
+    in runCommand name { } "${jq}/bin/jq . < ${compactJSON} > $out";
 
   # This becomes the main config file
   promConfig = {
@@ -25,6 +26,7 @@ let
     scrape_configs = cfg.scrapeConfigs;
   };
 
+  # JSON output is also valid YAML
   generatedPrometheusYml = writePrettyJSON "prometheus.yml" promConfig;
 
   prometheusYml =

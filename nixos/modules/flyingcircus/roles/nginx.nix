@@ -27,15 +27,15 @@ let
       map_hash_bucket_size 64;
 
       map $remote_addr $remote_addr_anon_head {
-          default 0.0.0;
-          "~(?P<ip>(\d+)\.(\d+)\.(\d+))\.\d+" $ip;
-          "~(?P<ip>[^:]+:[^:]+:[^:]+):" $ip;
+        default 0.0.0;
+        "~(?P<ip>\d+\.\d+\.\d+)\.\d+" $ip;
+        "~(?P<ip>[^:]+:[^:]+:[^:]+):" $ip;
       }
 
       map $remote_addr $remote_addr_anon_tail {
-          default .0;
-          "~(?P<ip>(\d+)\.(\d+)\.(\d+))\.\d+" .0;
-          "~(?P<ip>[^:]+:[^:]+:[^:]+):" ::;
+        default .0;
+        "~(?P<ip>\d+\.\d+\.\d+)\.\d+" .0;
+        "~(?P<ip>[^:]+:[^:]+:[^:]+):" ::;
       }
 
       map $remote_addr_anon_head$remote_addr_anon_tail $remote_addr_anon {
@@ -43,12 +43,20 @@ let
           "~(?P<ip>.*)" $ip;
       }
 
-      log_format anonymized '$remote_addr_anon - $remote_user [$time_local] '
+      # same as 'nonanonymized'
+      log_format main
+          '$remote_addr - $remote_user [$time_local] '
+          '"$request" $status $bytes_sent '
+          '"$http_referer" "$http_user_agent" '
+          '"$gzip_ratio"';
+
+      log_format anonymized
+          '$remote_addr_anon - $remote_user [$time_local] '
           '"$request" $status $body_bytes_sent '
           '"$http_referer" "$http_user_agent" '
           '"$gzip_ratio"';
 
-      log_format main
+      log_format nonanonymized
           '$remote_addr - $remote_user [$time_local] '
           '"$request" $status $bytes_sent '
           '"$http_referer" "$http_user_agent" '
@@ -61,7 +69,7 @@ let
           '"$upstream_response_time" $gzip_ratio';
 
       open_log_file_cache max=64;
-      access_log /var/log/nginx/access.log;
+      access_log /var/log/nginx/access.log main;
       access_log /var/log/nginx/performance.log performance;
 
       client_header_timeout 10m;

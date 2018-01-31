@@ -476,6 +476,26 @@ in
         </Plugin>
       '';
 
+      services.telegraf.inputs.graylog = [{
+        servers = [ "${restListenUri}/system/metrics/multiple" ];
+        metrics = [ "jvm.memory.total.committed"
+                    "jvm.memory.total.used"
+                    "jvm.threads.count"
+                    "org.graylog2.buffers.input.size"
+                    "org.graylog2.buffers.input.usage"
+                    "org.graylog2.buffers.output.size"
+                    "org.graylog2.buffers.output.usage"
+                    "org.graylog2.buffers.process.size"
+                    "org.graylog2.buffers.process.usage"
+                    "org.graylog2.journal.oldest-segment"
+                    "org.graylog2.journal.size"
+                    "org.graylog2.journal.size-limit"
+                    "org.graylog2.throughput.input"
+                    "org.graylog2.throughput.output" ];
+        username = "admin";
+        password = rootPassword;
+      }];
+
       flyingcircus.services.sensu-client.checks = {
         graylog_ui = {
           notification = "Graylog UI alive";
@@ -559,5 +579,19 @@ in
         *.* @${builtins.head glNodes}:${toString cfg.syslogInputPort};RSYSLOG_SyslogProtocol23Format
       '';
     })
+
+    {
+
+      flyingcircus.roles.statshost.prometheusMetricRelabel = [
+        {
+          source_labels = [ "__name__" ];
+          regex = "(org_graylog2)_(.*)$";
+          replacement = "graylog_\${2}";
+          target_label = "__name__";
+        }
+      ];
+
+    }
+
   ];
 }

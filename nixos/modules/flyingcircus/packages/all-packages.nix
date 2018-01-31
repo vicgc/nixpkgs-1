@@ -85,7 +85,7 @@ in rec {
 
   libevent = pkgs.callPackage ./libevent.nix { };
   libidn = pkgs.callPackage ./libidn.nix { };
-  libreoffice = pkgs_17_09.libreoffice;
+  libreoffice = pkgs_17_09.libreoffice-fresh;
 
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
