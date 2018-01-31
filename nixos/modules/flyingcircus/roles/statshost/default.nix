@@ -331,7 +331,7 @@ in
       };
 
       # Update relayed nodes.
-      systemd.services.fc-prometheus-update-relayed-nodes = {
+      systemd.services.fc-prometheus-update-relayed-nodes = (mkIf (relayNodes != []) {
         description = "Update prometheus proxy relayed nodes.";
         restartIfChanged = false;
         after = [ "network.target" ];
@@ -343,13 +343,13 @@ in
         path = [ pkgs.curl pkgs.coreutils ];
         script = concatStringsSep "\n" (map
           (relayNode: ''
-            curl -o /var/cache/statshost-relay-${relayNode.job_name}.json \
+            curl -s -o /var/cache/statshost-relay-${relayNode.job_name}.json \
               ${relayNode.proxy_url}/scrapeconfig.json
           '')
           relayNodes);
-      };
+      });
 
-      systemd.timers.fc-prometheus-update-relayed-nodes = {
+      systemd.timers.fc-prometheus-update-relayed-nodes = (mkIf (relayNodes != []) {
         description = "Timer for updating relayed targets";
         wantedBy = [ "timers.target" ];
         timerConfig = {
@@ -358,7 +358,7 @@ in
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
         };
-      };
+      });
 
 
       flyingcircus.services.sensu-client.checks = {
