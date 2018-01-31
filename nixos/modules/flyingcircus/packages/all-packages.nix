@@ -83,6 +83,8 @@ in rec {
 
   kibana = pkgs_17_09.kibana;
 
+  libarchive = pkgs_17_09.libarchive;
+
   libevent = pkgs.callPackage ./libevent.nix { };
   libidn = pkgs.callPackage ./libidn.nix { };
   libreoffice = pkgs_17_09.libreoffice-fresh;
