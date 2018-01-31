@@ -337,9 +337,14 @@ def build_channel(build_options):
 
 
 def build_dev(build_options):
-    logging.info("Building development checkout in /root/nixpkgs.")
+    nixpkgs = display_nixpkgs = '/root/nixpkgs'
+    if os.path.islink(nixpkgs):
+        display_nixpkgs = '{} (-> {})'.format(
+            nixpkgs, os.readlink(nixpkgs))
+
+    logging.info("Building development checkout in %s.", display_nixpkgs)
     subprocess.check_call(
-        ['nixos-rebuild', '-I', 'nixpkgs=/root/nixpkgs', 'switch'] +
+        ['nixos-rebuild', '-I', 'nixpkgs='+nixpkgs, 'switch'] +
         build_options)
     BuildState().set_dev()
 
