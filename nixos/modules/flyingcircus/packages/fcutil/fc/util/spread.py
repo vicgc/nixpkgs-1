@@ -25,6 +25,7 @@ class Spread:
         _log.info('Randomizing offset for %s to %s', self.jobname, self.offset)
         with open(self.stampfile, 'w') as f:
             print(self.offset, file=f)
+        os.utime(self.stampfile, (0, 0))
 
     def configure(self):
         """Reads or generates offset. Returns configured object"""
