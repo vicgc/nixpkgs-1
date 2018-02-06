@@ -7,22 +7,44 @@ let
   fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
 
   pkgs_17_09_src = fetchFromGitHub {
-    owner = "flyingcircusio";
+    owner = "NixOS";
     repo = "nixpkgs";
-    rev = "3092d86";
-    sha256 = "07bc8rkyg49d1w5j7zfzf4aa15hgzrrkf6girv3616f29j6gcmin";
+    rev = "c1d9aff";
+    sha256 = "13qfydr4a4by3fnqxcczdq0zr6vsqxbdmj8grwbsk3xjhw4442p9";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
   inherit pkgs_17_09_src;
 
-  # Security update - needed by qemu and others #26909
-  audiofile = pkgs_17_09.audiofile;
+  inherit (pkgs_17_09)
+    audiofile
+    bundlerApp
+    elasticsearch2
+    elasticsearch5
+    firefox
+    git
+    graphicsmagick
+    iptables
+    kibana
+    libreoffice-fresh
+    mailutils
+    nix
+    nodejs-4_x
+    nodejs-6_x
+    nodejs-8_x
+    php70Packages
+    prometheus
+    prometheus-haproxy-exporter
+    remarshal
+    ripgrep
+    samba
+    subversion18
+    virtualbox
+    xulrunner;
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
-  bundlerApp = pkgs_17_09.bundlerApp;
   busybox = pkgs.callPackage ./busybox { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
@@ -49,8 +71,6 @@ in rec {
   docsplit = pkgs.callPackage ./docsplit { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
-  elasticsearch2 = pkgs_17_09.elasticsearch2;
-  elasticsearch5 = pkgs_17_09.elasticsearch5;
   electron = pkgs.callPackage ./electron.nix {
     gconf = pkgs.gnome.GConf;
   };
@@ -61,12 +81,8 @@ in rec {
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
-  firefox = pkgs_17_09.firefox;
-
-  git = pkgs_17_09.git;
 
   grafana = pkgs_17_09.callPackage ./grafana { };
-  graphicsmagick = pkgs_17_09.graphicsmagick;
   graylog = pkgs.callPackage ./graylog.nix { };
 
   http-parser = pkgs.callPackage ./http-parser {
@@ -78,16 +94,12 @@ in rec {
   };
   imagemagickBig = pkgs.callPackage ./ImageMagick { };
 
-  iptables = pkgs_17_09.iptables;
-
   influxdb = pkgs.callPackage ./influxdb.nix { };
   innotop = pkgs.callPackage ./percona/innotop.nix { };
 
-  kibana = pkgs_17_09.kibana;
-
   libevent = pkgs.callPackage ./libevent.nix { };
   libidn = pkgs.callPackage ./libidn.nix { };
-  libreoffice = pkgs_17_09.libreoffice-fresh;
+  libreoffice = libreoffice-fresh;
 
   linux = linux_4_4;
   linux_4_4 = pkgs.callPackage ./kernel/linux-4.4.nix {
@@ -107,7 +119,6 @@ in rec {
   mc = pkgs.callPackage ./mc.nix { };
   mariadb = pkgs.callPackage ./mariadb.nix { };
   mailx = pkgs.callPackage ./mailx.nix { };
-  mailutils = pkgs_17_09.mailutils;
   memcached = pkgs.callPackage ./memcached.nix { };
   mongodb = mongodb_3_0;
   mongodb_3_0 = pkgs.callPackage ./mongodb/3_0.nix {
@@ -127,11 +138,9 @@ in rec {
       modules = [ nginxModules.rtmp nginxModules.dav nginxModules.moreheaders ];
     };
 
-  nix = pkgs_17_09.nix;
-
-  nodejs4 = pkgs_17_09.nodejs-4_x;
-  nodejs6 = pkgs_17_09.nodejs-6_x;
-  nodejs8 = pkgs_17_09.nodejs-8_x;
+  nodejs4 = nodejs-4_x;
+  nodejs6 = nodejs-6_x;
+  nodejs8 = nodejs-8_x;
 
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
     nodejs7;
@@ -169,13 +178,8 @@ in rec {
     php56
     php70;
 
-  php70Packages = pkgs_17_09.php70Packages;
-
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
-
-  prometheus = pkgs_17_09.prometheus;
-  prometheus-haproxy-exporter = pkgs_17_09.prometheus-haproxy-exporter;
 
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
@@ -186,9 +190,6 @@ in rec {
   rabbitmq_server = pkgs.callPackage ./rabbitmq-server.nix { };
   rabbitmq_delayed_message_exchange =
     pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
-
-  remarshal = pkgs_17_09.remarshal;
-  ripgrep = pkgs_17_09.ripgrep;
 
   rust = pkgs.callPackage ./rust/default.nix { };
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
@@ -212,11 +213,9 @@ in rec {
   rustStable = rustPlatform;
   rustUnstable = rustPlatform;
 
-  samba = pkgs_17_09.samba;
-
   sensu = pkgs.callPackage ./sensu { };
 
-  subversion = pkgs_17_09.subversion18;
+  subversion = subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
     inherit (pkgs_17_09) buildGoPackage fetchgit;
@@ -229,14 +228,12 @@ in rec {
     (old: {
       buildFlags = "localstatedir=/var/spool";
     });
-  virtualbox = pkgs_17_09.virtualbox;
   # The guest additions need to use the kernel we're actually building so we
   # have to callPackage them instead of using the pre-made package.
   virtualboxGuestAdditions = pkgs_17_09.callPackage "${pkgs_17_09_src}/pkgs/applications/virtualization/virtualbox/guest-additions" { kernel = linux_4_4; };
   vulnix = pkgs.callPackage ./vulnix { };
 
   xtrabackup = pkgs.callPackage ./percona/xtrabackup.nix { };
-  xulrunner = pkgs_17_09.xulrunner;
 
   yarn = pkgs.callPackage ./yarn.nix { nodejs = nodejs7; };
 
