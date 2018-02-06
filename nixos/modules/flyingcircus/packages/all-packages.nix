@@ -63,6 +63,8 @@ in rec {
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
   firefox = pkgs_17_09.firefox;
 
+  git = pkgs_17_09.git;
+
   grafana = pkgs_17_09.callPackage ./grafana { };
   graphicsmagick = pkgs_17_09.graphicsmagick;
   graylog = pkgs.callPackage ./graylog.nix { };
@@ -211,7 +213,10 @@ in rec {
   rustUnstable = rustPlatform;
 
   samba = pkgs_17_09.samba;
+
   sensu = pkgs.callPackage ./sensu { };
+
+  subversion = pkgs_17_09.subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
     inherit (pkgs_17_09) buildGoPackage fetchgit;

@@ -28,7 +28,6 @@ import tempfile
 
 enc = {}
 spread = None
-logging.getLogger('requests').setLevel(logging.WARNING)
 
 ACTIVATE = """\
 set -e
@@ -77,16 +76,17 @@ class Channel:
 
     @classmethod
     def current(cls, channel_name):
-        try:
-            nix_channels = p.expanduser('~/.nix-channels')
-            if p.getsize(nix_channels):
-                with open(nix_channels) as f:
-                    for line in f.readlines():
-                        url, name = line.strip().split(' ', 1)
-                        if name == channel_name:
-                            return Channel(url)
-        except OSError:
+        if not p.exists('/root/.nix-channels'):
             return
+        try:
+            with open('/root/.nix-channels') as f:
+                for line in f.readlines():
+                    url, name = line.strip().split(' ', 1)
+                    if name == channel_name:
+                        return Channel(url)
+        except OSError:
+            logging.exception('Failed to read .nix-channels')
+            raise
 
     def load(self, name):
         """Load channel as given name."""
@@ -105,7 +105,7 @@ class Channel:
         self.load('next')
         call = subprocess.Popen(
              ['nixos-rebuild',
-              '-I', 'nixpkgs=' + p.expanduser('~/.nix-defexpr/channels/next'),
+              '-I', 'nixpkgs=' + '/root/.nix-defexpr/channels/next',
               '--no-build-output',
               'dry-activate'],
              stderr=subprocess.PIPE)
@@ -350,14 +350,19 @@ def build_dev(build_options):
 
 
 def build(build_options):
-    channel = Channel.current('nixos')
-    if BuildState().is_dev or not channel:
+    if BuildState().is_dev:
         build_dev(build_options)
     else:
-        try:
-            channel.switch(build_options)
-        except Exception:
-            logging.exception('Error switching channel')
+        channel = Channel.current('nixos')
+        if channel:
+            try:
+                channel.switch(build_options)
+            except Exception:
+                logging.exception('Error switching channel')
+                sys.exit(1)
+        else:
+            logging.error("No 'nixos' channel present .nix-channels. "
+                          "Try `fc-manage --channel`.")
             sys.exit(1)
 
 
@@ -470,10 +475,10 @@ def main():
     logging.basicConfig(format='%(levelname)s: %(message)s',
                         level=logging.DEBUG if args.verbose else logging.INFO)
     # this is really annoying
-    logging.getLogger('iso8601').setLevel(logging.INFO)
+    logging.getLogger('iso8601').setLevel(logging.WARNING)
+    logging.getLogger('requests').setLevel(logging.WARNING)
 
-    lockprefix = p.expanduser('~/.') if os.geteuid() else '/run/lock'
-    with locked(lockprefix + 'fc-manage.lock'):
+    with locked('/run/lock/fc-manage.lock'):
         transaction(args)
 
 
