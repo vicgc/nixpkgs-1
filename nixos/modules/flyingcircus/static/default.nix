@@ -63,9 +63,9 @@ with lib;
       # This seems to be https://sourceware.org/bugzilla/show_bug.cgi?id=13028
       # which is fixed in glibc 2.22 which is included in NixOS 16.03.
       dev = [ "172.20.3.1" "172.20.2.7" "172.20.2.44" ];
-      rzob = ["195.62.125.5" "195.62.125.135"];
-      rzrl1 = ["172.24.32.3" "172.24.48.4"];
-      whq = ["212.122.41.129" "212.122.41.173" "212.122.41.169"];
+      whq = [ "212.122.41.129" "212.122.41.173" "212.122.41.169" ];
+      rzob = [ "195.62.125.1" "195.62.125.168" "195.62.126.170" ];
+      rzrl1 = [ "172.24.32.1" "172.24.48.2" "172.24.48.10" ];
 
       # We'd like to add reliable open and trustworthy DNS servers here, but
       # I didn't find reliable ones. FoeBud and Germany Privacy Foundation and
@@ -89,9 +89,9 @@ with lib;
       # Those are the routers and backup servers. This needs to move to the
       # directory service discovery.
       dev = [ "barney" "eddie" "patty"];
-      rzob = [ "carme" "cartman07" "cartman11" "kenny00" "cartman12" "kenny01" "cartman10" "iocaste" "cartman13" "cartman08" "cartman06" ];
-      rzrl1 = [ "kyle04" "kenny03" "kenny02" "cartman04" "cartman05" ];
-      whq = [ "barbrady01" "cartman00" "kyle03" "terri" "edna" "hibbert" "bob" "lou" ];
+      rzob = [ "cartman07" "cartman11" "cartman12" "iocaste" "cartman13" "cartman15" ];
+      rzrl1 = [ "cartman14" "kyle04" "cartman04" "cartman05" "kyle22" ];
+      whq = [ "barbrady01" "cartman00" "kyle03" "terri" "bob" "lou" ];
       # Location-independent NTP servers from the global public pool.
       standalone = [ "0.pool.ntp.org" "1.pool.ntp.org" "2.pool.ntp.org" ];
     };
