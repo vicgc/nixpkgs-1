@@ -27,19 +27,21 @@ let
     } // (args.argsOverride or {}));
 
 in
-lib.overrideDerivation
-  kernel
-  (old: {
-    # Postprocessing: disable very time and space consuming subsystems which
-    # cannot be altered by NixOS' own configuration mechanism
-    postConfigure = ''
-      sed -i \
-        -e "s/^CONFIG_BTRFS_FS=.*/# CONFIG_BTRFS_FS is not set/" \
-        -e "s/^CONFIG_DRM=.*/# CONFIG_DRM is not set/" \
-        -e "s/^CONFIG_SOUND=.*/# CONFIG_SOUND is not set/" \
-        -e "s/^CONFIG_STAGING=.*/# CONFIG_STAGING is not set/" \
-        -e "s/^CONFIG_WLAN=.*/# CONFIG_WLAN is not set/" \
-        $buildRoot/.config
-      make $makeFlags "''${makeFlagsArray[@]}" oldconfig
-    '';
-  })
+lib.addPassthru
+  (lib.overrideDerivation
+    kernel
+    (old: {
+      # Postprocessing: disable very time and space consuming subsystems which
+      # cannot be altered by NixOS' own configuration mechanism
+      postConfigure = ''
+        sed -i \
+          -e "s/^CONFIG_BTRFS_FS=.*/# CONFIG_BTRFS_FS is not set/" \
+          -e "s/^CONFIG_DRM=.*/# CONFIG_DRM is not set/" \
+          -e "s/^CONFIG_SOUND=.*/# CONFIG_SOUND is not set/" \
+          -e "s/^CONFIG_STAGING=.*/# CONFIG_STAGING is not set/" \
+          -e "s/^CONFIG_WLAN=.*/# CONFIG_WLAN is not set/" \
+          $buildRoot/.config
+        make $makeFlags "''${makeFlagsArray[@]}" oldconfig
+      '';
+    }))
+  { moduleBuildDependencies = []; }
