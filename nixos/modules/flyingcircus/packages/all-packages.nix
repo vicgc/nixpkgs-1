@@ -33,6 +33,7 @@ in rec {
     nodejs-4_x
     nodejs-6_x
     nodejs-8_x
+    openssh
     php70Packages
     prometheus
     prometheus-haproxy-exporter
@@ -144,9 +145,6 @@ in rec {
 
   inherit (pkgs.callPackage ./nodejs { libuv = pkgs.libuvVersions.v1_9_1; })
     nodejs7;
-
-
-  openssh = pkgs_17_09.openssh;
 
   inherit (pkgs.callPackages ./openssl {
       fetchurl = pkgs.fetchurlBoot;
