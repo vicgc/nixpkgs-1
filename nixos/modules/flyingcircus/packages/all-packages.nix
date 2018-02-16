@@ -4,9 +4,8 @@
 }:
 
 let
-  fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
 
-  pkgs_17_09_src = fetchFromGitHub {
+  pkgs_17_09_src = pkgs.fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
     rev = "c1d9aff";
