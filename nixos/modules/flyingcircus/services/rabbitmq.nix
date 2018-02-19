@@ -36,5 +36,6 @@ in {
     systemd.services.rabbitmq.environment = {
         RABBITMQ_PLUGINS_DIR = plugins;
     };
+    systemd.services.rabbitmq.path = [ pkgs.glibc ];
   };
 }
