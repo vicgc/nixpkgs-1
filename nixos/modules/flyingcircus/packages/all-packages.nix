@@ -28,6 +28,7 @@ in rec {
     kibana
     libreoffice-fresh
     mailutils
+    nfs-utils
     nix
     nodejs-4_x
     nodejs-6_x
