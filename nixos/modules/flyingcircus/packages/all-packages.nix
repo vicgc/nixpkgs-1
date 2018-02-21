@@ -33,7 +33,6 @@ in rec {
     nodejs-4_x
     nodejs-6_x
     nodejs-8_x
-    openssh
     php70Packages
     prometheus
     prometheus-haproxy-exporter
