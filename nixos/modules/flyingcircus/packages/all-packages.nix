@@ -40,6 +40,7 @@ in rec {
     remarshal
     ripgrep
     samba
+    strongswan
     subversion18
     virtualbox
     xulrunner;
