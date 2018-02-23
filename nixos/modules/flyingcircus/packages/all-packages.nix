@@ -4,8 +4,10 @@
 }:
 
 let
+  # Please leave the double import in place (the channel build will fail).
+  fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
 
-  pkgs_17_09_src = pkgs.fetchFromGitHub {
+  pkgs_17_09_src = fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
     rev = "c1d9aff";
