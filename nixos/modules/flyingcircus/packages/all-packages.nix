@@ -21,6 +21,7 @@ in rec {
   inherit (pkgs_17_09)
     audiofile
     bundlerApp
+    cmake
     elasticsearch2
     elasticsearch5
     firefox
@@ -28,6 +29,7 @@ in rec {
     graphicsmagick
     iptables
     kibana
+    libarchive
     libreoffice-fresh
     mailutils
     nix
