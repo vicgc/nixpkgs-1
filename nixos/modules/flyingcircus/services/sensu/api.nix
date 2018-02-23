@@ -17,7 +17,12 @@ let
     (x: x.node == "${config.networking.hostName}.gocept.net")
     { password = ""; } { password = ""; } sensu_clients).password;
 
-  sensu_api_json = pkgs.writeText "sensu-server.json"
+  api_password = (lib.findSingle
+    (x: x.service == "sensuserver-api" &&
+        x.address == "${config.networking.hostName}.gocept.net")
+    { password = ""; } { password = ""; } config.flyingcircus.enc_services).password;
+
+  sensu_api_json = pkgs.writeText "sensu-api.json"
     ''
     {
       "rabbitmq": {
@@ -25,6 +30,10 @@ let
         "user": "sensu-server",
         "password": "${server_password}",
         "vhost": "/sensu"
+      },
+      "api": {
+        "user": "sensuserver-api",
+        "password": "${api_password}"
       }
     }
     '';
