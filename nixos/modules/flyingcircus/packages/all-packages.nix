@@ -28,7 +28,6 @@ in rec {
     kibana
     libreoffice-fresh
     mailutils
-    nfs-utils
     nix
     nodejs-4_x
     nodejs-6_x
@@ -129,7 +128,9 @@ in rec {
   };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
-
+  nfs-utils = pkgs_17_09.nfs-utils.overrideAttrs (old: {
+    postInstall = old.postInstall + "\nln -s bin $out/sbin\n";
+  });
   nginx =
     let
       nginxModules = import ./nginx/modules.nix { inherit pkgs; };
