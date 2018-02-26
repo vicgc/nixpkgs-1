@@ -74,7 +74,7 @@ in  {
       path = [ sensu ];
       serviceConfig = {
         User = "sensuapi";
-        ExecStart = "${sensu}/bin/sensu-api -L warn  -c ${sensu_api_json}";
+        ExecStart = "${sensu}/bin/sensu-api -L warn -c ${sensu_api_json}";
         Restart = "always";
         RestartSec = "5s";
       };
