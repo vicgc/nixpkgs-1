@@ -82,7 +82,7 @@ in rec {
   fcmaintenance = pkgs.callPackage ./fcmaintenance { };
   fcmanage = pkgs.callPackage ./fcmanage { };
   fcsensuplugins = pkgs.callPackage ./fcsensuplugins { };
-  fcuserscan = pkgs.callPackage ./fcuserscan.nix { } ;
+  fcuserscan = pkgs.callPackage ./fcuserscan.nix { };
 
   grafana = pkgs_17_09.callPackage ./grafana { };
   graylog = pkgs.callPackage ./graylog.nix { };
@@ -129,6 +129,7 @@ in rec {
   mongodb_3_2 = pkgs.callPackage ./mongodb {
     sasl = pkgs.cyrus_sasl;
   };
+  multiping = pkgs.callPackage ./multiping { };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
   nfs-utils = pkgs_17_09.nfs-utils.overrideAttrs (old: {
