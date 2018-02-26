@@ -396,8 +396,9 @@ in
             ${pkgs.fcmanage}/bin/fc-graylog \
               -u '${user}' \
               -p '${removeSuffix "\n" pw}' \
-              ${what} \
-              '${api}'
+              ${api} \
+              configure \
+              ${what}
             '';
           configure_graylog_input = input:
             configure_graylog_raw "--input '${builtins.toJSON input}'";

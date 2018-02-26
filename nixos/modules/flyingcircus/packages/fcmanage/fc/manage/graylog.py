@@ -32,17 +32,26 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 log = logging.getLogger('fc-graylog')
 
 
-@click.command()
+@click.group()
 @click.option('-u', '--user', default='admin', show_default=True)
 @click.option('-p', '--password', default='admin', show_default=True)
+@click.argument('api')
+@click.pass_context
+def main(ctx, api, user, password):
+    graylog = requests.Session()
+    graylog.auth = (user, password)
+    graylog.api = api
+    ctx.obj = graylog
+
+
+@click.command()
 @click.option('--input')
 @click.option('--raw-path')
 @click.option('--raw-data')
-@click.argument('api')
-def main(user, password, api, input, raw_path, raw_data):
+@click.pass_obj
+def configure(graylog, input, raw_path, raw_data):
     """Configure a Graylog input node."""
-    graylog = requests.Session()
-    graylog.auth = (user, password)
+    api = graylog.api
 
     if input:
         # check if there is input with this name currently configured,
@@ -74,6 +83,8 @@ def main(user, password, api, input, raw_path, raw_data):
         response = graylog.put(api + raw_path, json=data)
         response.raise_for_status()
 
+
+main.add_command(configure)
 
 if __name__ == '__main__':
     main()
