@@ -447,6 +447,25 @@ in
         };
       };
 
+      systemd.services.graylog-collect-journal-age-metric = rec {
+        description = "Collect journal age and report to Telegraf";
+        wantedBy = [ "graylog.service" "telegraf.service"];
+        after = wantedBy;
+        serviceConfig = {
+          User = "telegraf";
+          Restart = "always";
+          RestartSec = "10";
+          ExecStart = ''
+            ${pkgs.fcmanage}/bin/fc-graylog \
+              -u admin \
+              -p '${removeSuffix "\n" rootPassword}' \
+              ${restListenUri} \
+              collect_journal_age_metric --socket-path /run/telegraf/influx.sock
+
+          '';
+        };
+      };
+
       services.collectd.extraConfig = ''
         LoadPlugin curl_json
         <Plugin curl_json>

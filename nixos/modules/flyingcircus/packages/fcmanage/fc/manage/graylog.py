@@ -22,9 +22,12 @@
 # requests.post(api + '/system/inputs/', auth=(user, pw), json=data).text
 # >>> '{"id":"57fe09c2ec3fa136a780adb9"}'
 import click
+import dateutil.parser
 import json
 import logging
 import requests
+import socket
+import time
 
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
@@ -85,6 +88,29 @@ def configure(graylog, input, raw_path, raw_data):
 
 
 main.add_command(configure)
+
+
+@click.command()
+@click.option('--socket-path')
+@click.pass_obj
+def collect_journal_age_metric(graylog, socket_path):
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(socket_path)
+    while True:
+        response = graylog.get(
+            graylog.api +
+            '/system/metrics/org.graylog2.journal.oldest-segment')
+
+        response.raise_for_status()
+        segment_date = dateutil.parser.parse(response.json()['value'])
+        response_date = dateutil.parser.parse(response.headers['date'])
+        age = (response_date - segment_date).total_seconds()
+        s.send(('graylog_journal_age value=%f\n' % age).encode('us-ascii'))
+        time.sleep(10)
+
+
+main.add_command(collect_journal_age_metric)
+
 
 if __name__ == '__main__':
     main()
