@@ -4,6 +4,7 @@
 }:
 
 let
+  # Please leave the double import in place (the channel build will fail).
   fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
 
   pkgs_17_09_src = fetchFromGitHub {
@@ -39,6 +40,7 @@ in rec {
     remarshal
     ripgrep
     samba
+    strongswan
     subversion18
     virtualbox
     xulrunner;
@@ -129,7 +131,9 @@ in rec {
   };
 
   nagiosPluginsOfficial = pkgs.callPackage ./nagios-plugins-official-2.x.nix {};
-
+  nfs-utils = pkgs_17_09.nfs-utils.overrideAttrs (old: {
+    postInstall = old.postInstall + "\nln -s bin $out/sbin\n";
+  });
   nginx =
     let
       nginxModules = import ./nginx/modules.nix { inherit pkgs; };
@@ -152,8 +156,12 @@ in rec {
         onlyHeaders = true;
       };
     })
-    openssl_1_0_2 openssl_1_1_0 openssl_1_0_1;
+    openssl_1_0_2 openssl_1_1_0 ;
   openssl = openssl_1_0_2;
+
+  # We don't want anyone to still use openssl 1.0.1 so I'm putting this in as
+  # a null value to break any dependency explicitly.
+  openssl_1_0_1 = null;
 
   osm2pgsql = pkgs.callPackage ./osm2pgsql.nix { };
   osrm-backend = pkgs.callPackage ./osrm-backend { };

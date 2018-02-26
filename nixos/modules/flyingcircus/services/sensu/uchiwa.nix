@@ -29,7 +29,7 @@ let
             "insecure": true,
             "path": "/api",
             "timeout": 5,
-            "user": "${config.networking.hostName}.gocept.net"  ,
+            "user": "sensuserver-api"  ,
             "pass": "${api_server.password}"
            }'')
       api_servers);

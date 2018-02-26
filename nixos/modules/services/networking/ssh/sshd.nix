@@ -239,17 +239,18 @@ in
       let
         service =
           { description = "SSH Daemon";
-
             wantedBy = optional (!cfg.startWhenNeeded) "multi-user.target";
-
+            after = [ "network.target" ];
             stopIfChanged = false;
-
             path = [ cfgc.package pkgs.gawk ];
-
             environment.LD_LIBRARY_PATH = nssModulesPath;
 
             preStart =
               ''
+                # Make sure we don't write to stdout, since in case of
+                # socket activation, it goes to the remote side (#19589).
+                exec >&2
+
                 mkdir -m 0755 -p /etc/ssh
 
                 ${flip concatMapStrings cfg.hostKeys (k: ''
@@ -261,15 +262,14 @@ in
 
             serviceConfig =
               { ExecStart =
-                  "${cfgc.package}/sbin/sshd " + (optionalString cfg.startWhenNeeded "-i ") +
+                  "${cfgc.package}/bin/sshd " + (optionalString cfg.startWhenNeeded "-i ") +
                   "-f ${pkgs.writeText "sshd_config" cfg.extraConfig}";
                 KillMode = "process";
               } // (if cfg.startWhenNeeded then {
                 StandardInput = "socket";
               } else {
                 Restart = "always";
-                Type = "forking";
-                PIDFile = "/run/sshd.pid";
+                Type = "simple";
               });
           };
       in
@@ -310,8 +310,6 @@ in
 
         UsePAM yes
 
-        UsePrivilegeSeparation sandbox
-
         AddressFamily ${if config.networking.enableIPv6 then "any" else "inet"}
         ${concatMapStrings (port: ''
           Port ${toString port}
@@ -343,6 +341,18 @@ in
         PrintMotd no # handled by pam_motd
 
         AuthorizedKeysFile ${toString cfg.authorizedKeysFiles}
+
+        ### Recommended settings from both:
+        # https://stribika.github.io/2015/01/04/secure-secure-shell.html
+        # and
+        # https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Modern_.28OpenSSH_6.7.2B.29
+        KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+        Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+        MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com
+
+        # LogLevel VERBOSE logs user's key fingerprint on login.
+        # Needed to have a clear audit track of which key was used to log in.
+        LogLevel VERBOSE
 
         ${flip concatMapStrings cfg.hostKeys (k: ''
           HostKey ${k.path}

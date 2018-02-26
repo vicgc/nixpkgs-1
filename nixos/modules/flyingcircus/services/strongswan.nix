@@ -1,3 +1,6 @@
+# strongSwan service ripped from release-17.09
+# we can probably go back to the stock service definition after upgrading to
+# 17.09+
 { config, lib, pkgs, ... }:
 
 let
@@ -49,7 +52,7 @@ let
 in
 {
   options.services.strongswan = {
-    enable = mkEnableOption "strongSwan";
+    enable = mkEnableOption "strongSwan 5.6.x";
 
     secrets = mkOption {
       type = types.listOf types.path;
@@ -115,12 +118,12 @@ in
   };
 
   config = with cfg; mkIf enable {
-    systemd.services.strongswan = {
+    systemd.services.strongswan56 = {
       description = "strongSwan IPSec Service";
       wantedBy = [ "multi-user.target" ];
       path = with pkgs; [ kmod iproute iptables utillinux ]; # XXX Linux
       wants = [ "keys.target" ];
-      after = [ "network.target" "keys.target" ];
+      after = [ "network-online.target" "keys.target" ];
       environment = {
         STRONGSWAN_CONF = strongswanConf { inherit setup connections ca secrets; };
       };
