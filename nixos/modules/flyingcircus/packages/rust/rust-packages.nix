@@ -7,32 +7,19 @@
 { stdenv, fetchFromGitHub, git }:
 
 stdenv.mkDerivation {
-  name = "rustRegistry-2017-11-20";
+  name = "rustRegistry-2018-02-25";
 
   src = fetchFromGitHub {
     owner = "rust-lang";
     repo = "crates.io-index";
-    rev = "2936c8e";
-    sha256 = "1x7sgaw19fqvxqx82bwzn20i6x0nmkrzl294zv0a23n4n7vkplny";
+    rev = "29073b8";
+    sha256 = "1g42rfaj40jyryvhzrd474si1zg4y476nxnj9n0zr6179gcpk2iz";
   };
   phases = [ "unpackPhase" "installPhase" ];
   installPhase = ''
-    # For some reason, cargo doesn't like fetchgit's git repositories, not even
-    # if we set leaveDotGit to true, set the fetchgit branch to 'master' and clone
-    # the repository (tested with registry rev
-    # 965b634156cc5c6f10c7a458392bfd6f27436e7e), failing with the message:
-    #
-    # "Target OID for the reference doesn't exist on the repository"
-    #
-    # So we'll just have to create a new git repository from scratch with the
-    # contents downloaded with fetchgit...
-
     mkdir -p $out
-
     cp -r ./* $out/
-
     cd $out
-
     git="${git}/bin/git"
 
     $git init

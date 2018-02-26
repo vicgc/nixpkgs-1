@@ -1,18 +1,18 @@
 #[macro_use]
 extern crate clap;
+extern crate errno;
 #[macro_use]
 extern crate error_chain;
-extern crate users;
 extern crate libc;
+extern crate users;
 extern crate walkdir;
-extern crate errno;
 
 use std::ffi::CString;
-use std::io::{self, Write, stderr};
+use std::io::{self, stderr, Write};
 use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use users::os::unix::GroupExt;
-use users::{User, gid_t, Users, UsersCache, Groups};
+use users::{gid_t, Groups, User, Users, UsersCache};
 use walkdir::WalkDir;
 
 mod test;
@@ -26,7 +26,6 @@ static PREFIX: &'static str = "/mnt/auto/box";
 
 #[cfg(test)]
 static PREFIX: &'static str = "/tmp";
-
 
 mod errors {
     use errno::Errno;
@@ -68,7 +67,6 @@ macro_rules! declined {
     }
 }
 
-
 fn myprefix<U: Users>(usercache: &U) -> Result<PathBuf> {
     let mut p = PathBuf::from(PREFIX);
     match usercache.get_current_username() {
@@ -99,7 +97,8 @@ fn below_prefix(boxdir: &Path, prefix: &Path) -> bool {
 }
 
 fn drop_fsprivs<F>(unprivileged_code: F) -> io::Result<()>
-    where F: Fn() -> io::Result<()>
+where
+    F: Fn() -> io::Result<()>,
 {
     let saved_uid = unsafe { libc::geteuid() };
     unsafe {
@@ -114,9 +113,8 @@ fn drop_fsprivs<F>(unprivileged_code: F) -> io::Result<()>
 
 fn createbox(path: &Path) -> Result<()> {
     println!("Creating box directory `{}'.", path.display());
-    drop_fsprivs(|| std::fs::create_dir(path)).chain_err(|| {
-            format!("No luck while creating box dir `{}'", path.display())
-        })?;
+    drop_fsprivs(|| std::fs::create_dir(path))
+        .chain_err(|| format!("No luck while creating box dir `{}'", path.display()))?;
     Ok(())
 }
 
@@ -146,12 +144,14 @@ fn chown_recursive(boxdir: &Path, user: &User, gid: gid_t) -> Result<()> {
     for entry in WalkDir::new(boxdir) {
         let entry = entry?;
         if let Err(e) = chown(entry.path(), user, gid) {
-            writeln!(stderr(),
-                     "{}: Warning while changing ownership of `{}' to `{}': {}",
-                     crate_name!(),
-                     entry.path().display(),
-                     user.name(),
-                     e)?;
+            writeln!(
+                stderr(),
+                "{}: Warning while changing ownership of `{}' to `{}': {}",
+                crate_name!(),
+                entry.path().display(),
+                user.name(),
+                e
+            )?;
         };
     }
     Ok(())
@@ -170,11 +170,9 @@ fn make_private(boxdir: &Path, realuser: &User) -> Result<()> {
 fn grant<U: Users>(boxdir: &Path, touser: &str, usercache: &U) -> Result<()> {
     match usercache.get_user_by_name(touser) {
         Some(ref user) if user.primary_group_id() == SERVICE => {
-            chown_recursive(&boxdir, user, SERVICE)
+            chown_recursive(boxdir, user, SERVICE)
         }
-        Some(_) => {
-            Err(ErrorKind::GrantUser(format!("`{}' is not a service user.", touser)).into())
-        }
+        Some(_) => Err(ErrorKind::GrantUser(format!("`{}' is not a service user.", touser)).into()),
         None => Err(ErrorKind::GrantUser(format!("User {} not found", touser)).into()),
     }
 }
@@ -183,17 +181,25 @@ fn authorized<U: Users + Groups>(me: &User, users: &U) -> bool {
     if me.primary_group_id() != USERS {
         return false;
     };
-    match users.get_group_by_name("sudo-srv")
-        .and_then(|g| Some(g.members().iter().any(|ref username| username == &me.name()))) {
+    match users.get_group_by_name("sudo-srv").and_then(|g| {
+        Some(
+            g.members()
+                .iter()
+                .any(|username| username == me.name()),
+        )
+    }) {
         Some(found) => found,
         None => false,
     }
 }
 
 fn run<U: Users + Groups>(touser: &str, boxdir: &Path, users: &U) -> Result<()> {
-    let realuser = users.get_user_by_uid(users.get_current_uid())
-        .ok_or(Error::from(format!("failed to look up current user id {}",
-                                   users.get_current_uid())))?;
+    let realuser = users
+        .get_user_by_uid(users.get_current_uid())
+        .ok_or_else(|| Error::from(format!(
+            "failed to look up current user id {}",
+            users.get_current_uid()
+        )))?;
     if !authorized(&realuser, users) {
         return declined!("Only human users with `sude-srv' permission are allowed to use me");
     }
@@ -209,8 +215,10 @@ fn run<U: Users + Groups>(touser: &str, boxdir: &Path, users: &U) -> Result<()> 
 
     let canonical = expbox.canonicalize()?;
     if !canonical.is_dir() {
-        let msg = format!("You can only manage directories. `{}' isn\'t one.",
-                          canonical.display());
+        let msg = format!(
+            "You can only manage directories. `{}' isn\'t one.",
+            canonical.display()
+        );
         return Err(ErrorKind::Declined(msg).into());
     }
     match touser {
@@ -237,10 +245,10 @@ fn main() {
         Some(g) => {
             let mut users = UsersCache::new();
             let boxdir = Path::new(g.value_of("BOXDIR").unwrap());
-            if let Err(ref e) = run(g.value_of("USER").unwrap(), boxdir, &mut users) {
-                writeln!(stderr(), "Error: {}", e).unwrap();
+            if let Err(ref e) = run(g.value_of("USER").unwrap(), boxdir, &users) {
+                eprintln!("Error: {}", e);
                 for e in e.iter().skip(1) {
-                    writeln!(stderr(), "Cause: {}", e).unwrap();
+                    eprintln!("Cause: {}", e);
                 }
                 std::process::exit(1);
             }
