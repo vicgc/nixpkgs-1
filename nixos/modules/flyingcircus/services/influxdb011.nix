@@ -170,6 +170,8 @@ in
         User = "${cfg.user}";
         Group = "${cfg.group}";
         PermissionsStartOnly = true;
+        Restart = "always";
+        RestartSec = "5s";
       };
       preStart = ''
         mkdir -m 0770 -p ${cfg.dataDir}
