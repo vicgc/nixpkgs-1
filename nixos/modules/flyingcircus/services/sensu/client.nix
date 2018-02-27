@@ -225,9 +225,9 @@ in {
        # Sensu sudo rules
        Cmnd_Alias VULNIX_DIR = ${coreutils}/bin/install -o sensuclient -g sensuclient -d /var/cache/vulnix
        Cmnd_Alias VULNIX_CMD = ${vulnix}/bin/vulnix
+       Cmnd_Alias MULTIPING = ${multiping}/bin/multiping
 
-       %sensuclient ALL=(root) VULNIX_DIR
-       %sensuclient ALL=(root) VULNIX_CMD
+       %sensuclient ALL=(root) VULNIX_DIR, VULNIX_CMD, MULTIPING
    '';
 
     systemd.services.sensu-client = {
@@ -261,7 +261,17 @@ in {
       '';
     };
 
-    flyingcircus.services.sensu-client.checks = {
+    flyingcircus.services.sensu-client.checks =
+    let
+      uplink = ipvers: {
+        notification = "Internet uplink IPv${ipvers} slow/unavailable";
+        command = ''
+          /var/setuid-wrappers/sudo ${multiping}/bin/multiping -${ipvers} \
+          google.com dns.quad9.net heise.de
+        '';
+        interval = 300;
+      };
+    in {
       load = {
         notification = "Load is too high";
         command =  "check_load -r -w ${cfg.expectedLoad.warning} -c ${cfg.expectedLoad.critical}";
@@ -289,14 +299,8 @@ in {
         command = "check_ntp_time -H 0.de.pool.ntp.org";
         interval = 300;
       };
-      internet_uplink_ipv4 = {
-        notification = "Internet (Google) is not available";
-        command = "check_ping -w 100,5% -c 200,10% -H google.com -4";
-      };
-      internet_uplink_ipv6 = {
-        notification = "Internet (Google) is not available";
-        command = "check_ping -w 100,5% -c 200,10% -H google.com -6";
-      };
+      internet_uplink_ipv4 = uplink "4";
+      internet_uplink_ipv6 = uplink "6";
       # Signal for 30 minutes that it was not OK for the VM to reboot. We may
       # need something to counter this on planned reboots. 30 minutes is enough
       # for status pages to pick this up. After that, we'll leave it in "warning"

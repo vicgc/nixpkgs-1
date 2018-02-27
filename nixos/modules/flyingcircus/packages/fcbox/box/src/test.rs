@@ -8,8 +8,7 @@ use std::fs::{self, File};
 use std::os::unix::fs::PermissionsExt;
 use super::*;
 use users::mock::MockUsers;
-use users::{User, Group};
-
+use users::{Group, User};
 
 fn mock_users() -> (MockUsers, User) {
     let mut users = MockUsers::with_current_uid(1046);
@@ -24,20 +23,26 @@ fn mock_users() -> (MockUsers, User) {
 
 #[test]
 fn test_myprefix() {
-    assert_eq!(myprefix(&mock_users().0).unwrap(),
-               Path::new("/tmp/johndoe"));
+    assert_eq!(
+        myprefix(&mock_users().0).unwrap(),
+        Path::new("/tmp/johndoe")
+    );
 }
 
 #[test]
 fn dont_expand_if_slashes() {
-    assert_eq!(expand(Path::new("../johndoe/dir1"), Path::new("/tmp")),
-               Path::new("../johndoe/dir1"))
+    assert_eq!(
+        expand(Path::new("../johndoe/dir1"), Path::new("/tmp")),
+        Path::new("../johndoe/dir1")
+    )
 }
 
 #[test]
 fn expand_relative() {
-    assert_eq!(expand(Path::new("dir2"), Path::new("/mnt/box")),
-               Path::new("/mnt/box/dir2"))
+    assert_eq!(
+        expand(Path::new("dir2"), Path::new("/mnt/box")),
+        Path::new("/mnt/box/dir2")
+    )
 }
 
 #[test]
@@ -85,8 +90,12 @@ fn grant_to_human_users_should_fail() {
 }
 
 /// Generic test runner for make_{public,private} functions
-fn modetest(dirperm_before: mode_t, dirperm_after: mode_t, fileperm: mode_t,
-            uut: &Fn(&Path, &User) -> Result<()>) -> Result<()> {
+fn modetest(
+    dirperm_before: mode_t,
+    dirperm_after: mode_t,
+    fileperm: mode_t,
+    uut: &Fn(&Path, &User) -> Result<()>,
+) -> Result<()> {
     let tmpdir = TempDir::new("fc-box")?;
     let boxdir = tmpdir.path().join("box");
     fs::create_dir(&boxdir)?;
@@ -95,9 +104,17 @@ fn modetest(dirperm_before: mode_t, dirperm_after: mode_t, fileperm: mode_t,
     let _ = File::create(&f);
     chmod(&f, fileperm)?;
     assert!(uut(&boxdir, &User::new(1046, "johndoe", 100)).is_ok());
-    assert_eq!(dirperm_after, fs::metadata(&boxdir)?.permissions().mode());
+    assert_eq!(
+        dirperm_after,
+        fs::metadata(&boxdir)?.permissions().mode() & 0o777,
+        "dirperm"
+    );
     // not changed
-    assert_eq!(fileperm, fs::metadata(&f)?.permissions().mode());
+    assert_eq!(
+        fileperm,
+        fs::metadata(&f)?.permissions().mode() & 0o777,
+        "fileperm"
+    );
     Ok(())
 }
 
