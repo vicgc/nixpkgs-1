@@ -215,7 +215,6 @@ in rec {
       };
     });
   rustfmt = pkgs.callPackage ./rust/rustfmt.nix { };
-  rust-bindgen = pkgs.callPackage ./rust/bindgen.nix { };
 
   # compatibility fixes for 15.09
   rustCargoPlatform = rustPlatform;
