@@ -32,10 +32,11 @@ setup(
     ],
     packages=['fc.manage'],
     install_requires=[
+        'click',
         'fc.maintenance',
         'fc.util',
+        'python-dateutil',
         'requests',
-        'click',
     ],
     tests_require=[test_deps],
     setup_requires=['pytest-runner'],
