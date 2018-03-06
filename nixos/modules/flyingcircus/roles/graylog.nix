@@ -396,8 +396,9 @@ in
             ${pkgs.fcmanage}/bin/fc-graylog \
               -u '${user}' \
               -p '${removeSuffix "\n" pw}' \
-              ${what} \
-              '${api}'
+              ${api} \
+              configure \
+              ${what}
             '';
           configure_graylog_input = input:
             configure_graylog_raw "--input '${builtins.toJSON input}'";
@@ -443,6 +444,25 @@ in
           OnUnitActiveSec = "30d";
           # Not yet supported by our systemd version.
           # RandomSec = "3m";
+        };
+      };
+
+      systemd.services.graylog-collect-journal-age-metric = rec {
+        description = "Collect journal age and report to Telegraf";
+        wantedBy = [ "graylog.service" "telegraf.service"];
+        after = wantedBy;
+        serviceConfig = {
+          User = "telegraf";
+          Restart = "always";
+          RestartSec = "10";
+          ExecStart = ''
+            ${pkgs.fcmanage}/bin/fc-graylog \
+              -u admin \
+              -p '${removeSuffix "\n" rootPassword}' \
+              ${restListenUri} \
+              collect_journal_age_metric --socket-path /run/telegraf/influx.sock
+
+          '';
         };
       };
 

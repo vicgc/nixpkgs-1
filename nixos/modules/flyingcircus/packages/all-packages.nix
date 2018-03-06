@@ -3,20 +3,33 @@
 , stdenv ? pkgs.stdenv
 }:
 
-let
-  # Please leave the double import in place (the channel build will fail).
-  fetchFromGitHub = (import <nixpkgs> {}).fetchFromGitHub;
+with lib;
 
-  pkgs_17_09_src = fetchFromGitHub {
+let
+  # Fold multiple outputs (a.k.a. closure size reduction) into a single
+  # "old-school" derivation.
+  mergeOutputs = keep: original:
+    pkgs.buildEnv {
+      name = original.name;
+      paths = [ original ] ++ original.propagatedBuildInputs;
+      ignoreCollisions = true;
+      outputsToLink = intersectLists keep original.outputs;
+    };
+
+  # Please leave the double import in place (the channel build will fail
+  # otherwise).
+  pkgs_17_09_src = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "c1d9aff";
-    sha256 = "13qfydr4a4by3fnqxcczdq0zr6vsqxbdmj8grwbsk3xjhw4442p9";
+    rev = "ea0c4b5";
+    sha256 = "0qi1baliz6x88nzjrsyka6qbkxliry5vngmyk81hqza1863dqiwj";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
 in rec {
   inherit pkgs_17_09_src;
+
+  # === Imports from newer upstream versions ===
 
   inherit (pkgs_17_09)
     audiofile
@@ -44,6 +57,10 @@ in rec {
     subversion18
     virtualbox
     xulrunner;
+
+  libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
+
+  # === Own ports ===
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
   boost160 = pkgs.callPackage ./boost/1.60.nix { };
@@ -116,7 +133,7 @@ in rec {
       default_pkgs = pkgs.recurseIntoAttrs
       (pkgs.linuxPackagesFor linux_4_4 linuxPackages_4_4);
     in
-      lib.overrideExisting default_pkgs { inherit virtualbox virtualboxGuestAdditions; };
+      overrideExisting default_pkgs { inherit virtualbox virtualboxGuestAdditions; };
 
   mc = pkgs.callPackage ./mc.nix { };
   mariadb = pkgs.callPackage ./mariadb.nix { };
@@ -202,7 +219,7 @@ in rec {
 
   rust = pkgs.callPackage ./rust/default.nix { };
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);
-  makeRustPlatform = rust: lib.fix (self:
+  makeRustPlatform = rust: fix (self:
     let
       callPackage = pkgs.newScope self;
     in rec {

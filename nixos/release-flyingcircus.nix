@@ -82,6 +82,7 @@ let
       osrm-backend
       qt4
       ssmtp
+      pdf2svg
       wkhtmltopdf
       ;
   };

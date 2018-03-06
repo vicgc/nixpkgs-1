@@ -11,6 +11,11 @@ stdenv.mkDerivation rec {
     sha256 = "1km0mzfl6in7l5vz9kl09a88ajx562rw93ng9h2jqavrailvsbgd";
   };
 
+  patches = [
+    ./CVE-2017-14166.patch
+    ./CVE-2017-14502.patch
+  ];
+
   buildInputs = [ sharutils libxml2 zlib bzip2 openssl xz ] ++
     stdenv.lib.optionals stdenv.isLinux [ e2fsprogs attr acl ];
 

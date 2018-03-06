@@ -35,6 +35,7 @@ py.buildPythonPackage rec {
     multipath_tools
     nix
     py.click
+    py.dateutil
     py.fcutil
     py.requests2
     utillinux

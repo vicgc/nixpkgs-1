@@ -43,9 +43,9 @@ let
           "~(?P<ip>.*)" $ip;
       }
 
-      # same as 'nonanonymized'
+      # same as 'anonymized'
       log_format main
-          '$remote_addr - $remote_user [$time_local] '
+          '$remote_addr_anon - $remote_user [$time_local] '
           '"$request" $status $bytes_sent '
           '"$http_referer" "$http_user_agent" '
           '"$gzip_ratio"';
@@ -69,7 +69,7 @@ let
           '"$upstream_response_time" $gzip_ratio';
 
       open_log_file_cache max=64;
-      access_log /var/log/nginx/access.log main;
+      access_log /var/log/nginx/access.log anonymized;
       access_log /var/log/nginx/performance.log performance;
 
       client_header_timeout 10m;
@@ -293,9 +293,6 @@ in
             #    rewrite . https://$server_name$request_uri redirect;
             #}
             #add_header Strict-Transport-Security max-age=31536000;
-
-            # Uncomment the following line to strip IP addresses in access logs
-            #access_log /var/log/nginx/''${server_name}_access.log anonymized;
 
             location / {
                 # Example for passing virtual hosting details to Zope apps

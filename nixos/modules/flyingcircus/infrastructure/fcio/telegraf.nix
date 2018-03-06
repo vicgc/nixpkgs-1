@@ -65,13 +65,20 @@ mkIf (params ? location && params ? resource_group) {
     processes = [{}];
     system = [{}];
     swap = [{}];
+    socket_listener = [{
+      service_address = "unix:///run/telegraf/influx.sock";
+      data_format = "influx";
+    }];
   };
 
-  systemd.services.telegraf.serviceConfig = {
-    PermissionsStartOnly = "true";
-    ExecStartPre = ''
+  systemd.services.telegraf = {
+    serviceConfig = {
+      PermissionsStartOnly = "true";
+    };
+    preStart = ''
       ${pkgs.coreutils}/bin/install -d -o root -g service -m 02775 \
         /etc/local/telegraf
+      ${pkgs.coreutils}/bin/install -d -o telegraf /run/telegraf
     '';
   };
 
@@ -85,7 +92,7 @@ mkIf (params ? location && params ? resource_group) {
   '';
 
   flyingcircus.services.sensu-client.checks = {
-    telegraph_prometheus_output = {
+    telegraf_prometheus_output = {
       notification = "Telegraf prometheus output alive";
       command = ''
         check_http -v -j HEAD -H ${config.networking.hostName} -p ${port} \
