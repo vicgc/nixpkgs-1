@@ -11,7 +11,7 @@ let
   mergeOutputs = keep: original:
     pkgs.buildEnv {
       name = original.name;
-      paths = [ original ];
+      paths = [ original ] ++ original.propagatedBuildInputs;
       ignoreCollisions = true;
       outputsToLink = intersectLists keep original.outputs;
     };
