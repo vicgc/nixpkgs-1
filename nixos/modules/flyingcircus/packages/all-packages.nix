@@ -50,6 +50,7 @@ in rec {
     php70Packages
     prometheus
     prometheus-haproxy-exporter
+    python35
     remarshal
     ripgrep
     samba
