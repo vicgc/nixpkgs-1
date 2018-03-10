@@ -16,15 +16,21 @@ let
     else null;
 
   package = versionConfiguration.${esVersion}.package;
-  enabled = package != null;
+  enabled = esVersion != null;
 
   versionConfiguration = {
-    "2" = { package = pkgs.elasticsearch2;
-          serviceName = "elasticsearch2-node";
-        };
-    "5" = { package = pkgs.elasticsearch5;
-          serviceName = "elasticsearch5-node";
-        };
+    "2" = {
+      package = pkgs.elasticsearch2;
+      serviceName = "elasticsearch2-node";
+    };
+    "5" = {
+      package = pkgs.elasticsearch5;
+      serviceName = "elasticsearch5-node";
+    };
+    null = {
+      package = null;
+      serviceName = null;
+    };
   };
 
   esNodes =
@@ -54,9 +60,8 @@ let
 
   currentMemory = fclib.current_memory config 1024;
 
-  esHeap =
-    fclib.min [
-      (currentMemory * cfg.heapPercentage / 100)
+  esHeap = fclib.min
+    [ (currentMemory * cfg.heapPercentage / 100)
       (31 * 1024)];
 
 in
@@ -104,8 +109,8 @@ in
         type = types.nullOr (types.listOf types.string);
         default = null;
       };
-    };
 
+    };
 
     flyingcircus.roles.elasticsearch2 = {
       enable = mkOption {
@@ -114,7 +119,6 @@ in
         description = "Enable the Flying Circus elasticsearch2 role.";
       };
     };
-
 
     flyingcircus.roles.elasticsearch5 = {
       enable = mkOption {
