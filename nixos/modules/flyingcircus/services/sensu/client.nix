@@ -170,6 +170,18 @@ in {
           description = ''Limit of load thresholds before reaching critical.'';
         };
       };
+      expectedSwap = {
+        warning = mkOption {
+          type = types.str;
+          default = "1024";
+          description = ''Limit of swap usage in MiB before warning.'';
+        };
+        critical = mkOption {
+          type = types.str;
+          default = "2048";
+          description = ''Limit of swap usage in MiB before reaching critical.'';
+        };
+      };
     };
   };
 
@@ -279,7 +291,7 @@ in {
       };
       swap = {
         notification = "Swap usage is too high";
-        command = "${fcsensuplugins}/bin/check_swap_abs";
+        command = "${fcsensuplugins}/bin/check_swap_abs -w ${cfg.expectedSwap.warning} -c ${cfg.expectedSwap.critical}";
         interval = 300;
       };
       ssh = {
