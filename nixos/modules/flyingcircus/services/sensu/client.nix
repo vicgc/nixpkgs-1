@@ -278,8 +278,8 @@ in {
         interval = 10;
       };
       swap = {
-        notification = "Swap is running low";
-        command = "check_swap -w 20% -c 10%";
+        notification = "Swap usage is too high";
+        command = "${fcsensuplugins}/bin/check_swap_abs";
         interval = 300;
       };
       ssh = {
