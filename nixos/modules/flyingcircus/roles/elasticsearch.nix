@@ -5,24 +5,41 @@ let
   cfg_service = config.services.elasticsearch;
   fclib = import ../lib;
 
-  package =
+  esVersion =
     if config.flyingcircus.roles.elasticsearch5.enable
-    then pkgs.elasticsearch5
+    then "5"
     else if config.flyingcircus.roles.elasticsearch2.enable
-    then pkgs.elasticsearch2
+    then "2"
     # XXX remove after finishing migration
     else if config.flyingcircus.roles.elasticsearch.enable
-    then pkgs.elasticsearch2
+    then "2"
     else null;
 
-  enabled = package != null;
+  package = versionConfiguration.${esVersion}.package;
+  enabled = esVersion != null;
+
+  versionConfiguration = {
+    "2" = {
+      package = pkgs.elasticsearch2;
+      serviceName = "elasticsearch2-node";
+    };
+    "5" = {
+      package = pkgs.elasticsearch5;
+      serviceName = "elasticsearch5-node";
+    };
+    null = {
+      package = null;
+      serviceName = null;
+    };
+  };
 
   esNodes =
     if cfg.esNodes == null
     then map
       (service: service.address)
       (filter
-        (s: s.service == "elasticsearch-node")
+        (s: s.service == versionConfiguration.${esVersion}.serviceName
+         || s.service == "elasticsearch-node")  # XXX remove after finishing migraiton
         config.flyingcircus.enc_services)
     else cfg.esNodes;
 
@@ -43,9 +60,8 @@ let
 
   currentMemory = fclib.current_memory config 1024;
 
-  esHeap =
-    fclib.min [
-      (currentMemory * cfg.heapPercentage / 100)
+  esHeap = fclib.min
+    [ (currentMemory * cfg.heapPercentage / 100)
       (31 * 1024)];
 
 in
@@ -93,8 +109,8 @@ in
         type = types.nullOr (types.listOf types.string);
         default = null;
       };
-    };
 
+    };
 
     flyingcircus.roles.elasticsearch2 = {
       enable = mkOption {
@@ -103,7 +119,6 @@ in
         description = "Enable the Flying Circus elasticsearch2 role.";
       };
     };
-
 
     flyingcircus.roles.elasticsearch5 = {
       enable = mkOption {
