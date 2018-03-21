@@ -255,6 +255,12 @@ in
               proxy_pass http://${listenOn}:${toString glAPIHAPort};
           }
 
+          location /admin {
+              auth_basic "FCIO user";
+              auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
+              proxy_pass http://${listenOn}:${toString glAPIHAPort};
+          }
+
         }
       '' + optionalString (cfg.publicFrontend.enable && cfg.publicFrontend.ssl) ''
         server {
@@ -280,6 +286,12 @@ in
           location / {
               proxy_set_header Remote-User "";
               proxy_set_header X-Graylog-Server-URL https://${cfg.publicFrontend.hostName}:443/api;
+              proxy_pass http://${listenOn}:${toString glAPIHAPort};
+          }
+
+          location /admin {
+              auth_basic "FCIO user";
+              auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
               proxy_pass http://${listenOn}:${toString glAPIHAPort};
           }
         }
