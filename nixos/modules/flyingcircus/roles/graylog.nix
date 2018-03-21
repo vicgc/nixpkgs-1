@@ -589,12 +589,17 @@ in
             balance leastconn
             option tcplog
             option httpchk HEAD /api/system/lbstatus
+            timeout server 10s
+            timeout client 10s
+            timeout tunnel 61s
         ${backendConfig (node:
             "server ${node}  ${node}:${toString gelfTCPGraylogPort} check port ${toString glAPIPort} inter 10s rise 2 fall 1")}
 
         backend graylog
             balance roundrobin
-            option httpchk HEAD /api/system/lbstatus
+            option httpchk GET /api
+            timeout client 121s    # should be equal to server timeout
+            timeout server 121s    # should be equal to client timeout
         ${backendConfig (node:
             "server ${node}  ${node}:${toString glAPIPort} check fall 1 rise 2 inter 10s maxconn 20")}
 
