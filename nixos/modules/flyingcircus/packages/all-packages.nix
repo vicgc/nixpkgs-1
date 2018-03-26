@@ -51,6 +51,7 @@ in rec {
     prometheus
     prometheus-haproxy-exporter
     python35
+    python35Packages
     remarshal
     ripgrep
     samba
@@ -239,7 +240,9 @@ in rec {
   rustStable = rustPlatform;
   rustUnstable = rustPlatform;
 
-  sensu = pkgs.callPackage ./sensu { };
+  sensu = pkgs.callPackage ./sensu {
+    ruby = pkgs.ruby_2_1;
+  };
 
   subversion = subversion18;
 

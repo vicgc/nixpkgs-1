@@ -13,7 +13,7 @@ let
     import re
     import shlex
     import sys
-    R_ALLOWED = re.compile(r'^(#.*|ip[46]{0,2}tables .*)?$')
+    R_ALLOWED = re.compile(r'^(#.*|ip[46]{0,2}tables .*)?''$')
 
     for line in fileinput.input():
       line = ' '.join(

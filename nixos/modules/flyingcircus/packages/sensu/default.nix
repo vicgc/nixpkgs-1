@@ -1,9 +1,9 @@
-{ lib, bundlerEnv, ruby_2_0, python2, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig }:
+{ lib, bundlerEnv, ruby, python2, pkgs, which, defaultGemConfig, zlib, libxml2, graphicsmagick, pkgconfig, imagemagickBig }:
 
 bundlerEnv {
-  name = "sensu-0.22.1";
+  inherit ruby;
 
-  ruby = ruby_2_0;
+  name = "sensu-0.22.1";
 
   gemfile = ./Gemfile;
   lockfile = ./Gemfile.lock;
