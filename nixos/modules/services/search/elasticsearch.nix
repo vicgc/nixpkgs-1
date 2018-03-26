@@ -169,9 +169,7 @@ in {
         PermissionsStartOnly = true;
         LimitNOFILE = "1024000";
       };
-      preStart =
-        let rmIfDir = dir: "test -L ${dir} || (test -d ${dir} && rmdir ${dir})";
-        in ''
+      preStart = ''
         ${optionalString (!config.boot.isContainer) ''
           # Only set vm.max_map_count if lower than ES required minimum
           # This avoids conflict if configured via boot.kernel.sysctl
@@ -179,17 +177,22 @@ in {
             ${pkgs.procps}/bin/sysctl -w vm.max_map_count=262144
           fi
         ''}
-        mkdir -m 0700 -p ${cfg.dataDir}
+        install -d -m 0750 ${cfg.dataDir}
         # Remove previously existing directories. Fail if they are not empty.
         # ln -f does *not* overwrite directories
-        ${rmIfDir "${cfg.dataDir}/plugins"}
-        ${rmIfDir "${cfg.dataDir}/lib"}
-        ${rmIfDir "${cfg.dataDir}/modules"}
+        rmIfDir() {
+          if [[ -L $1 || ! -e $1 ]]; then return 0; fi
+          rmdir $1
+        }
+        rmIfDir "${cfg.dataDir}/plugins"
+        rmIfDir "${cfg.dataDir}/lib"
+        rmIfDir "${cfg.dataDir}/modules"
         # Install plugins
-        ln -sfT ${esPlugins}/plugins ${cfg.dataDir}/plugins
-        ln -sfT ${cfg.package}/lib ${cfg.dataDir}/lib
-        ln -sfT ${cfg.package}/modules ${cfg.dataDir}/modules
-        if [ "$(id -u)" = 0 ]; then chown -R elasticsearch ${cfg.dataDir}; fi
+        ln -sf "${esPlugins}/plugins" "${cfg.package}/lib" \
+          "${cfg.package}/modules" "${cfg.dataDir}"
+        if [[ "$(id -u)" = 0 ]]; then
+          chown -R elasticsearch ${cfg.dataDir}
+        fi
       '';
     };
 
