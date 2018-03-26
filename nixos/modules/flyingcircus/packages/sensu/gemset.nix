@@ -421,6 +421,13 @@
     };
     version = "1.8.0";
   };
+  "ruby-dbus" = {
+    version = "0.11.0";
+    source = {
+      type = "gem";
+      sha256 = "1ga8q959i8j8iljnw9hgxnjlqz1q0f95p9r3hyx6r5fl657qbx8z";
+    };
+  };
   ruby-supervisor = {
     source = {
       sha256 = "07g0030sb9psrnz3b8axyjrcgwrmd38p0m05nq24bvrlvav4vkc0";
@@ -583,13 +590,18 @@
     version = "0.0.3";
   };
   sensu-plugins-systemd = {
-    dependencies = ["sensu-plugin"];
+    version = "0.0.1";
     source = {
-      remotes = ["http://rubygems.org"];
-      sha256 = "0f0hdp2cvzs5wby2fkjg48siyjgdi83hf11ld1by2l0cn4s9ir24";
-      type = "gem";
-    };
-    version = "0.1.0";
+      type = "git";
+      url = "git://github.com/nyxcharon/sensu-plugins-systemd.git";
+      rev = "be972959c5f6cdc989b1122db72a4b10a1ecce77";
+      sha256 = "123fnj9yiwbzxax9c14zy5iwc3qaldn5nqibs9k0nysr9zwkygpa";
+      fetchSubmodules = false;
+     };
+     dependencies = [
+       "sensu-plugin"
+       "systemd-bindings"
+     ];
   };
   sensu-settings = {
     dependencies = ["multi_json"];
@@ -622,6 +634,16 @@
       type = "gem";
     };
     version = "1.4.6";
+  };
+  "systemd-bindings" = {
+    version = "0.0.1.1";
+    source = {
+      type = "gem";
+      sha256 = "1bprj8njmzbshjmrabra3djhw6737hn9mm0n8sxb7wv1znpr7lds";
+    };
+    dependencies = [
+      "ruby-dbus"
+    ];
   };
   sys-filesystem = {
     dependencies = ["ffi"];
