@@ -104,6 +104,8 @@ in
     ];
   };
 
+  systemd.targets.basic.unitConfig.JobTimeoutAction = "none";
+
   systemd.ctrl-alt-del = "poweroff.target";
   systemd.extraConfig = ''
     RuntimeWatchdogSec=60
