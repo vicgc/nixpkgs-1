@@ -52,6 +52,8 @@ in rec {
     prometheus-haproxy-exporter
     python35
     python35Packages
+    python36
+    python36Packages
     remarshal
     ripgrep
     samba
