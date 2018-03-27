@@ -218,10 +218,7 @@ in
       flyingcircus.roles.nginx.enable = true;
       flyingcircus.roles.nginx.httpConfig =
       let
-        listenOnPort = interface: port:
-          lib.concatMapStringsSep "\n    "
-              (addr: "listen ${addr}:${toString port};")
-              (fclib.listenAddressesQuotedV6 config interface);
+        listenOnPort = fclib.nginxListenOn config;
         allow = ips: lib.concatMapStringsSep "\n    "
             (addr: "allow ${addr};")
             (ips);
@@ -255,6 +252,12 @@ in
               proxy_pass http://${listenOn}:${toString glAPIHAPort};
           }
 
+          location /admin {
+              auth_basic "FCIO user";
+              auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
+              proxy_pass http://${listenOn}:${toString glAPIHAPort};
+          }
+
         }
       '' + optionalString (cfg.publicFrontend.enable && cfg.publicFrontend.ssl) ''
         server {
@@ -280,6 +283,12 @@ in
           location / {
               proxy_set_header Remote-User "";
               proxy_set_header X-Graylog-Server-URL https://${cfg.publicFrontend.hostName}:443/api;
+              proxy_pass http://${listenOn}:${toString glAPIHAPort};
+          }
+
+          location /admin {
+              auth_basic "FCIO user";
+              auth_basic_user_file "/etc/local/nginx/htpasswd_fcio_users";
               proxy_pass http://${listenOn}:${toString glAPIHAPort};
           }
         }
@@ -577,12 +586,17 @@ in
             balance leastconn
             option tcplog
             option httpchk HEAD /api/system/lbstatus
+            timeout server 10s
+            timeout client 10s
+            timeout tunnel 61s
         ${backendConfig (node:
             "server ${node}  ${node}:${toString gelfTCPGraylogPort} check port ${toString glAPIPort} inter 10s rise 2 fall 1")}
 
         backend graylog
             balance roundrobin
-            option httpchk HEAD /api/system/lbstatus
+            option httpchk GET /api
+            timeout client 121s    # should be equal to server timeout
+            timeout server 121s    # should be equal to client timeout
         ${backendConfig (node:
             "server ${node}  ${node}:${toString glAPIPort} check fall 1 rise 2 inter 10s maxconn 20")}
 
