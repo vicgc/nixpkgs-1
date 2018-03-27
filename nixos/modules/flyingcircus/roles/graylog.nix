@@ -218,10 +218,7 @@ in
       flyingcircus.roles.nginx.enable = true;
       flyingcircus.roles.nginx.httpConfig =
       let
-        listenOnPort = interface: port:
-          lib.concatMapStringsSep "\n    "
-              (addr: "listen ${addr}:${toString port};")
-              (fclib.listenAddressesQuotedV6 config interface);
+        listenOnPort = fclib.nginxListenOn config;
         allow = ips: lib.concatMapStringsSep "\n    "
             (addr: "allow ${addr};")
             (ips);

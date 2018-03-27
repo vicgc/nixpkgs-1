@@ -41,13 +41,31 @@ rec {
           (map (addr: addr.address) interface_config.ip6)
       else [];
 
-    listenAddressesQuotedV6 = config: interface:
-      map
-        (addr:
-          if isIp6 addr then
-            "[${addr}]"
-          else addr)
-        (listenAddresses config interface);
+  listenAddressesQuotedV6 = config: interface:
+    map
+      (addr:
+        if isIp6 addr then
+          "[${addr}]"
+        else addr)
+      (listenAddresses config interface);
+
+  listServiceAddresses = config: service:
+  (map
+    (service: service.address)
+    (filter
+      (s: s.service == service)
+      config.flyingcircus.enc_services));
+
+  listServiceAddressesWithPort = config: service: port:
+    map
+      (address: "${address}:${toString port}")
+      (listServiceAddresses config service);
+
+  nginxListenOn  = config: interface: mod:
+    lib.concatMapStringsSep "\n  "
+      (addr: "listen ${addr}:${toString mod};")
+      (listenAddressesQuotedV6 config interface);
+
 
   /*
    * policy routing

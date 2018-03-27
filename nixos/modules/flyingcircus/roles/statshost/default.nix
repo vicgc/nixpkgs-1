@@ -437,14 +437,10 @@ in
             }
 
           '';
-          listenOnPort = interface: port:
-            lib.concatMapStringsSep "\n    "
-                (addr: "listen ${addr}:${toString port};")
-                (fclib.listenAddressesQuotedV6 config interface);
         in
         if cfgStatsGlobal.useSSL then ''
           server {
-              ${listenOnPort "ethfe" 80}
+              ${fclib.nginxListenOn config "ethfe" 80}
               server_name ${httpHost};
 
               location / {
@@ -453,7 +449,7 @@ in
           }
 
           server {
-              ${listenOnPort "ethfe" "443 ssl http2"}
+              ${fclib.nginxListenOn config "ethfe" "443 ssl http2"}
               ${common}
 
               ssl_certificate ${/etc/local/nginx/stats.crt};
@@ -464,12 +460,12 @@ in
         else
         ''
           server {
-              ${listenOnPort "ethfe" 80}
+              ${fclib.nginxListenOn config "ethfe" 80}
               ${common}
           }
         '';
 
-      networking.firewall.allowedTCPPorts = [ 80 443 2004 ];
+      networking.firewall.allowedTCPPorts = [ 2004 ];
       networking.firewall.allowedUDPPorts = [ 2003 ];
 
       # Provide FC dashboards, and update them automatically.
