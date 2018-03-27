@@ -86,7 +86,7 @@ let
     start_tls = true
     bind_dn = "uid=%s,ou=People,dc=gocept,dc=com"
     search_base_dns = ["ou=People,dc=gocept,dc=com"]
-    search_filter = "(uid=%s)"
+    search_filter = "(&(&(objectClass=inetOrgPerson)(uid=%s))(memberOf=cn=${config.flyingcircus.enc.parameters.resource_group},ou=GroupOfNames,dc=gocept,dc=com))";"
     group_search_base_dns = ["ou=Group,dc=gocept,dc=com"]
     group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
 
@@ -101,9 +101,6 @@ let
     group_dn = "${config.flyingcircus.enc.parameters.resource_group}"
     org_role = "Admin"
 
-    [[servers.group_mappings]]
-    group_dn = "*"
-    org_role = ""
   '';
   grafanaJsonDashboardPath = "${config.services.grafana.dataDir}/dashboards";
 
