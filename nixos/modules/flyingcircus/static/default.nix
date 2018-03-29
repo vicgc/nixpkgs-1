@@ -52,6 +52,8 @@ with lib;
       "18" = "tr3";
       # dynamic hardware pool: local endpoints for Kamp DHP tunnels
       "19" = "dhp";
+      # office WLAN behind double NAT
+      "99" = "ws2";
     };
 
     flyingcircus.static.nameservers = {
