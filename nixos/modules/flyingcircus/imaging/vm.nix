@@ -23,10 +23,13 @@ with lib;
       pkgs.runCommand "flyingcircus-image"
         rec {
           preVM = ''
+            echo "starting VM image generation @ $(date -Is)"
             export PATH=${makeBinPath buildInputs}:$PATH
             mkdir $out
             diskImage=$out/image.qcow2
-            ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 -o preallocation=metadata,compat=1.1,lazy_refcounts=on $diskImage "10G"
+            ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 \
+              -o preallocation=metadata,compat=1.1,lazy_refcounts=on \
+              $diskImage "10G"
             mv closure xchg/
 
             # Copy all paths in the closure to the filesystem.
@@ -34,21 +37,20 @@ with lib;
             # doing it file-by-file.
             echo "taring store paths"
             storePaths=$(perl ${pkgs.pathsFromGraph} xchg/closure)
-            tar c $storePaths | lz4 --no-frame-crc > xchg/store.tar.lz4
+            time tar c $storePaths | lz4 -1 --no-frame-crc > xchg/store.tar.lz4
           '';
           postVM = ''
             export PATH=${makeBinPath buildInputs}:$PATH
             echo "compressing VM image"
-            lz4 $diskImage ''${diskImage}.lz4
+            time lz4 -1 $diskImage ''${diskImage}.lz4
             rm $diskImage
           '';
           memSize = 2048;
           QEMU_OPTS = "-smp 8";
           buildInputs = with pkgs; [
-            utillinux perl lz4 gnutar xfsprogs gptfdisk
+            gnutar gptfdisk lz4 perl utillinux xfsprogs
           ];
-          exportReferencesGraph =
-            [ "closure" config.system.build.toplevel ];
+          exportReferencesGraph = [ "closure" config.system.build.toplevel ];
         }
         ''
           # Create a root and bootloader partitions
@@ -70,7 +72,7 @@ with lib;
           mount --bind /sys /mnt/sys
 
           echo "untaring store paths"
-          lz4 -d --no-frame-crc /tmp/xchg/store.tar.lz4 | tar x -C /mnt
+          time lz4 -d --no-frame-crc /tmp/xchg/store.tar.lz4 | tar x -C /mnt
 
           # Register the paths in the Nix database.
           printRegistration=1 perl ${pkgs.pathsFromGraph} /tmp/xchg/closure | \
