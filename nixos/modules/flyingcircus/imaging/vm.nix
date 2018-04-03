@@ -19,6 +19,9 @@ with lib;
   boot.loader.grub.device = mkOverride 10 "/dev/vda";
 
   system.build.flyingcircusVMImage =
+    let
+      qemuImg = "${pkgs.vmTools.qemu}/bin/qemu-img";
+    in
     pkgs.vmTools.runInLinuxVM (
       pkgs.runCommand "flyingcircus-image"
         rec {
@@ -27,22 +30,24 @@ with lib;
             export PATH=${makeBinPath buildInputs}:$PATH
             mkdir $out
             diskImage=$out/image.qcow2
-            ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 \
-              -o preallocation=metadata,compat=1.1,lazy_refcounts=on \
+            ${qemuImg} create -f qcow2 \
+              -o preallocation=falloc,lazy_refcounts=on \
               $diskImage "10G"
             mv closure xchg/
 
             # Copy all paths in the closure to the filesystem.
             # We package them up to speed up the whole process instead of
             # doing it file-by-file.
-            echo "taring store paths"
-            storePaths=$(perl ${pkgs.pathsFromGraph} xchg/closure)
-            time tar c $storePaths | lz4 -1 --no-frame-crc > xchg/store.tar.lz4
+            echo "copying out store paths"
+            time (
+              storePaths="$(perl ${pkgs.pathsFromGraph} xchg/closure)"
+              tar c $storePaths | lz4 --no-frame-crc > xchg/store.tar.lz4
+            )
           '';
           postVM = ''
             export PATH=${makeBinPath buildInputs}:$PATH
             echo "compressing VM image"
-            time lz4 -1 $diskImage ''${diskImage}.lz4
+            time lz4 $diskImage ''${diskImage}.lz4
             rm $diskImage
           '';
           memSize = 2048;
@@ -71,7 +76,7 @@ with lib;
           mount --bind /dev /mnt/dev
           mount --bind /sys /mnt/sys
 
-          echo "untaring store paths"
+          echo "copying in store paths"
           time lz4 -d --no-frame-crc /tmp/xchg/store.tar.lz4 | tar x -C /mnt
 
           # Register the paths in the Nix database.
