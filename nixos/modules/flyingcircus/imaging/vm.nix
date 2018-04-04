@@ -16,38 +16,48 @@ with lib;
 
   # Providing the expected device-indepentend symlink wasn't easily possible,
   # so we just start with the fixed known environment here.
-  boot.loader.grub.device = lib.mkOverride 10 "/dev/vda";
+  boot.loader.grub.device = mkOverride 10 "/dev/vda";
 
   system.build.flyingcircusVMImage =
+    let
+      qemuImg = "${pkgs.vmTools.qemu}/bin/qemu-img";
+    in
     pkgs.vmTools.runInLinuxVM (
       pkgs.runCommand "flyingcircus-image"
-        { preVM =
-            ''
-              set -x 
-              mkdir $out
-              diskImage=$out/image.qcow2
-              ${pkgs.vmTools.qemu}/bin/qemu-img create -f qcow2 -o preallocation=metadata,compat=1.1,lazy_refcounts=on $diskImage "30G"
-              mv closure xchg/
+        rec {
+          preVM = ''
+            echo "starting VM image generation @ $(date -Is)"
+            export PATH=${makeBinPath buildInputs}:$PATH
+            mkdir $out
+            diskImage=$out/image.qcow2
+            ${qemuImg} create -f qcow2 \
+              -o preallocation=falloc,lazy_refcounts=on \
+              $diskImage "10G"
+            mv closure xchg/
 
-              # Copy all paths in the closure to the filesystem.
-              # We package them up to speed up the whole process instead of 
-              # doing it file-by-file.
-              storePaths=$(${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} xchg/closure)
-              time ${pkgs.gnutar}/bin/tar c $storePaths | ${pkgs.lz4}/bin/lz4 --no-frame-crc  > xchg/store.tar.lz4
-            '';
+            # Copy all paths in the closure to the filesystem.
+            # We package them up to speed up the whole process instead of
+            # doing it file-by-file.
+            echo "copying out store paths"
+            time (
+              storePaths="$(perl ${pkgs.pathsFromGraph} xchg/closure)"
+              tar c $storePaths | lz4 --no-frame-crc > xchg/store.tar.lz4
+            )
+          '';
           postVM = ''
-              set -x 
-              time ${pkgs.lz4}/bin/lz4 --no-frame-crc $diskImage $diskImage.lz4
-              rm $diskImage
-            '';
+            export PATH=${makeBinPath buildInputs}:$PATH
+            echo "compressing VM image"
+            time lz4 $diskImage ''${diskImage}.lz4
+            rm $diskImage
+          '';
           memSize = 2048;
           QEMU_OPTS = "-smp 8";
-          buildInputs = [ pkgs.utillinux pkgs.perl pkgs.lz4 pkgs.gnutar pkgs.xfsprogs pkgs.gptfdisk ];
-          exportReferencesGraph =
-            [ "closure" config.system.build.toplevel ];
+          buildInputs = with pkgs; [
+            gnutar gptfdisk lz4 perl utillinux xfsprogs
+          ];
+          exportReferencesGraph = [ "closure" config.system.build.toplevel ];
         }
         ''
-          set -x 
           # Create a root and bootloader partitions
           sgdisk /dev/vda -o
           sgdisk /dev/vda -a 8192 -n 1:8192:0 -c 1:root -t 1:8300
@@ -66,6 +76,7 @@ with lib;
           mount --bind /dev /mnt/dev
           mount --bind /sys /mnt/sys
 
+          echo "copying in store paths"
           time lz4 -d --no-frame-crc /tmp/xchg/store.tar.lz4 | tar x -C /mnt
 
           # Register the paths in the Nix database.
