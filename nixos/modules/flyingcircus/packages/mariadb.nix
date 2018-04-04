@@ -16,8 +16,6 @@ stdenv.mkDerivation rec {
     ++ stdenv.lib.optionals stdenv.isLinux [ jemalloc libaio ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ perl fixDarwinDylibNames ];
 
-  patches = stdenv.lib.optional stdenv.isDarwin ./my_context_asm.patch;
-
   cmakeFlags = [
     "-DBUILD_CONFIG=mysql_release"
     "-DDEFAULT_CHARSET=utf8"
