@@ -42,6 +42,7 @@ in rec {
     iptables
     kibana
     libreoffice-fresh
+    libvorbis
     mailutils
     nix
     nodejs-4_x
