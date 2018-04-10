@@ -65,6 +65,8 @@ in rec {
 
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
 
+  libsndfile = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libsndfile;
+
   # === Own ports ===
 
   boost159 = pkgs.callPackage ./boost/1.59.nix { };
