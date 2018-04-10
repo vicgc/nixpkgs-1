@@ -42,7 +42,6 @@ in rec {
     iptables
     kibana
     libreoffice-fresh
-    libvorbis
     mailutils
     nix
     nodejs-4_x
@@ -64,8 +63,8 @@ in rec {
     xulrunner;
 
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
-
   libsndfile = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libsndfile;
+  libvorbis = mergeOutputs [ "out" "dev" ] pkgs_17_09.libvorbis;
 
   # === Own ports ===
 
