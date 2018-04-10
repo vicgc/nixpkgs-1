@@ -49,6 +49,11 @@ let
       (fclib.min [64 (shared_buffers / 32)])
       1];
 
+  random_page_cost =
+    let rbd_pool = attrByPath ["parameters" "memory"] null config.flyingcircus.enc;
+    in
+    if rbd_pool == "rbd.ssd" then 1 else 4;
+
   listen_addresses =
     fclib.listenAddresses config "lo" ++
     fclib.listenAddresses config "ethsrv";
@@ -179,7 +184,8 @@ in
       #------------------------------------------------------------------------------
       effective_cache_size = ${toString (shared_buffers * 2)}MB
 
-      # version-specific resource settings for 9.3
+      random_page_cost = ${toString random_page_cost}
+      # version-specific resource settings for >=9.3
       effective_io_concurrency = 100
 
       #------------------------------------------------------------------------------
