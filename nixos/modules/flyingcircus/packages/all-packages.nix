@@ -40,6 +40,7 @@ in rec {
     git
     graphicsmagick
     iptables
+    jbig2dec
     kibana
     libreoffice-fresh
     mailutils
