@@ -224,89 +224,54 @@ in
 
     };
 
-    services.collectd.extraConfig = ''
-      LoadPlugin curl_json
-      <Plugin curl_json>
-        <URL "http://${thisNode}:9200/_cluster/health">
-          Header "Accept: application/json"
-          Instance "elasticsearch"
-          <Key "number_of_data_nodes">
-            Type "gauge"
-          </Key>
-          <Key "active_shards">
-            Type "gauge"
-          </Key>
-          <Key "active_primary_shards">
-            Type "gauge"
-          </Key>
-          <Key "unassigned_shards">
-            Type "gauge"
-          </Key>
-          <Key "initializing_shards">
-            Type "gauge"
-          </Key>
-          <Key "number_of_pending_tasks">
-            Type "gauge"
-          </Key>
-          <Key "relocating_shards">
-            Type "gauge"
-          </Key>
-        </URL>
+    systemd.services.prometheus-elasticsearch-exporter = {
+      description = "Prometheus exporter for elasticsearch metrics";
+      wantedBy = [ "multi-user.target" ];
+      path = [ pkgs.prometheus-elasticsearch-exporter ];
+      script = ''
+        exec elasticsearch_exporter\
+            --es.uri http://${thisNode}:9200 \
+            --web.listen-address localhost:9108
+      '';
+      serviceConfig = {
+        User = "nobody";
+        Restart = "always";
+        PrivateTmp = true;
+        WorkingDirectory = /tmp;
+        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+      };
+    };
 
-        <URL "http://${thisNode}:9200/_nodes/${config.networking.hostName}/stats">
-          Header "Accept: application/json"
-          Instance "elasticsearch"
-          <Key "nodes/*/jvm/mem/heap_used_in_bytes">
-            Type "gauge"
-          </Key>
-          <Key "nodes/*/jvm/mem/heap_committed_in_bytes">
-            Type "gauge"
-          </Key>
-          <Key "nodes/*/jvm/threads/count">
-            Type "gauge"
-            Instance "thread_count"
-          </Key>
-          <Key "nodes/*/http/total_opened">
-            Type "derive"
-            Instance "http_requests"
-          </Key>
-          <Key "nodes/*/indices/docs/count">
-            Type "gauge"
-            Instance "indexed_docs"
-          </Key>
+    services.telegraf.inputs = {
+      prometheus  = [{
+        urls = ["http://localhost:9108/metrics"];
+      }];
+    };
 
-          <Key "nodes/*/indices/search/query_total">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/search/query_time_in_millis">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/search/fetch_total">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/search/fetch_time_in_millis">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/indexing/index_total">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/indexing/index_time_in_millis">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/refresh/total">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/refresh/total_time_in_millis">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/flush/total">
-            Type "derive"
-          </Key>
-          <Key "nodes/*/indices/flush/total_time_in_millis">
-            Type "derive"
-          </Key>
-        </URL>
-      </Plugin>'';
+    # services.telegraf.inputs.elasticsearch = [{
+    #   servers = ["http://${thisNode}:9200"];
+    #   cluster_health = true;
+    #   # cluster_stats = true;
+    # }];
+
+    # flyingcircus.roles.statshost.prometheusMetricRelabel = [
+    #   { source_labels = [ "__name__" ];
+    #     regex = "elasticsearch_fs_data_(.+)_(.+)_in_bytes";
+    #     replacement = "\${1}";
+    #     target_label = "path";
+    #   }
+    #   { source_labels = [ "__name__" ];
+    #     regex = "elasticsearch_fs_data_(.+)_(.+)_in_bytes";
+    #     replacement = "elasticsearch_filesystem_data_\${2}_bytes";
+    #     target_label = "__name__";
+    #   }
+    #   # Use an arbitray metric to extract cluster state
+    #   { source_labels = [ "__name__" "status" ];
+    #     regex = "elasticsearch_clusterstats_indices_shards_total;";
+    #     replacement="elasticsearch_cluster_health_status"
+    #     target_label = "__name__"
+    #   }
+    #       ];
 
   };
 }
