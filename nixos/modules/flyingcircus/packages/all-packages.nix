@@ -252,7 +252,7 @@ in rec {
   subversion = subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
-    inherit (pkgs_17_09) buildGoPackage fetchgit;
+    inherit (pkgs_17_09) buildGoPackage fetchFromGitHub;
   };
 
   uchiwa = pkgs.callPackage ./uchiwa { };
