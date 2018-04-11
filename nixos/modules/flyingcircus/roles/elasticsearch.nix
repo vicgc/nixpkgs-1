@@ -247,31 +247,5 @@ in
         urls = ["http://localhost:9108/metrics"];
       }];
     };
-
-    # services.telegraf.inputs.elasticsearch = [{
-    #   servers = ["http://${thisNode}:9200"];
-    #   cluster_health = true;
-    #   # cluster_stats = true;
-    # }];
-
-    # flyingcircus.roles.statshost.prometheusMetricRelabel = [
-    #   { source_labels = [ "__name__" ];
-    #     regex = "elasticsearch_fs_data_(.+)_(.+)_in_bytes";
-    #     replacement = "\${1}";
-    #     target_label = "path";
-    #   }
-    #   { source_labels = [ "__name__" ];
-    #     regex = "elasticsearch_fs_data_(.+)_(.+)_in_bytes";
-    #     replacement = "elasticsearch_filesystem_data_\${2}_bytes";
-    #     target_label = "__name__";
-    #   }
-    #   # Use an arbitray metric to extract cluster state
-    #   { source_labels = [ "__name__" "status" ];
-    #     regex = "elasticsearch_clusterstats_indices_shards_total;";
-    #     replacement="elasticsearch_cluster_health_status"
-    #     target_label = "__name__"
-    #   }
-    #       ];
-
   };
 }
