@@ -214,6 +214,7 @@ in rec {
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
+  prometheus-elasticsearch-exporter = pkgs_17_09.callPackage ./prometheus-elasticsearch-exporter.nix { };
 
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
@@ -253,7 +254,7 @@ in rec {
   subversion = subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
-    inherit (pkgs_17_09) buildGoPackage fetchgit;
+    inherit (pkgs_17_09) buildGoPackage fetchFromGitHub;
   };
 
   uchiwa = pkgs.callPackage ./uchiwa { };

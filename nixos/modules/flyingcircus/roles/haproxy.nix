@@ -67,9 +67,7 @@ in
 
   };
 
-  config = mkMerge [
-
-  (mkIf config.flyingcircus.roles.haproxy.enable {
+  config = (mkIf config.flyingcircus.roles.haproxy.enable {
 
     services.haproxy.enable = true;
     services.haproxy.config = haproxyCfgContent;
@@ -142,19 +140,5 @@ in
         urls = ["http://localhost:9127/metrics"];
       }];
     };
-  })
-
-  {
-    flyingcircus.roles.statshost.prometheusMetricRelabel = [
-      # Remove _counter and _gauge postfixes which telegraf adds. See
-      # https://github.com/influxdata/telegraf/issues/2950
-      {
-        source_labels = [ "__name__" ];
-        regex = "haproxy_(.+)_(counter|gauge)";
-        replacement = "haproxy_\${1}";
-        target_label = "__name__";
-      }
-    ];
-  }
-  ];
+  });
 }
