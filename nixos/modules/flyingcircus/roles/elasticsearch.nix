@@ -244,7 +244,7 @@ in
 
     services.telegraf.inputs = {
       prometheus  = [{
-        urls = ["http://localhost:9108/metrics"];
+        urls = [ "http://localhost:9108/metrics" ];
       }];
     };
   };
