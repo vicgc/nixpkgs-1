@@ -14,8 +14,8 @@
     fetch = {
       type = "git";
       url = "https://github.com/Shopify/sarama";
-      rev = "574d3147eee384229bf96a5d12c207fe7b5234f3";
-      sha256 = "02ckm91bngkrbvkf4j7s5swrjjv3dr9kn9glwyc15apjv2ynkc4j";
+      rev = "3b1b38866a79f06deddf0487d5c27ba0697ccd65";
+      sha256 = "02qwlqd1kdgwlv39fimpbzjhgw8shzkkad82kfwdy8lppscb20br";
     };
   }
   {
@@ -46,12 +46,21 @@
     };
   }
   {
+    goPackagePath = "github.com/apache/thrift";
+    fetch = {
+      type = "git";
+      url = "https://github.com/apache/thrift";
+      rev = "4aaa92ece8503a6da9bc6701604f69acf2b99d07";
+      sha256 = "1my582c0ln1byxid5acdd6dk7lvi7lwd6gka10s4bp4w3xrd55x8";
+    };
+  }
+  {
     goPackagePath = "github.com/aws/aws-sdk-go";
     fetch = {
       type = "git";
       url = "https://github.com/aws/aws-sdk-go";
-      rev = "7524cb911daddd6e5c9195def8e59ae892bef8d9";
-      sha256 = "0dm8zfv3jdrbnhm1yyq6507v5lzi6wwhrpwkdswhf0ihgc9ca90z";
+      rev = "c861d27d0304a79f727e9a8a4e2ac1e74602fdc0";
+      sha256 = "023cyg551dvm2l50dx1qsikkj77lk2dhiya7by8in7h65av6hjgl";
     };
   }
   {
@@ -61,6 +70,15 @@
       url = "https://github.com/beorn7/perks";
       rev = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9";
       sha256 = "1hrybsql68xw57brzj805xx2mghydpdiysv3gbhr7f5wlxj2514y";
+    };
+  }
+  {
+    goPackagePath = "github.com/bsm/sarama-cluster";
+    fetch = {
+      type = "git";
+      url = "https://github.com/bsm/sarama-cluster";
+      rev = "abf039439f66c1ce78017f560b490612552f6472";
+      sha256 = "16013ac7jv72mdiv84vhk4av1vb5q8xq3fhv253fz2a17h9ld78q";
     };
   }
   {
@@ -109,12 +127,30 @@
     };
   }
   {
+    goPackagePath = "github.com/dgrijalva/jwt-go";
+    fetch = {
+      type = "git";
+      url = "https://github.com/dgrijalva/jwt-go";
+      rev = "dbeaa9332f19a944acb5736b4456cfcc02140e29";
+      sha256 = "0zk6l6kzsjdijfn7c4h0aywdjx5j2hjwi67vy1k6wr46hc8ks2hs";
+    };
+  }
+  {
     goPackagePath = "github.com/docker/docker";
     fetch = {
       type = "git";
       url = "https://github.com/docker/docker";
-      rev = "b89aff1afa1f61993ab2ba18fd62d9375a195f5d";
-      sha256 = "1lkj1wmv4nfj3vrrdc072p5iib8p1l0y52mlg55p94b20v18ph2m";
+      rev = "f5ec1e2936dcbe7b5001c2b817188b095c700c27";
+      sha256 = "1y3rkzgg8vpjq61y473lnh0qyc6msl4ixw7ci2p56fyqrhkmhf96";
+    };
+  }
+  {
+    goPackagePath = "github.com/docker/go-connections";
+    fetch = {
+      type = "git";
+      url = "https://github.com/docker/go-connections";
+      rev = "990a1a1a70b0da4c4cb70e117971a4f0babfbf1a";
+      sha256 = "16lcf485a7gl0kzkc5n0qq9frjkfinxhcr3j4874qqkr8ghghwbb";
     };
   }
   {
@@ -248,8 +284,8 @@
     fetch = {
       type = "git";
       url = "https://github.com/jackc/pgx";
-      rev = "b84338d7d62598f75859b2b146d830b22f1b9ec8";
-      sha256 = "13q763a31yya8ij6m5zbnri7wc88hjwwn1rw4v7dmwbwsrqn885c";
+      rev = "63f58fd32edb5684b9e9f4cfaac847c6b42b3917";
+      sha256 = "1n9cbdwzpagnrisxwq0frqdnkmyfg2qlxsr890527d32633hp0h2";
     };
   }
   {
@@ -280,15 +316,6 @@
     };
   }
   {
-    goPackagePath = "github.com/klauspost/crc32";
-    fetch = {
-      type = "git";
-      url = "https://github.com/klauspost/crc32";
-      rev = "cb6bfca970f6908083f26f39a79009d608efd5cd";
-      sha256 = "0q4yr4isgmph1yf1vq527lpmid7vqv56q7vxh3gkp5679fb90q6n";
-    };
-  }
-  {
     goPackagePath = "github.com/matttproud/golang_protobuf_extensions";
     fetch = {
       type = "git";
@@ -304,6 +331,24 @@
       url = "https://github.com/miekg/dns";
       rev = "99f84ae56e75126dd77e5de4fae2ea034a468ca1";
       sha256 = "1v7rccng7mbzqh5qf8d8gqfppm127v32s8i1n3k50q3flv227byf";
+    };
+  }
+  {
+    goPackagePath = "github.com/mitchellh/mapstructure";
+    fetch = {
+      type = "git";
+      url = "https://github.com/mitchellh/mapstructure";
+      rev = "d0303fe809921458f417bcf828397a65db30a7e4";
+      sha256 = "1fjwi5ghc1ibyx93apz31n4hj6gcq1hzismpdfbg2qxwshyg0ya8";
+    };
+  }
+  {
+    goPackagePath = "github.com/multiplay/go-ts3";
+    fetch = {
+      type = "git";
+      url = "https://github.com/multiplay/go-ts3";
+      rev = "07477f49b8dfa3ada231afc7b7b17617d42afe8e";
+      sha256 = "1z2cfqhm6g48vzscargw6vl9idfppdcm3wq1xfwy73l1s77q4n9n";
     };
   }
   {
@@ -347,8 +392,26 @@
     fetch = {
       type = "git";
       url = "https://github.com/nsqio/go-nsq";
-      rev = "a53d495e81424aaf7a7665a9d32a97715c40e953";
-      sha256 = "04npqz6ajr4r2w5jfvfzppr307qrwr57w4c1ppq9p9ddf7hx3wpz";
+      rev = "eee57a3ac4174c55924125bb15eeeda8cffb6e6f";
+      sha256 = "194wdmgsc0qhdjx95ka7blly58r9bj2vc0bgls7jawzszfpsbx8x";
+    };
+  }
+  {
+    goPackagePath = "github.com/opencontainers/runc";
+    fetch = {
+      type = "git";
+      url = "https://github.com/opencontainers/runc";
+      rev = "89ab7f2ccc1e45ddf6485eaa802c35dcf321dfc8";
+      sha256 = "1rnaqcsww7plr430r4ksv9si4l91l25li0bwa1b03g3sn2shirk1";
+    };
+  }
+  {
+    goPackagePath = "github.com/openzipkin/zipkin-go-opentracing";
+    fetch = {
+      type = "git";
+      url = "https://github.com/openzipkin/zipkin-go-opentracing";
+      rev = "1cafbdfde94fbf2b373534764e0863aa3bd0bf7b";
+      sha256 = "1vpl3mpvhljzpnll67ip3m9aazy3dvgi57n7w3pn8kg3b7kr4rwj";
     };
   }
   {
@@ -367,6 +430,15 @@
       url = "https://github.com/pierrec/xxHash";
       rev = "5a004441f897722c627870a981d02b29924215fa";
       sha256 = "146ibrgvgh61jhbbv9wks0mabkci3s0m68sg6shmlv1yixkw6gja";
+    };
+  }
+  {
+    goPackagePath = "github.com/pkg/errors";
+    fetch = {
+      type = "git";
+      url = "https://github.com/pkg/errors";
+      rev = "645ef00459ed84a119197bfb8d8205042c6df63d";
+      sha256 = "001i6n71ghp2l6kdl3qq1v2vmghcz3kicv9a5wgcihrzigm75pp5";
     };
   }
   {
@@ -437,8 +509,8 @@
     fetch = {
       type = "git";
       url = "https://github.com/shirou/gopsutil";
-      rev = "9a4a9167ad3b4355dbf1c2c7a0f5f0d3fb1e9ab9";
-      sha256 = "0pzvkszga4clj3nqlbs9g9rk7jxb8jdcszhscwgk1chqqwifhyxj";
+      rev = "384a55110aa5ae052eb93ea94940548c1e305a99";
+      sha256 = "00idmnsmalxhm1y60lhm9vyck1ay7gbp0r35fgs8bbiwq351bs23";
     };
   }
   {
@@ -532,6 +604,15 @@
     };
   }
   {
+    goPackagePath = "golang.org/x/sys";
+    fetch = {
+      type = "git";
+      url = "https://go.googlesource.com/sys";
+      rev = "739734461d1c916b6c72a63d7efda2b27edb369f";
+      sha256 = "0b0yh28ap1q0b8myg0gw4p9d6m71ry0d3n4hiycvd8sgk327379a";
+    };
+  }
+  {
     goPackagePath = "golang.org/x/text";
     fetch = {
       type = "git";
@@ -541,12 +622,12 @@
     };
   }
   {
-    goPackagePath = "gopkg.in/dancannon/gorethink.v1";
+    goPackagePath = "gopkg.in/asn1-ber.v1";
     fetch = {
       type = "git";
-      url = "https://gopkg.in/dancannon/gorethink.v1";
-      rev = "edc7a6a68e2d8015f5ffe1b2560eed989f8a45be";
-      sha256 = "0602082mfypdm98i963sdvij8l5ia5cw9r9cy7m6a60cvh1xmaka";
+      url = "https://gopkg.in/asn1-ber.v1";
+      rev = "4e86f4367175e39f69d9358a5f17b4dda270378d";
+      sha256 = "13p8s74kzklb5lklfpxwxb78rknihawv1civ4s9bfqx565010fwk";
     };
   }
   {
@@ -556,6 +637,24 @@
       url = "https://gopkg.in/fatih/pool.v2";
       rev = "6e328e67893eb46323ad06f0e92cb9536babbabc";
       sha256 = "1p1sljfpbg2bp4qv7ghvz1wcmmsbcfclsninxa97kr0v7na7jw5p";
+    };
+  }
+  {
+    goPackagePath = "gopkg.in/gorethink/gorethink.v3";
+    fetch = {
+      type = "git";
+      url = "https://gopkg.in/gorethink/gorethink.v3";
+      rev = "7ab832f7b65573104a555d84a27992ae9ea1f659";
+      sha256 = "1pri52ac45aqf5a2kmsd4mfhyfbkd1snkjbvanrdgipikysxi696";
+    };
+  }
+  {
+    goPackagePath = "gopkg.in/ldap.v2";
+    fetch = {
+      type = "git";
+      url = "https://gopkg.in/ldap.v2";
+      rev = "8168ee085ee43257585e50c6441aadf54ecb2c9f";
+      sha256 = "1w0993i8bl8sap01gwm1v6hjp0rsanj2mbpyabwcwnns2g79n895";
     };
   }
   {
@@ -572,8 +671,8 @@
     fetch = {
       type = "git";
       url = "https://gopkg.in/olivere/elastic.v5";
-      rev = "ee3ebceab960cf68ab9a89ee6d78c031ef5b4a4e";
-      sha256 = "0pby1b8s0h964cq6nld0arapkbfqb8vzm1k41cnxjq14ryh8adlh";
+      rev = "3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26";
+      sha256 = "1zkwprs68q1r7pigb59n8zbw8610z9r1pi6r0s28kzdgiv30sfdm";
     };
   }
   {

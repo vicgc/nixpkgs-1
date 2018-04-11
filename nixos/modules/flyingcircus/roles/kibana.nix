@@ -8,7 +8,9 @@ let
 
   elasticSearchUrl =
     if cfg.elasticSearchUrl == null
-    then (fclib.configFromFile /etc/local/kibana/elasticSearchUrl null)
+    then (
+          removeSuffix "\n"
+            (fclib.configFromFile /etc/local/kibana/elasticSearchUrl null))
     else cfg.elasticSearchUrl;
 
 

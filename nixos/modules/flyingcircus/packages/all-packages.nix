@@ -38,6 +38,7 @@ in rec {
     elasticsearch5
     firefox
     git
+    ghostscript
     graphicsmagick
     iptables
     kibana
@@ -63,6 +64,8 @@ in rec {
     xulrunner;
 
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
+  libsndfile = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libsndfile;
+  libvorbis = mergeOutputs [ "out" "dev" ] pkgs_17_09.libvorbis;
 
   # === Own ports ===
 
@@ -211,6 +214,7 @@ in rec {
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
+  prometheus-elasticsearch-exporter = pkgs_17_09.callPackage ./prometheus-elasticsearch-exporter.nix { };
 
   qemu = pkgs.callPackage ./qemu/qemu-2.8.nix {
     inherit (pkgs.darwin.apple_sdk.frameworks) CoreServices Cocoa;
@@ -250,7 +254,7 @@ in rec {
   subversion = subversion18;
 
   telegraf = pkgs.callPackage ./telegraf {
-    inherit (pkgs_17_09) buildGoPackage fetchgit;
+    inherit (pkgs_17_09) buildGoPackage fetchFromGitHub;
   };
 
   uchiwa = pkgs.callPackage ./uchiwa { };
