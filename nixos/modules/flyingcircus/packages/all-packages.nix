@@ -39,7 +39,6 @@ in rec {
     firefox
     git
     ghostscript
-    ghostscript-fonts
     graphicsmagick
     iptables
     kibana
