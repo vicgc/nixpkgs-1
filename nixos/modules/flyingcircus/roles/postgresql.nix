@@ -50,7 +50,8 @@ let
       1];
 
   random_page_cost =
-    let rbd_pool = attrByPath ["parameters" "rbd_pool"] null config.flyingcircus.enc;
+    let rbd_pool =
+      attrByPath [ "parameters" "rbd_pool" ] null config.flyingcircus.enc;
     in
     if rbd_pool == "rbd.ssd" then 1 else 4;
 
