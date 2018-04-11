@@ -38,6 +38,8 @@ in rec {
     elasticsearch5
     firefox
     git
+    ghostscript
+    ghostscript-fonts
     graphicsmagick
     iptables
     kibana
