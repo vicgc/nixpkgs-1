@@ -61,6 +61,10 @@ rec {
       (address: "${address}:${toString port}")
       (listServiceAddresses config service);
 
+  # Generate "listen" statements for nginx.conf for all IPs
+  # of the given interface with modifications.
+  # E.g. nginxListenOn config ethfe "443 ssl http2"
+  # NOTE: "mod" *must* must start with the port number.
   nginxListenOn  = config: interface: mod:
     lib.concatMapStringsSep "\n  "
       (addr: "listen ${addr}:${toString mod};")
