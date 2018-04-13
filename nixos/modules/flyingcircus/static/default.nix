@@ -52,7 +52,7 @@ with lib;
       "18" = "tr3";
       # dynamic hardware pool: local endpoints for Kamp DHP tunnels
       "19" = "dhp";
-      # office WLAN behind double NAT
+      # office WLAN behind double NAT, see https://wiki.flyingcircus.io/WLAN
       "99" = "ws2";
     };
 
