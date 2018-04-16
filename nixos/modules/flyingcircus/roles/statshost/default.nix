@@ -26,10 +26,16 @@ let
     (fclib.current_memory config 256) * 1024 * 1024
     * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
 
+  # It's common to have stathost and loghost on the same node. Each should
+  # use half of the memory then. A general approach for this kind of
+  # multi-service would be nice.
+  heapCorrection =
+    if config.flyingcircus.roles.loghost.enable
+    then 50
+    else 100;
+
   customRelabelPath = "/etc/local/statshost/metric-relabel.yaml";
   customRelabelConfig = relabelConfiguration customRelabelPath;
-  # the filename to path conversion is tricky to get right
-
   customRelabelJSON = filename:
     pkgs.runCommand "${baseNameOf filename}.json" {
       buildInputs = [ pkgs.remarshal ];
@@ -45,32 +51,48 @@ let
   prometheusMetricRelabel =
     cfgStatsGlobal.prometheusMetricRelabel ++ customRelabelConfig;
 
-  relayNodes =
+  relayRGNodes =
     fclib.jsonFromFile "/etc/local/statshost/relays.json" "[]";
 
-  relayConfig = map
+  relayLocationNodes = map
+    (proxy: { job_name = proxy.location;
+              proxy_url = "http://${proxy.address}:9090"; })
+    relayLocationProxies;
+  relayLocationProxies =
+    # We need the FE address, which is not published by directory. I'd think
+    # "interface" should become an attribute in the services table.
+    let
+      makeFE = s: "${(removeSuffix ".gocept.net" s.address)}.fe.${s.location}.gocept.net";
+    in
+  map
+    (service: service // { address = makeFE service; })
+    (filter
+      (s: s.service == "statshostproxy-location")
+      config.flyingcircus.enc_services);
+
+
+  buildRelayConfig = relayNodes: nodeConfig: map
     (relayNode: {
         scrape_interval = "15s";
         file_sd_configs = [
           {
-            files = [ "/var/cache/statshost-relay-${relayNode.job_name}.json" ];
+            files = [ (nodeConfig relayNode)];
             refresh_interval = "10m";
           }
         ];
         metric_relabel_configs =
           prometheusMetricRelabel ++
-          (relabelConfiguration
-            "/etc/local/statshost/metric-relabel.${relayNode.job_name}.yaml");
+          (relabelConfiguration "/etc/local/statshost/metric-relabel.${relayNode.job_name}.yaml");
       } // relayNode)
       relayNodes;
 
-  # It's common to have stathost and loghost on the same node. Each should
-  # use half of the memory then. A general approach for this kind of
-  # multi-service would be nice.
-  heapCorrection =
-    if config.flyingcircus.roles.loghost.enable
-    then 50
-    else 100;
+    relayRGConfig = buildRelayConfig
+      relayRGNodes
+      (relayNode: "/var/cache/statshost-relay-${relayNode.job_name}.json");
+
+    relayLocationConfig = buildRelayConfig
+      relayLocationNodes
+      (relayNode: "/etc/current-config/statshost-relay-${relayNode.job_name}.json");
 
   statshostService = lib.findFirst
     (s: s.service == "statshost-collector")
@@ -246,6 +268,21 @@ in
       services.collectdproxy.statshost.enable = true;
       services.collectdproxy.statshost.send_to =
         "${cfgStatsGlobal.hostName}:2003";
+
+      # Global prometheus configuration
+      environment.etc = builtins.listToAttrs
+        (map
+          (p: nameValuePair "current-config/statshost-relay-${p.location}.json"  {
+            text = builtins.toJSON [
+              { targets = (map
+                (s: "${s.node}:9126")
+                (filter
+                  (s: s.service == "statshost-collector" && s.location == p.location)
+                  config.flyingcircus.enc_service_clients));
+              }];
+          })
+        relayLocationProxies);
+
     })
 
     (mkIf (cfgStatsRG.enable || cfgProxyRG.enable) {
@@ -257,9 +294,7 @@ in
       }];
     })
 
-    # RG-specific statshost. Prometheus
     (mkIf cfgStatsRG.enable {
-
       environment.etc = {
         "local/statshost/metric-relabel.yaml.example".text = ''
           - source_labels: [ "__name__" ]
@@ -280,6 +315,40 @@ in
         "local/statshost/README.txt".text =
           import ./README.nix { inherit config; };
       };
+
+      # Update relayed nodes.
+      systemd.services.fc-prometheus-update-relayed-nodes = (mkIf (relayRGNodes != []) {
+        description = "Update prometheus proxy relayed nodes.";
+        restartIfChanged = false;
+        after = [ "network.target" ];
+        wantedBy = [ "prometheus.service" ];
+        serviceConfig = {
+          User = "root";
+          Type = "oneshot";
+        };
+        path = [ pkgs.curl pkgs.coreutils ];
+        script = concatStringsSep "\n" (map
+          (relayNode: ''
+            curl -s -o /var/cache/statshost-relay-${relayNode.job_name}.json \
+              ${relayNode.proxy_url}/scrapeconfig.json
+          '')
+          relayRGNodes);
+      });
+
+      systemd.timers.fc-prometheus-update-relayed-nodes = (mkIf (relayRGNodes != []) {
+        description = "Timer for updating relayed targets";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          Unit = "fc-prometheus-update-relayed-nodes";
+          OnUnitActiveSec = "11m";
+          # Not yet supported by our systemd version.
+          # RandomSec = "3m";
+        };
+      });
+    })
+
+    # An actual statshost. Enable Prometheus.
+    (mkIf (cfgStatsGlobal.enable || cfgStatsRG.enable) {
 
       services.prometheus.enable = true;
       services.prometheus.extraFlags = promFlags;
@@ -326,45 +395,16 @@ in
           metric_relabel_configs = prometheusMetricRelabel;
         }
 
-      ] ++ relayConfig;
+      ]
+      ++ relayRGConfig
+      ++ relayLocationConfig;
 
       system.activationScripts.statshost = {
         text = "install -d -g service -m 2775 /etc/local/statshost";
         deps = [];
       };
 
-      # Update relayed nodes.
-      systemd.services.fc-prometheus-update-relayed-nodes = (mkIf (relayNodes != []) {
-        description = "Update prometheus proxy relayed nodes.";
-        restartIfChanged = false;
-        after = [ "network.target" ];
-        wantedBy = [ "prometheus.service" ];
-        serviceConfig = {
-          User = "root";
-          Type = "oneshot";
-        };
-        path = [ pkgs.curl pkgs.coreutils ];
-        script = concatStringsSep "\n" (map
-          (relayNode: ''
-            curl -s -o /var/cache/statshost-relay-${relayNode.job_name}.json \
-              ${relayNode.proxy_url}/scrapeconfig.json
-          '')
-          relayNodes);
-      });
-
-      systemd.timers.fc-prometheus-update-relayed-nodes = (mkIf (relayNodes != []) {
-        description = "Timer for updating relayed targets";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          Unit = "fc-prometheus-update-relayed-nodes";
-          OnUnitActiveSec = "11m";
-          # Not yet supported by our systemd version.
-          # RandomSec = "3m";
-        };
-      });
-
-
-      flyingcircus.services.sensu-client.checks = {
+    flyingcircus.services.sensu-client.checks = {
         prometheus = {
           notification = "Prometheus http port alive";
           command = ''

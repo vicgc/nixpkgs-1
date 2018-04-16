@@ -56,6 +56,13 @@ rec {
       (s: s.service == service)
       config.flyingcircus.enc_services));
 
+  # Return service address (string) or null, if no service
+  listServiceAddress = config: service:
+    let
+      addresses = listServiceAddresses config service;
+    in
+      if addresses == [] then null else head addresses;
+
   listServiceAddressesWithPort = config: service: port:
     map
       (address: "${address}:${toString port}")
