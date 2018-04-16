@@ -41,6 +41,7 @@ in rec {
     ghostscript
     graphicsmagick
     iptables
+    jbig2dec
     kibana
     libreoffice-fresh
     mailutils
