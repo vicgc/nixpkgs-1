@@ -174,28 +174,6 @@ self: {
 
 
 
-  "flake8" = python.mkDerivation {
-    name = "flake8-2.5.4";
-    src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/60/4a/7b0ac4920af5673380b7079ba2f7580a8645790c7718881082c0d918b8b4/flake8-2.5.4.tar.gz";
-      sha256 = "cc1e58179f6cf10524c7bfdd378f5536d0a61497688517791639a5ecc867492f";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."mccabe"
-      self."pep8"
-      self."pyflakes"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.mit;
-      description = "the modular source code checker: pep8, pyflakes and co";
-    };
-  };
-
-
-
   "idna" = python.mkDerivation {
     name = "idna-2.5";
     src = pkgs.fetchurl {
@@ -320,128 +298,6 @@ self: {
 
 
 
-  "pytest" = python.mkDerivation {
-    name = "pytest-3.2.3";
-    src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/53/d0/208853c09be8377e6d4de7c0df875ef7ef37189373d76a74b65b44e50528/pytest-3.2.3.tar.gz;
-      sha256 = "0g6w86ks73fnrnsyib9ii2rbyx830vn7aglsjqz9v1n2xwbndyi7";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."colorama"
-      self."py"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.mit;
-      description = "pytest: simple powerful testing with Python";
-    };
-  };
-
-
-
-  "pytest-catchlog" = python.mkDerivation {
-    name = "pytest-catchlog-1.2.2";
-    src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/f2/2b/2faccdb1a978fab9dd0bf31cca9f6847fbe9184a0bdcc3011ac41dd44191/pytest-catchlog-1.2.2.zip;
-      sha256 = "1w7wxh27sbqwm4jgwrjr9c2gy384aca5jzw9c0wzhl0pmk2mvqab";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."py"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.mit;
-      description = "py.test plugin to capture log messages";
-    };
-  };
-
-
-
-  "pytest-codecheckers" = python.mkDerivation {
-    name = "pytest-codecheckers-0.2";
-    src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/53/09/263669db13955496e77017f389693c1e1dd77d98fd4afd51b133162e858f/pytest-codecheckers-0.2.tar.gz";
-      sha256 = "853de10f204865140da2bc173f791c9e13794fc43656e02fffcce23c9999e748";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."pep8"
-      self."py"
-      self."pyflakes"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = "";
-      description = "pytest plugin to add source code sanity checks (pep8 and friends)";
-    };
-  };
-
-
-
-  "pytest-cov" = python.mkDerivation {
-    name = "pytest-cov-2.5.1";
-    src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/24/b4/7290d65b2f3633db51393bdf8ae66309b37620bc3ec116c5e357e3e37238/pytest-cov-2.5.1.tar.gz;
-      sha256 = "0bbfpwdh9k3636bxc88vz9fa7vf4akchgn513ql1vd0xy4n7bah3";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."coverage"
-      self."pytest"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.bsdOriginal;
-      description = "Pytest plugin for measuring coverage.";
-    };
-  };
-
-
-
-  "pytest-runner" = python.mkDerivation {
-    name = "pytest-runner-2.12.1";
-    src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/43/bb/def5d83ce6abe507300e013562d3e1229633e86296d3f7f76bd39bf3d2b9/pytest-runner-2.12.1.tar.gz;
-      sha256 = "1r6a1fywv41fvdgm8qfvn77rmlrgdwv217rqkafl1047l7kr742w";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [ ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.mit;
-      description = "Invoke py.test as distutils command with dependency resolution";
-    };
-  };
-
-
-
-  "pytest-timeout" = python.mkDerivation {
-    name = "pytest-timeout-1.2.0";
-    src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/cc/b7/b2a61365ea6b6d2e8881360ae7ed8dad0327ad2df89f2f0be4a02304deb2/pytest-timeout-1.2.0.tar.gz;
-      sha256 = "1f3wy93637yqp6dw1xmqwrzkswr81fi8qsxxb60755q8y5l337n2";
-    };
-    doCheck = commonDoCheck;
-    buildInputs = commonBuildInputs;
-    propagatedBuildInputs = [
-      self."pytest"
-    ];
-    meta = with pkgs.stdenv.lib; {
-      homepage = "";
-      license = licenses.mit;
-      description = "py.test plugin to abort hanging tests";
-    };
-  };
-
-
-
   "requests" = python.mkDerivation {
     name = "requests-2.18.3";
     src = pkgs.fetchurl {
@@ -496,6 +352,25 @@ self: {
       homepage = "";
       license = licenses.mit;
       description = "Python 2 and 3 compatibility utilities";
+    };
+  };
+
+
+
+  "toml" = python.mkDerivation {
+    name = "toml-0.9.4";
+    src = pkgs.fetchurl {
+      url = "https://files.pythonhosted.org/packages/f5/f9/044110c267e6408013b85166a7cfcd352cf85275aa8ce700aa5c0eb407ba/toml-0.9.4.tar.gz";
+      sha256 = "0bdbpbip67wdm6c7xwc6mmbmskyradj4cdxn1iibj4fcx1nbv1lf";
+    };
+    doCheck = commonDoCheck;
+    buildInputs = commonBuildInputs;
+    propagatedBuildInputs = [
+    ];
+    meta = with pkgs.stdenv.lib; {
+      homepage = "";
+      license = licenses.zpt21;
+      description = "Python Library for Tom's Obvious, Minimal Language";
     };
   };
 
