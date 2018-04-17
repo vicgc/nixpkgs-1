@@ -187,12 +187,14 @@ in {
 
   config = mkIf cfg.enable {
     system.activationScripts.sensu-client = ''
-      install -d -o sensuclient -g service -m 775 /etc/local/sensu-client
-      install -d -o sensuclient -g service -m 775 /var/tmp/sensu
+      install -d -o sensuclient -g service -m 775 \
+        /etc/local/sensu-client /var/tmp/sensu /var/cache/vulnix
       install -d /run/current-config/sensu ${local_sensu_configuration}
       rm -rf /run/current-config/sensu/*
       (cat ${client_json} | ${perlPackages.JSONPP}/bin/json_pp > /run/current-config/sensu/client.json) || ln -sf  ${client_json} /run/current-config/sensu/client.json
       ln -fs ${local_sensu_configuration} /run/current-config/sensu/local.d
+      install -d -o sensuclient -g service -m 775 /var/cache/vulnix
+      chown -R sensuclient:service /var/cache/vulnix
     '';
     environment.etc."local/sensu-client/README.txt".text = ''
       Put local sensu checks here.
@@ -232,14 +234,11 @@ in {
       extraGroups = [ "service" "adm" "systemd-journal" ];
     };
 
-    # needs to be adjusted, when we fix issue https://github.com/flyingcircusio/vulnix/issues/13
     security.sudo.extraConfig = ''
        # Sensu sudo rules
-       Cmnd_Alias VULNIX_DIR = ${coreutils}/bin/install -o sensuclient -g sensuclient -d /var/cache/vulnix
-       Cmnd_Alias VULNIX_CMD = ${vulnix}/bin/vulnix
        Cmnd_Alias MULTIPING = ${multiping}/bin/multiping
 
-       %sensuclient ALL=(root) VULNIX_DIR, VULNIX_CMD, MULTIPING
+       %sensuclient ALL=(root) MULTIPING
    '';
 
     systemd.services.sensu-client = {
@@ -267,10 +266,6 @@ in {
         EMBEDDED_RUBY = "true";
         LANG = "en_US.utf8";
       };
-      preStart = ''
-        /var/setuid-wrappers/sudo install -o sensuclient -g sensuclient \
-          -d /var/cache/vulnix
-      '';
     };
 
     flyingcircus.services.sensu-client.checks =
@@ -360,12 +355,10 @@ in {
       vulnix = {
         notification = "Security vulnerabilities in the last 6h";
         command =
-        let
-          whitelist = https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml;
-        in
-          "NIX_REMOTE=daemon nice /var/setuid-wrappers/sudo " +
+          "NIX_REMOTE=daemon nice " +
           "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
-          "-w ${whitelist}";
+          "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml " +
+          "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.toml";
         interval = 6 * 3600;
       };
 
