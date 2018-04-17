@@ -193,6 +193,8 @@ in {
       rm -rf /run/current-config/sensu/*
       (cat ${client_json} | ${perlPackages.JSONPP}/bin/json_pp > /run/current-config/sensu/client.json) || ln -sf  ${client_json} /run/current-config/sensu/client.json
       ln -fs ${local_sensu_configuration} /run/current-config/sensu/local.d
+      install -d -o sensuclient -g service -m 775 /var/cache/vulnix
+      chown -R sensuclient:service /var/cache/vulnix
     '';
     environment.etc."local/sensu-client/README.txt".text = ''
       Put local sensu checks here.
@@ -264,10 +266,6 @@ in {
         EMBEDDED_RUBY = "true";
         LANG = "en_US.utf8";
       };
-      preStart = ''
-        install -d -o sensuclient -g service -m 775 /var/cache/vulnix
-        chown -R sensuclient:service /var/cache/vulnix
-      '';
     };
 
     flyingcircus.services.sensu-client.checks =
