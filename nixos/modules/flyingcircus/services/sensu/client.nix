@@ -361,8 +361,7 @@ in {
           "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
           "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml " +
           "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.toml";
-        #interval = 6 * 3600;
-        interval = 120;
+        interval = 6 * 3600;
       };
 
       manage = {
