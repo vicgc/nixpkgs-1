@@ -288,15 +288,4 @@ in {
     version = "5.5.38";
     sha256 = "0f1y76whg6yx9a18mh97f8yq8lb64ri1f0zfr9la9374nbmq2g27";
   };
-
-  php56 = generic {
-    version = "5.6.35";
-    sha256 = "14ivsxdny0s7qm9pf773pafs8xzlzzpmaz039lwymn11rblsfy7f";
-  };
-
-  php70 = generic {
-    version = "7.0.29";
-    sha256 = "1g1z1nhnmq0idsb9rfb46cdddfimaacw3yal291i2ypzqpal54cq";
-  };
-
 }

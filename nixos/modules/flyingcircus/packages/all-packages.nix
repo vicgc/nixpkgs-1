@@ -50,7 +50,11 @@ in rec {
     nodejs-4_x
     nodejs-6_x
     nodejs-8_x
+    php56
+    php70
     php70Packages
+    php71
+    php71Packages
     prometheus
     prometheus-haproxy-exporter
     python35
@@ -212,10 +216,7 @@ in rec {
   rum = pkgs.callPackage ./postgresql/rum { postgresql = postgresql96; };
 
   inherit (pkgs.callPackages ./php { })
-    php55
-    php56
-    php70;
-  php = php70;
+    php55;
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
