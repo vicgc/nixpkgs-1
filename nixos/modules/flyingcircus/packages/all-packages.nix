@@ -21,8 +21,8 @@ let
   pkgs_17_09_src = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "ea0c4b5";
-    sha256 = "0qi1baliz6x88nzjrsyka6qbkxliry5vngmyk81hqza1863dqiwj";
+    rev = "e984f9e";
+    sha256 = "10sbyna5p03x7h6mc5cfl4dh8cd2ah4n8zxqnlm6asbjrr6n8xs7";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
@@ -32,6 +32,7 @@ in rec {
   # === Imports from newer upstream versions ===
 
   inherit (pkgs_17_09)
+    apacheHttpd
     audiofile
     bundlerApp
     elasticsearch2
@@ -212,6 +213,7 @@ in rec {
     php55
     php56
     php70;
+  php = php70;
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
