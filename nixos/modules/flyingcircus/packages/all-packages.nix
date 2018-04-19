@@ -54,7 +54,7 @@ in rec {
     php70
     php70Packages
     php71
-    php72
+    php71Packages
     prometheus
     prometheus-haproxy-exporter
     python35
