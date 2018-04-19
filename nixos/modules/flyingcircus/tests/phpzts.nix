@@ -25,8 +25,8 @@ import ../../../tests/make-test.nix ({ lib, pkgs, ... }:
     in
     ''
       startAll;
-      $machine->succeed("${php56}/bin/php -i | grep no-debug-zts >/dev/console");
-      $machine->succeed("${php70}/bin/php -i | grep no-debug-zts >/dev/console");
-      $machine->succeed("${php71}/bin/php -i | grep no-debug-zts >/dev/console");
+      $machine->succeed("${php56}/bin/php -i | grep 'Thread Safety => enabled' >/dev/console");
+      $machine->succeed("${php70}/bin/php -i | grep 'Thread Safety => enabled' >/dev/console");
+      $machine->succeed("${php71}/bin/php -i | grep 'Thread Safety => enabled' >/dev/console");
     '';
 })
