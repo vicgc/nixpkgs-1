@@ -38,8 +38,8 @@ in rec {
     elasticsearch2
     elasticsearch5
     firefox
-    git
     ghostscript
+    git
     graphicsmagick
     iptables
     jbig2dec
@@ -61,6 +61,7 @@ in rec {
     python35Packages
     python36
     python36Packages
+    qt4
     remarshal
     ripgrep
     samba
