@@ -68,6 +68,7 @@ in rec {
     strongswan
     subversion18
     virtualbox
+    wkhtmltopdf
     xulrunner;
 
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
