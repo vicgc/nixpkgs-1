@@ -21,7 +21,7 @@ import ../../../tests/make-test.nix ({ lib, pkgs, ... }:
     let
       php56 = (pkgs.php56.override { config.php.zts = true; });
       php70 = (pkgs.php70.override { config.php.zts = true; });
-      php77 = (pkgs.php77.override { config.php.zts = true; });
+      php71 = (pkgs.php71.override { config.php.zts = true; });
     in
     ''
       startAll;
