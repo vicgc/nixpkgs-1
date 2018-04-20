@@ -223,9 +223,12 @@ in rec {
   };
   qpress = pkgs.callPackage ./percona/qpress.nix { };
 
-  rabbitmq_server = pkgs.callPackage ./rabbitmq-server.nix { };
+  rabbitmq_server_3_6_5 = pkgs.callPackage ./rabbitmq/server-3.6.5.nix { };
+  rabbitmq_server_3_6_15 = pkgs.callPackage ./rabbitmq/server-3.6.15.nix { };
+  rabbitmq_server = rabbitmq_server_3_6_15;
+
   rabbitmq_delayed_message_exchange =
-    pkgs.callPackage ./rabbitmq_delayed_message_exchange.nix { };
+    pkgs.callPackage ./rabbitmq/delayed_message_exchange.nix { };
 
   rust = pkgs.callPackage ./rust/default.nix { };
   rustPlatform = pkgs.recurseIntoAttrs (makeRustPlatform rust);

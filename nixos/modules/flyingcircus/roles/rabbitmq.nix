@@ -16,6 +16,12 @@ let
       "telegraf"
     ]);
 
+  packageString = removeSuffix "\n"
+    (fclib.configFromFile /etc/local/rabbitmq/package "");
+  package = if packageString != ""
+    then pkgs.${packageString}
+    else null;
+
 in
 {
 
@@ -33,10 +39,14 @@ in
 
   config = mkIf cfg.enable {
 
-    services.rabbitmq.enable = true;
-    services.rabbitmq.listenAddress = listen_address;
-    services.rabbitmq.plugins = [ "rabbitmq_management" ];
-    services.rabbitmq.config = extraConfig;
+    services.rabbitmq = {
+      enable = true;
+      listenAddress = listen_address;
+      plugins = [ "rabbitmq_management" ];
+      config = extraConfig;
+    } // (optionalAttrs (package != null) {
+      package = package;
+    });
 
     users.extraUsers.rabbitmq = {
       shell = "/run/current-system/sw/bin/bash";
@@ -58,10 +68,10 @@ in
     '';
 
     environment.etc."local/rabbitmq/README.txt".text = ''
-      RabbitMQ (${pkgs.rabbitmq_server.version}) is running on this machine.
+      RabbitMQ (${config.services.rabbitmq.package.version}) is running on this machine.
 
       If you need to set non-default configuration options, you can put a
-      file called rabbitmq.config into this directory. The content of this
+      file called `rabbitmq.config` into this directory. The content of this
       file will be added the configuration of the RabbitMQ-service.
 
       To access rabbitmqctl and other management tools, change into rabbitmq's
@@ -69,6 +79,13 @@ in
 
         $ sudo -iu rabbitmq
         % rabbitmqctl status
+
+
+      Advanced Usage
+
+      * To select the RabbitMQ version, create a file named `package` with the
+        NixOS attribute of the desired RabbitMQ, e.g. `rabbitmq_server_3_6_5`.
+
 
       '';
 
