@@ -11,7 +11,7 @@ let
   # Derive password for telegraf.
   telegrafPassword = builtins.hashString
     "sha256" (concatStrings [
-      config.flyingcircus.enc.parameters.directory_password
+      (attrByPath [ "directory_password" ] "" config.flyingcircus.enc.parameters)
       config.networking.hostName
       "telegraf"
     ]);
