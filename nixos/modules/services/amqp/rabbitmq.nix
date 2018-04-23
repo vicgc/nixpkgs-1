@@ -69,6 +69,14 @@ in {
         '';
       };
 
+      package = mkOption {
+        type = types.package;
+        default = pkgs.rabbitmq_server;
+        description = ''
+          Overridable attribute of the RabbitMQ Server package to use.
+        '';
+      };
+
       plugins = mkOption {
         default = [];
         type = types.listOf types.str;
@@ -81,7 +89,7 @@ in {
   ###### implementation
   config = mkIf cfg.enable {
 
-    environment.systemPackages = [ pkgs.rabbitmq_server ];
+    environment.systemPackages = [ cfg.package ];
 
     users.extraUsers.rabbitmq = {
       description = "RabbitMQ server user";
@@ -99,7 +107,7 @@ in {
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
 
-      path = [ pkgs.rabbitmq_server pkgs.procps ];
+      path = [ cfg.package pkgs.procps ];
 
       environment = {
         RABBITMQ_MNESIA_BASE = "${cfg.dataDir}/mnesia";
@@ -115,8 +123,8 @@ in {
       } //  optionalAttrs (cfg.config != "") { RABBITMQ_CONFIG_FILE = config_file_wo_suffix; };
 
       serviceConfig = {
-        ExecStart = "${pkgs.rabbitmq_server}/sbin/rabbitmq-server";
-        ExecStop = "${pkgs.rabbitmq_server}/sbin/rabbitmqctl stop";
+        ExecStart = "${cfg.package}/sbin/rabbitmq-server";
+        ExecStop = "${cfg.package}/sbin/rabbitmqctl stop";
         User = "rabbitmq";
         Group = "rabbitmq";
         WorkingDirectory = cfg.dataDir;

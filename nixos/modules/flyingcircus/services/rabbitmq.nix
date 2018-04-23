@@ -17,7 +17,7 @@ let
         ln -s $package/* $out
       done
     '';
-    server = pkgs.rabbitmq_server;
+    server = cfg.package;
     packages = cfg.pluginPackages;
     preferLocalBuild = true;
     allowSubstitutes = false;
