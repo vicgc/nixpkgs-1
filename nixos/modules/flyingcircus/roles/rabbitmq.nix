@@ -18,7 +18,7 @@ let
 
   packageString = removeSuffix "\n"
     (fclib.configFromFile /etc/local/rabbitmq/package "");
-  package = if packageString != ""
+  localPackage = if packageString != ""
     then pkgs.${packageString}
     else null;
 
@@ -44,8 +44,8 @@ in
       listenAddress = listen_address;
       plugins = [ "rabbitmq_management" ];
       config = extraConfig;
-    } // (optionalAttrs (package != null) {
-      package = package;
+    } // (optionalAttrs (localPackage != null) {
+      package = localPackage;
     });
 
     users.extraUsers.rabbitmq = {
@@ -85,8 +85,6 @@ in
 
       * To select the RabbitMQ version, create a file named `package` with the
         NixOS attribute of the desired RabbitMQ, e.g. `rabbitmq_server_3_6_5`.
-
-
       '';
 
     systemd.services.fc-rabbitmq-settings = {
