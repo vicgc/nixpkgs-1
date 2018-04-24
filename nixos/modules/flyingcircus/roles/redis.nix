@@ -19,6 +19,8 @@ let
     else cfg.password
   );
 
+  extraConfig = fclib.configFromFile /etc/local/redis/custom.conf "";
+
 in
 {
 
@@ -47,6 +49,7 @@ in
     services.redis.enable = true;
     services.redis.requirePass = password;
     services.redis.bind = concatStringsSep " " listen_addresses;
+    services.redis.extraConfig = extraConfig;
 
     system.activationScripts.fcio-redis = ''
       install -d -o ${toString config.ids.uids.redis} -g service -m 02775 \
@@ -91,6 +94,17 @@ in
         ];
       } ];
     };
+
+    environment.etc."local/redis/README.txt".text = ''
+      Redis is running on this machine.
+
+      You can find the password for the redis in the `password`. You can also change
+      the redis password by changing the `password` file.
+
+      To change the redis configuration, add a file `custom.conf`, which will be
+      appended to the redis configuration.
+    '';
+
   };
 
 }
