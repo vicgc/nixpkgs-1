@@ -180,7 +180,8 @@ in
 
   };
 
-  config = mkIf cfg.roles.nginx.enable {
+  config = mkMerge [
+    (mkIf cfg.roles.nginx.enable {
 
     services.nginx.enable = true;
     services.nginx.config = "";
@@ -329,5 +330,10 @@ in
         enable = cfg.compat.gentoo.enable;
       };
     };
-  };
+  })
+
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = [ "nginx" ];
+  }
+  ];
 }

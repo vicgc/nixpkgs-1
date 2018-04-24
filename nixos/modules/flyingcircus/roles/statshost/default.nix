@@ -130,6 +130,7 @@ in
 {
 
   imports = [
+    ./global-relabel.nix
     ./location-relay.nix
     ./rg-relay.nix
   ];
@@ -180,6 +181,17 @@ in
         type = types.int;
         default = 70;
         description = "How long to keep data in *days*.";
+      };
+
+      globalAllowedMetrics = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = ''
+          List of globally allowed metric prefixes. Metrics not matching the
+          prefix will be droped on the *central* prometheus. This is useful
+          to avoid indexing customer metrics, which have no meaning for us
+          anyway.
+        '';
       };
 
     };
