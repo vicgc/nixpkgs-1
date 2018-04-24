@@ -28,7 +28,7 @@ let
         # SAPI modules:
 
         apxs2 = {
-          configureFlags = ["--with-apxs2=${apacheHttpd}/bin/apxs"];
+          configureFlags = ["--with-apxs2=${apacheHttpd.dev}/bin/apxs"];
           buildInputs = [apacheHttpd];
         };
 
@@ -288,15 +288,4 @@ in {
     version = "5.5.38";
     sha256 = "0f1y76whg6yx9a18mh97f8yq8lb64ri1f0zfr9la9374nbmq2g27";
   };
-
-  php56 = generic {
-    version = "5.6.31";
-    sha256 = "03xixkvfp64bqp97p8vlj3hp63bpjw7hc16b7fgm7w35rdlp2fcg";
-  };
-
-  php70 = generic {
-    version = "7.0.24";
-    sha256 = "06fgpljz6xpxxkpf4cv9rqz8g504l9ikbw5aq0hqh5sgd611kycv";
-  };
-
 }
