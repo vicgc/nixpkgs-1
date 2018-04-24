@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
     sha256 = "1v46lfidwqzmw37ymipc83r6z4cdjqs0mxgad2bbl3vkj655sjf2";
   };
 
-  builder = ./rabbitmq_install_plugin.sh;
+  builder = ./install_plugin.sh;
 
   meta = {
     homepage = https://github.com/rabbitmq/rabbitmq-delayed-message-exchange;
