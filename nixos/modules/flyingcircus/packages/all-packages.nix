@@ -21,8 +21,8 @@ let
   pkgs_17_09_src = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "e984f9e";
-    sha256 = "10sbyna5p03x7h6mc5cfl4dh8cd2ah4n8zxqnlm6asbjrr6n8xs7";
+    rev = "159b63a";
+    sha256 = "03hy1hlgk1h7bmgjmprc55s3nr635kznzvmspspwqw9xb2b2xcfq";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
@@ -73,6 +73,8 @@ in rec {
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
   libsndfile = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libsndfile;
   libvorbis = mergeOutputs [ "out" "dev" ] pkgs_17_09.libvorbis;
+  libjpeg-turbo = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libjpeg;
+  libjpeg = libjpeg-turbo;
 
   # === Own ports ===
 
