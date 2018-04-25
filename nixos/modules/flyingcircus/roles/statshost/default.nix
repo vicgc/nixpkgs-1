@@ -215,7 +215,7 @@ in
 
   config = mkMerge [
 
-    # Global stats host. Currently influxdb.
+    # Global stats host. Currently influxdb *and* prometheus
     (mkIf cfgStatsGlobal.enable {
 
       # make the 'influx' command line tool accessible
@@ -294,6 +294,10 @@ in
               }];
           })
         relayLocationProxies);
+
+      # Since influx is also running on the machine, split memory between the
+      # two. Once Influx is gone, this seeting allso needs to go.
+      flyingcircus.roles.statshost.prometheusHeapMemoryPercentage = 40;
 
     })
 
