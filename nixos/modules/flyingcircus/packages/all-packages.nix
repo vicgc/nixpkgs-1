@@ -21,8 +21,8 @@ let
   pkgs_17_09_src = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "ea0c4b5";
-    sha256 = "0qi1baliz6x88nzjrsyka6qbkxliry5vngmyk81hqza1863dqiwj";
+    rev = "159b63a";
+    sha256 = "03hy1hlgk1h7bmgjmprc55s3nr635kznzvmspspwqw9xb2b2xcfq";
   };
   pkgs_17_09 = import pkgs_17_09_src {};
 
@@ -32,13 +32,14 @@ in rec {
   # === Imports from newer upstream versions ===
 
   inherit (pkgs_17_09)
+    apacheHttpd
     audiofile
     bundlerApp
     elasticsearch2
     elasticsearch5
     firefox
-    git
     ghostscript
+    git
     graphicsmagick
     iptables
     jbig2dec
@@ -49,7 +50,11 @@ in rec {
     nodejs-4_x
     nodejs-6_x
     nodejs-8_x
+    php56
+    php70
     php70Packages
+    php71
+    php71Packages
     prometheus
     prometheus-haproxy-exporter
     python35
@@ -62,11 +67,14 @@ in rec {
     strongswan
     subversion18
     virtualbox
+    wkhtmltopdf
     xulrunner;
 
   libtiff = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libtiff;
   libsndfile = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libsndfile;
   libvorbis = mergeOutputs [ "out" "dev" ] pkgs_17_09.libvorbis;
+  libjpeg-turbo = mergeOutputs [ "out" "bin" "dev" ] pkgs_17_09.libjpeg;
+  libjpeg = libjpeg-turbo;
 
   # === Own ports ===
 
@@ -209,9 +217,7 @@ in rec {
   rum = pkgs.callPackage ./postgresql/rum { postgresql = postgresql96; };
 
   inherit (pkgs.callPackages ./php { })
-    php55
-    php56
-    php70;
+    php55;
 
   postfix = pkgs.callPackage ./postfix/3.0.nix { };
   powerdns = pkgs.callPackage ./powerdns.nix { };
