@@ -61,7 +61,6 @@ in rec {
     python35Packages
     python36
     python36Packages
-    qt4
     remarshal
     ripgrep
     samba
