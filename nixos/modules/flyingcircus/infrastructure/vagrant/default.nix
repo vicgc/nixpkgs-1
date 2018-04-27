@@ -76,4 +76,10 @@ in
       root   ALL=(ALL) SETENV: ALL
       %wheel ALL=(ALL) NOPASSWD: ALL, SETENV: ALL
     '';
+
+  swapDevices = [
+    { device = "/var/swapfile01";
+      size = 2048; }
+  ];
+
 }
