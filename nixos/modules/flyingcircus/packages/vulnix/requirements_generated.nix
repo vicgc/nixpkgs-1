@@ -68,10 +68,10 @@ self: {
 
 
   "ZODB" = python.mkDerivation {
-    name = "ZODB-5.2.4";
+    name = "ZODB-5.4.0";
     src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/15/5a/1ffa400b7ca7b1df5dc0de2bd25e1d4946c258c797216b2aef6f0bf946b0/ZODB-5.2.4.tar.gz;
-      sha256 = "1pya0inkkxaqmi14gp796cidf894nz64n603zk670jj9xz0wkhgc";
+      url = https://files.pythonhosted.org/packages/6a/8a/22c3b38ae95a61c861c1086609be9bdcddfe7ad4a912a5a74ee66e3bf638/ZODB-5.4.0.tar.gz;
+      sha256 = "0b306042f4f0d558a477d65c34b0dd6e7604c6e583f55dfda52befa2fa13e076";
     };
     doCheck = commonDoCheck;
     buildInputs = commonBuildInputs;
@@ -188,10 +188,10 @@ self: {
 
 
   "lxml" = python.mkDerivation {
-    name = "lxml-3.8.0";
+    name = "lxml-4.2.1";
     src = pkgs.fetchurl {
-      url = https://pypi.python.org/packages/20/b3/9f245de14b7696e2d2a386c0b09032a2ff6625270761d6543827e667d8de/lxml-3.8.0.tar.gz;
-      sha256 = "15nvf6n285n282682qyw3wihsncb0x5amdhyi4b83bfa2nz74vvk";
+      url = https://files.pythonhosted.org/packages/e8/5d/98f56e274bdf17f2e0d9016d1788ca80d26d8987dcd5e1d9416d86ee0625/lxml-4.2.1.tar.gz;
+      sha256 = "e2629cdbcad82b83922a3488937632a4983ecc0fed3e5cfbf430d069382eeb9b";
     };
     doCheck = commonDoCheck;
     buildInputs = commonBuildInputs;

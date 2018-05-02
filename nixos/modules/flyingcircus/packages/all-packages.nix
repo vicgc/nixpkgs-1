@@ -63,6 +63,7 @@ in rec {
     python36Packages
     remarshal
     ripgrep
+    ronn
     samba
     strongswan
     subversion18
