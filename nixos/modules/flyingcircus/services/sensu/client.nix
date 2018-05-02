@@ -352,15 +352,15 @@ in {
         command = "${fcsensuplugins}/bin/check_journal_file";
       };
 
-      # vulnix = {
-      #   notification = "Security vulnerabilities in the last 6h";
-      #   command =
-      #     "NIX_REMOTE=daemon nice " +
-      #     "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
-      #     "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml " +
-      #     "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.toml";
-      #   interval = 6 * 3600;
-      # };
+      vulnix = {
+        notification = "Security vulnerabilities in the last 6h";
+        command =
+          "NIX_REMOTE=daemon nice " +
+          "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
+          "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml " +
+          "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.toml";
+        interval = 6 * 3600;
+      };
 
       manage = {
         notification = "The FC manage job is not enabled.";
