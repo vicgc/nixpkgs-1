@@ -355,7 +355,7 @@ in {
       vulnix = {
         notification = "Security vulnerabilities in the last 6h";
         command =
-          "NIX_REMOTE=daemon nice " +
+          "NIX_REMOTE=daemon nice timeout 10m " +
           "${vulnix}/bin/vulnix --system --cache-dir /var/cache/vulnix " +
           "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.yaml " +
           "-w https://raw.githubusercontent.com/flyingcircusio/vulnix.whitelist/master/fcio-whitelist.toml";
