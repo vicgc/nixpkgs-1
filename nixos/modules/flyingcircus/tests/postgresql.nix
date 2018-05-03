@@ -6,12 +6,10 @@ import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
     {
       imports = [
         ./setup.nix
-        ../platform
-        ../roles/postgresql.nix
-        ../services/agent.nix
-        ../services/sensu/client.nix
-        ../services/telegraf.nix
         ../static
+        ../roles
+        ../services
+        ../platform
       ];
 
       config.flyingcircus.roles.${rolename}.enable = true;

@@ -27,105 +27,122 @@ let
       resource_group = params.resource_group;
     };
 
-in
-mkIf (params ? location && params ? resource_group) {
-
-  services.telegraf.enable = true;
-  services.telegraf.configDir =
-    if builtins.pathExists "/etc/local/telegraf"
-    then /etc/local/telegraf
-    else null;
-  services.telegraf.extraConfig = {
-    global_tags = globalTags;
-    outputs = {
-      prometheus_client = [{
-        listen = "${lib.head(
-          fclib.listenAddressesQuotedV6 config "ethsrv")}:${port}";
+    telegrafInputs = {
+      cpu = [{
+        percpu = false;
+        totalcpu = true;
       }];
+      disk = [{
+        mount_points = [
+          "/"
+          "/tmp"
+        ];
+      }];
+      diskio = [{
+        skip_serial_number = true;
+      }];
+      kernel = [{}];
+      mem = [{}];
+      netstat = [{}];
+      net = [{}];
+      processes = [{}];
+      system = [{}];
+      swap = [{}];
+      socket_listener = [{
+        service_address = "unix:///run/telegraf/influx.sock";
+        data_format = "influx";
+      }];
+  };
+
+
+in mkMerge [
+  (mkIf (params ? location && params ? resource_group) {
+
+    services.telegraf.enable = true;
+    services.telegraf.configDir =
+      if builtins.pathExists "/etc/local/telegraf"
+      then /etc/local/telegraf
+      else null;
+    services.telegraf.extraConfig = {
+      global_tags = globalTags;
+      outputs = {
+        prometheus_client = map
+          (a: {
+            listen = "${a}:${port}";
+            })
+          (fclib.listenAddressesQuotedV6 config "ethsrv");
+      };
     };
-  };
-  services.telegraf.inputs = {
-    cpu = [{
-      percpu = false;
-      totalcpu = true;
-    }];
-    disk = [{
-      mount_points = [
-        "/"
-        "/tmp"
-      ];
-    }];
-    diskio = [{
-      skip_serial_number = true;
-    }];
-    kernel = [{}];
-    mem = [{}];
-    netstat = [{}];
-    net = [{}];
-    processes = [{}];
-    system = [{}];
-    swap = [{}];
-    socket_listener = [{
-      service_address = "unix:///run/telegraf/influx.sock";
-      data_format = "influx";
-    }];
-  };
 
-  systemd.services.telegraf = {
-    serviceConfig = {
-      PermissionsStartOnly = "true";
-    };
-    preStart = ''
-      ${pkgs.coreutils}/bin/install -d -o root -g service -m 02775 \
-        /etc/local/telegraf
-      ${pkgs.coreutils}/bin/install -d -o telegraf /run/telegraf
-    '';
-  };
+    services.telegraf.inputs = telegrafInputs;
 
-  environment.etc."local/telegraf/README.txt".text = ''
-    There is a telegraf daemon running on this machine to gather statistics.
-    To gather additional or custom statistis add a proper configuration file
-    here. `*.conf` will beloaded.
-
-    See https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md
-    for details on how to configure telegraf.
-  '';
-
-  flyingcircus.services.sensu-client.checks = {
-    telegraf_prometheus_output = {
-      notification = "Telegraf prometheus output alive";
-      command = ''
-        check_http -v -j HEAD -H ${config.networking.hostName} -p ${port} \
-        -u /metrics
+    systemd.services.telegraf = {
+      serviceConfig = {
+        PermissionsStartOnly = "true";
+      };
+      preStart = ''
+        ${pkgs.coreutils}/bin/install -d -o root -g service -m 02775 \
+          /etc/local/telegraf
+        ${pkgs.coreutils}/bin/install -d -o telegraf /run/telegraf
       '';
     };
-  };
 
-  flyingcircus.roles.statshost.prometheusMetricRelabel =
-    let
-      rename_merge = options:
-        [
-          {
-            source_labels = [ "__name__" ];
-            # Only if there is no command set.
-            regex = options.regex;
-            replacement = "\${1}";
-            target_label = options.target_label;
-          }
-          {
-            source_labels = [ "__name__" ];
-            regex = options.regex;
-            replacement = options.target_name;
-            target_label = "__name__";
-          }
-        ];
-    in (
-      (rename_merge {
-        regex = "netstat_tcp_(.*)";
-        target_label = "state";
-        target_name = "netstat_tcp";
-       })
+    environment.etc."local/telegraf/README.txt".text = ''
+      There is a telegraf daemon running on this machine to gather statistics.
+      To gather additional or custom statistis add a proper configuration file
+      here. `*.conf` will beloaded.
 
-    );
+      See https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md
+      for details on how to configure telegraf.
+    '';
 
-}
+    flyingcircus.services.sensu-client.checks = {
+      telegraf_prometheus_output = {
+        notification = "Telegraf prometheus output alive";
+        command = ''
+          check_http -v -j HEAD -H ${config.networking.hostName} -p ${port} \
+          -u /metrics
+        '';
+      };
+    };
+
+    networking.firewall.extraCommands =
+      let
+        statsHost = fclib.listServiceAddress config "statshostproxy-collector";
+      in optionalString (statsHost != null) ''
+        ip46tables -A nixos-fw -i ethsrv -s ${statsHost} \
+          -p tcp --dport ${port} -j nixos-fw-accept
+      '';
+
+    flyingcircus.roles.statshost.prometheusMetricRelabel =
+      let
+        rename_merge = options:
+          [
+            {
+              source_labels = [ "__name__" ];
+              # Only if there is no command set.
+              regex = options.regex;
+              replacement = "\${1}";
+              target_label = options.target_label;
+            }
+            {
+              source_labels = [ "__name__" ];
+              regex = options.regex;
+              replacement = options.target_name;
+              target_label = "__name__";
+            }
+          ];
+      in (
+        (rename_merge {
+          regex = "netstat_tcp_(.*)";
+          target_label = "state";
+          target_name = "netstat_tcp";
+         })
+
+      );
+  })
+
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = attrNames telegrafInputs;
+  }
+]

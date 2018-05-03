@@ -11,7 +11,6 @@ in
 {
   imports = [
       <nixpkgs/nixos/modules/profiles/qemu-guest.nix>
-      ./collectd.nix
       ./quota.nix
       ./telegraf.nix
   ];

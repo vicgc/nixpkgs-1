@@ -37,7 +37,8 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = mkMerge [
+    (mkIf cfg.enable {
 
     services.rabbitmq = {
       enable = true;
@@ -141,6 +142,9 @@ in
       }];
     };
 
-  };
-
+  })
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = [ "rabbitmq" ];
+  }
+  ];
 }

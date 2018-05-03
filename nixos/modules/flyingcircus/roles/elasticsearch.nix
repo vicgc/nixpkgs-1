@@ -130,7 +130,8 @@ in
 
   };
 
-  config = mkIf enabled {
+  config = mkMerge [
+    (mkIf enabled {
 
     services.elasticsearch = {
       enable = true;
@@ -247,5 +248,11 @@ in
         urls = [ "http://localhost:9108/metrics" ];
       }];
     };
-  };
+  })
+
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = [ "elasticsearch" ];
+  }
+
+  ];
 }

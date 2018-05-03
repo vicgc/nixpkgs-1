@@ -8,7 +8,7 @@ let
   promGroup = "prometheus";
 
   # Get a submodule without any embedded metadata:
-  _filter = x: filterAttrs (k: v: k != "_module") x;
+  _filter = x: filterAttrs (k: v: k != "_module" && v != null) x;
 
   # Pretty-print JSON to a file
   writePrettyJSON = name: x:
@@ -309,7 +309,8 @@ let
   promTypes.relabel_config = types.submodule {
     options = {
       source_labels = mkOption {
-        type = types.listOf types.str;
+        type = types.nullOr (types.listOf types.str);
+        default = null;
         description = ''
           The source labels select values from existing labels. Their content
           is concatenated using the configured separator and matched against
@@ -317,8 +318,8 @@ let
         '';
       };
       separator = mkOption {
-        type = types.str;
-        default = ";";
+        type = types.nullOr types.str;
+        default = null;
         description = ''
           Separator placed between concatenated source label values.
         '';
@@ -332,22 +333,23 @@ let
         '';
       };
       regex = mkOption {
-        type = types.str;
-        default = "(.*)";
+        type = types.nullOr types.str;
+        default = null;
         description = ''
           Regular expression against which the extracted value is matched.
         '';
       };
       replacement = mkOption {
-        type = types.str;
-        default = "$1";
+        type = types.nullOr types.str;
+        default = null;
         description = ''
           Replacement value against which a regex replace is performed if the
           regular expression matches.
         '';
       };
       action = mkOption {
-        type = types.enum ["replace" "keep" "drop"];
+        type = types.enum [ "replace" "keep" "drop" "hasmod" "labelmap"
+                            "labeldrop" "labelkeep" ];
         default = "replace";
         description = ''
           Action to perform based on regex matching.
