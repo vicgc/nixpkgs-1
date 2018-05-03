@@ -7,7 +7,7 @@ with lib;
     flyingcircus.roles.nginx.enable = true;
     flyingcircus.roles.nginx.httpConfig = ''
       server {
-        listen ${prometheusListenAddress};
+        listen ${config.services.prometheus.listenAddress};
         access_log /var/log/nginx/loghost_access.log;
         error_log /var/log/nginx/loghost_error.log;
 
