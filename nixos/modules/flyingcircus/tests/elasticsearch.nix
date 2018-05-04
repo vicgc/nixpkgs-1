@@ -9,10 +9,10 @@ import ../../../tests/make-test.nix ({ rolename, ... }:
 
         imports = [
           ./setup.nix
-          ../static/default.nix
-          ../roles/default.nix
-          ../services/default.nix
-          ../platform/default.nix
+          ../static
+          ../roles
+          ../services
+          ../platform
         ];
 
         virtualisation.memorySize = 2048;

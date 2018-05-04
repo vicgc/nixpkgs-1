@@ -105,7 +105,9 @@ in
 
   };
 
-  config = mkIf postgres_enabled (
+  config = mkMerge [
+
+  (mkIf postgres_enabled (
   let
     postgresqlPkg = builtins.getAttr version package;
   in
@@ -265,5 +267,10 @@ in
       }];
     };
 
-  });
+  }))
+
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = [ "postgresql" ];
+  }
+  ];
 }

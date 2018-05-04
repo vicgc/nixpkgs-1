@@ -67,7 +67,8 @@ in
 
   };
 
-  config = (mkIf config.flyingcircus.roles.haproxy.enable {
+  config = mkMerge [
+    (mkIf config.flyingcircus.roles.haproxy.enable {
 
     services.haproxy.enable = true;
     services.haproxy.config = haproxyCfgContent;
@@ -140,5 +141,10 @@ in
         urls = ["http://localhost:9127/metrics"];
       }];
     };
-  });
+  })
+
+  {
+    flyingcircus.roles.statshost.globalAllowedMetrics = [ "haproxy" ];
+  }
+  ];
 }
