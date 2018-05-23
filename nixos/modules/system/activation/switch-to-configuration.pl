@@ -35,11 +35,9 @@ die "This is not a NixOS installation!\n" unless
 
 openlog("nixos", "", LOG_USER);
 
-print "New system: $out\n";
 my $currentSystem = readlink("/run/current-system");
-print "Current system: $currentSystem\n";
 if ($currentSystem eq $out) {
-    print "Lazy activation: not re-activating current system.";
+    print "lazy activation: not activating unchanged configuration";
     exit 0;
 }
 
