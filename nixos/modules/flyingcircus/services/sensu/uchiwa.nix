@@ -28,7 +28,7 @@ let
             "ssl": true,
             "insecure": true,
             "path": "/api",
-            "timeout": 5,
+            "timeout": 30,
             "user": "sensuserver-api"  ,
             "pass": "${api_server.password}"
            }'')

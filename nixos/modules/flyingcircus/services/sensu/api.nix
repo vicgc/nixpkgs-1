@@ -66,6 +66,40 @@ in  {
     services.rabbitmq.enable = true;
     services.redis.enable = true;
 
+    # This is a bit of a hack at the moment ...
+    flyingcircus.roles.haproxy.enable = true;
+    flyingcircus.roles.haproxy.haConfig = ''
+      # haproxy configuration example - copy to haproxy.cfg and adapt.
+
+      global
+          daemon
+          chroot /var/empty
+          user haproxy
+          group haproxy
+          maxconn 4096
+          log localhost local2
+          stats socket ${config.flyingcircus.roles.haproxy.statsSocket} mode 660 group nogroup level operator
+
+      defaults
+          mode http
+          log global
+          option httplog
+          option dontlognull
+          option http-server-close
+          timeout connect 5s
+          timeout client 30s    # should be equal to server timeout
+          timeout server 30s    # should be equal to client timeout
+          timeout queue 25s     # discard requests sitting too long in the queue
+
+      listen http-in
+          bind 127.0.0.1:8002
+          bind ::1:8002
+          default_backend sensu_api
+
+      backend sensu_api
+          server localhost localhost:4567 maxconn 1
+    '';
+
     systemd.services.sensu-api = {
       wantedBy = [ "multi-user.target" ];
       requires = [

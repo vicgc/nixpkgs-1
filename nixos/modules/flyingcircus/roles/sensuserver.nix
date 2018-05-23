@@ -69,7 +69,7 @@ in
             # strip the leading /api and the API is not vhost
             # compatible, thus needs this removed.
             location /api/ {
-                proxy_pass http://127.0.0.1:4567/;
+                proxy_pass http://127.0.0.1:8002/;
             }
 
           }
