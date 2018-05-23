@@ -35,6 +35,12 @@ die "This is not a NixOS installation!\n" unless
 
 openlog("nixos", "", LOG_USER);
 
+my $currentSystem = readlink("/run/current-system");
+if ($currentSystem eq $out) {
+    print "lazy activation: not activating unchanged configuration";
+    exit 0;
+}
+
 # Install or update the bootloader.
 if ($action eq "switch" || $action eq "boot") {
     system("@installBootLoader@ $out") == 0 or exit 1;
