@@ -51,15 +51,19 @@ in
   boot.kernelParams = [
     # Crash management
     "panic=1"
-    # panic_on_fail is a NixOSism managed by stage-1-init.sh
-    "boot.panic_on_fail"
-    "systemd.crash_reboot=yes"
+    "boot.panic_on_fail" # panic_on_fail is a NixOSism managed by stage-1-init.sh
 
     # Output management
     "console=ttyS0"
-    "systemd.journald.forward_to_console=yes"
+    "debug"
+    "systemd.journald.forward_to_console=no"
+    "systemd.log_target=kmsg"
+    "systemd.log_level=debug"
+
     "nosetmode"
     ];
+
+  boot.consoleLogLevel = 7;
 
   # installs /dev/disk/device-by-alias/*
   services.udev.extraRules = ''
