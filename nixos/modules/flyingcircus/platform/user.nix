@@ -86,12 +86,6 @@ let
       (user: "install -d -o ${toString user.id} -g ${get_primary_group user} -m 0755 ${user.home_directory}")
       userdata;
 
-  configure_lingering = userdata:
-    # No users should have lingering enabled
-    map
-      (user: " ${config.systemd.package}/bin/loginctl disable-linger ${user.uid}")
-      userdata;
-
   # merge a list of sets recursively
   mergeSets = listOfSets:
     if (builtins.length listOfSets) == 1 then
@@ -153,9 +147,6 @@ in
 
     system.activationScripts.fcio-homedirpermissions = lib.stringAfter [ "users" ]
       (builtins.concatStringsSep "\n" (home_dir_permissions cfg.userdata));
-
-    system.activationScripts.fcio-configure-lingering = lib.stringAfter [ "users" ]
-      (builtins.concatStringsSep "\n" (configure_lingering cfg.userdata));
 
   };
 }

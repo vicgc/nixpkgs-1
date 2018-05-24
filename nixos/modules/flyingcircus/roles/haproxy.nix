@@ -121,6 +121,7 @@ in
     systemd.services.prometheus-haproxy-exporter = {
       description = "Prometheus exporter for haproxy metrics";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
       path = [ pkgs.haproxy ];
       script = ''
         exec ${pkgs.prometheus-haproxy-exporter}/bin/haproxy_exporter \
