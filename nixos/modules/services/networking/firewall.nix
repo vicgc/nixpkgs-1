@@ -473,9 +473,12 @@ in
 
     systemd.services.firewall = {
       description = "Firewall";
-      wantedBy = [ "network-pre.target" ];
-      before = [ "network-pre.target" ];
-      after = [ "systemd-modules-load.service" ];
+      # XXX FCIO FlyingCircus: we need functioning networking.
+      # We're overriding this in our own modules but we can't
+      # fix the dependency cycle by countering mkMerge
+      # wantedBy = [ "network.target" ];
+      # before = [ "network.target" ];
+      # after = [ "systemd-modules-load.service" "network-local-co"];
 
       path = [ pkgs.iptables ] ++ cfg.extraPackages;
 
