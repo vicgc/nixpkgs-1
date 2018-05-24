@@ -142,6 +142,9 @@ in
         description = "ClamAV virus database updater (freshclam)";
         restartTriggers = [ freshclamConfigFile ];
 
+        requires = [ "network.target" ];
+        after = [ "network.target" ];
+
         preStart = ''
           install -d -o ${clamavUser} -g ${clamavGroup} -m 0755 \
             ${runDir} ${stateDir}

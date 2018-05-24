@@ -63,7 +63,7 @@ in {
     systemd.services.telegraf = {
       description = "Telegraf Agent";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-interfaces.target" ];
+      after = [ "network.target" ];
       path = [ pkgs.net_snmp ];
       serviceConfig = {
         ExecStart=''${cfg.package}/bin/telegraf ${startupOptions}'';
