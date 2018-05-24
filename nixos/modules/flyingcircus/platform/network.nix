@@ -216,7 +216,17 @@ in
                 RemainAfterExit = true;
               };
             })
-          (attrNames interfaces))));
+          (attrNames interfaces)))) //
+      # Some firewall scripts include hostnames and those won't run
+      # properly during initial startup when we don't have network yet.
+      # This isn't ideal either (see Case 101736) but it helps counter obvious
+      # breakage.
+      {
+        firewall.wantedBy = [ "network.target" ];
+        firewall.before = [ "network.target" ];
+        firewall.after = [ "systemd-modules-load.service"
+                           "network-local-commands.service" ];
+      };
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
