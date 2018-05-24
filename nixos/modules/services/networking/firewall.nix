@@ -473,9 +473,15 @@ in
 
     systemd.services.firewall = {
       description = "Firewall";
-      wantedBy = [ "network-pre.target" ];
-      before = [ "network-pre.target" ];
-      after = [ "systemd-modules-load.service" ];
+      # XXX FCIO we need functioning networking while starting the firewall.
+      # Some firewall scripts include hostnames and those won't run
+      # properly during initial startup when we don't have network yet.
+      # This isn't ideal either (see Case 101736) but it helps counter obvious
+      # breakage.
+      # See also Case 101736
+      wantedBy = [ "network.target" ];
+      before = [ "network.target" ];
+      after = [ "systemd-modules-load.service" "network-local-commands.service" ];
 
       path = [ pkgs.iptables ] ++ cfg.extraPackages;
 

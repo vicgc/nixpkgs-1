@@ -12,7 +12,20 @@ import ../../../tests/make-test.nix ({ rolename, lib, pkgs, ... }:
         ../platform
       ];
 
-      config.flyingcircus.roles.${rolename}.enable = true;
+      config.flyingcircus = {
+        roles.${rolename}.enable = true;
+
+        # postgresql.conf depends on srv addresses
+        enc.parameters.interfaces.srv = {
+          bridged = false;
+          mac = "52:54:00:12:34:56";
+          networks = {
+            "192.168.101.0/24" = [ "192.168.101.1" ];
+            "2001:db8:f030:1c3::/64" = [ "2001:db8:f030:1c3::1" ];
+          };
+          gateways = {};
+        };
+      };
     };
   testScript =
     let

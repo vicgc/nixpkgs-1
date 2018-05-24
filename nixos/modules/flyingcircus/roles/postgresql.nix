@@ -122,8 +122,7 @@ in
 
     services.postgresql.initialScript = ./postgresql-init.sql;
     services.postgresql.dataDir = "/srv/postgresql/${version}";
-    systemd.services.postgresql.after = [ "network-interfaces.target" ];
-    systemd.services.postgresql.wants = [ "network-interfaces.target" ];
+    systemd.services.postgresql.bindsTo = [ "network-addresses-ethsrv.service" ];
 
     systemd.services.postgresql.postStart =
     let
