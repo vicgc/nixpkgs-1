@@ -55,11 +55,8 @@ in
 
     # Output management
     "console=ttyS0"
-    "debug"
     "systemd.journald.forward_to_console=no"
     "systemd.log_target=kmsg"
-    "systemd.log_level=debug"
-
     "nosetmode"
     ];
 
