@@ -7,14 +7,14 @@ let
 
   fclib = import ../lib;
 
+  interfaces = lib.attrByPath [ "parameters" "interfaces" ] {} cfg.enc;
+  location = lib.attrByPath [ "parameters" "location" ] "standalone" cfg.enc;
+
   # generally use DHCP in the current location?
   allowDHCP = location:
     if hasAttr location cfg.static.allowDHCP
-    then cfg.static.allowDHCP.${cfg.enc.parameters.location}
+    then cfg.static.allowDHCP.${location}
     else false;
-
-  interfaces = lib.attrByPath [ "parameters" "interfaces" ] {} cfg.enc;
-  location = lib.attrByPath [ "parameters" "location" ] "standalone" cfg.enc;
 
   # Policy routing
 
@@ -216,17 +216,7 @@ in
                 RemainAfterExit = true;
               };
             })
-          (attrNames interfaces)))) //
-      # Some firewall scripts include hostnames and those won't run
-      # properly during initial startup when we don't have network yet.
-      # This isn't ideal either (see Case 101736) but it helps counter obvious
-      # breakage.
-      {
-        firewall.wantedBy = [ "network.target" ];
-        firewall.before = [ "network.target" ];
-        firewall.after = [ "systemd-modules-load.service"
-                           "network-local-commands.service" ];
-      };
+          (attrNames interfaces))));
 
     # firewall configuration: generic options
     networking.firewall.allowPing = true;
@@ -235,7 +225,7 @@ in
     # DHCP settings: never do IPv4ll and don't use DHCP if there is explicit
     # network configuration present
     networking.useDHCP =
-      (interfaces == {}) || (allowDHCP cfg.enc.parameters.location);
+      (interfaces == {}) || (allowDHCP location);
     networking.dhcpcd.extraConfig = ''
       # IPv4ll gets in the way if we really do not want
       # an IPv4 address on some interfaces.

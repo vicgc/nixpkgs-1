@@ -473,12 +473,15 @@ in
 
     systemd.services.firewall = {
       description = "Firewall";
-      # XXX FCIO FlyingCircus: we need functioning networking.
-      # We're overriding this in our own modules but we can't
-      # fix the dependency cycle by countering mkMerge
-      # wantedBy = [ "network.target" ];
-      # before = [ "network.target" ];
-      # after = [ "systemd-modules-load.service" "network-local-co"];
+      # XXX FCIO we need functioning networking while starting the firewall.
+      # Some firewall scripts include hostnames and those won't run
+      # properly during initial startup when we don't have network yet.
+      # This isn't ideal either (see Case 101736) but it helps counter obvious
+      # breakage.
+      # See also Case 101736
+      wantedBy = [ "network.target" ];
+      before = [ "network.target" ];
+      after = [ "systemd-modules-load.service" "network-local-commands.service" ];
 
       path = [ pkgs.iptables ] ++ cfg.extraPackages;
 
