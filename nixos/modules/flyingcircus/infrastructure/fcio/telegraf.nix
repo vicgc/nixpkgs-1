@@ -56,7 +56,7 @@ let
 
 
 in mkMerge [
-  (mkIf (params ? location && params ? resource_group) {
+  ({
 
     services.telegraf.enable = true;
     services.telegraf.configDir =
