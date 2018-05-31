@@ -180,7 +180,34 @@ in
 
   };
 
-  config = mkMerge [
+  config =
+  with lib;
+  let
+    htpasswdUsers = optionalString
+      (config.users.groups ? login)
+      (builtins.concatStringsSep "\n"
+        (map
+         (user: "${user.name}:${user.hashedPassword}")
+         (builtins.filter
+          (user: (builtins.stringLength user.hashedPassword) > 0)
+          (map
+           (username: config.users.users.${username})
+           (config.users.groups.login.members)))));
+
+    listenStatements =
+      builtins.concatStringsSep "\n    "
+        (concatMap
+          (formatted_addr: [
+            "listen ${formatted_addr}:80;"
+            "listen ${formatted_addr}:443 ssl;"])
+          (map
+            (addr:
+              if fclib.isIp4 addr
+              then addr
+              else "[${addr}]")
+            (fclib.listenAddresses config "ethfe")));
+
+  in mkMerge [
     (mkIf cfg.roles.nginx.enable {
 
     services.nginx.enable = true;
@@ -262,19 +289,7 @@ in
         }
 
         server {
-            ${
-              builtins.concatStringsSep "\n    "
-                (lib.concatMap
-                  (formatted_addr: [
-                    "listen ${formatted_addr}:80;"
-                    "listen ${formatted_addr}:443 ssl;"])
-                  (map
-                    (addr:
-                      if fclib.isIp4 addr
-                      then addr
-                      else "[${addr}]")
-                    (fclib.listenAddresses config "ethfe")))
-            }
+            ${listenStatements}
 
             # The first server name listed is the primary name. We remommend against
             # using a wildcard server name (*.example.com) as primary.
@@ -309,14 +324,7 @@ in
         '';
 
       "local/nginx/htpasswd_fcio_users" = {
-        text = builtins.concatStringsSep "\n"
-          (map
-           (user: "${user.name}:${user.hashedPassword}")
-           (builtins.filter
-            (user: (builtins.stringLength user.hashedPassword) > 0)
-            (map
-             (username: config.users.users.${username})
-             (config.users.groups.login.members))));
+        text = htpasswdUsers;
         uid = config.ids.uids.nginx;
         mode = "0440";
       };

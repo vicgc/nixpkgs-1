@@ -16,7 +16,7 @@ let
       action = "labeldrop"; }
   ];
 
-in
+in mkIf config.flyingcircus.roles.statshost.enable
 {
   flyingcircus.roles.statshost.prometheusMetricRelabel =
     markAllowedMetrics ++ dropUnmarkedMetrics;

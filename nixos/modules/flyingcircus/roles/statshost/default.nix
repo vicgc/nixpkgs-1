@@ -20,8 +20,7 @@ let
     "-storage.local.target-heap-size=${toString prometheusHeap}"
     "-storage.local.chunk-encoding-version=2"
   ];
-  prometheusListenAddress =
-    "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+  prometheusListenAddress = cfgStatsGlobal.prometheusListenAddress;
   prometheusHeap =
     (fclib.current_memory config 256) * 1024 * 1024
     * cfgStatsGlobal.prometheusHeapMemoryPercentage / 100;
@@ -169,6 +168,12 @@ in
         type = types.str;
         default = "https://github.com/flyingcircusio/grafana.git";
         description = "Dashboard git repository.";
+      };
+
+      prometheusListenAddress = mkOption {
+        type = types.str;
+        default = "${lib.head(fclib.listenAddressesQuotedV6 config "ethsrv")}:9090";
+        description = "Prometheus listen address";
       };
 
       prometheusHeapMemoryPercentage = mkOption {
