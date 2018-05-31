@@ -33,16 +33,12 @@ import ../../../tests/make-test.nix ({lib, pkgs, ... }:
         192.168.101.1 myself.fcio.net myself
       '';
 
-      users.groups.login = {
-        members = [];
-      };
-
       # Add a scrape target for our test node. Globally nodes are only scraped
       # via relay/proxy, but we don't want/need to set this up here.
       environment.etc."local/statshost/scrape-test.json".text =
         builtins.toJSON [ { targets = [ "myself.fcio.net:9126" ]; } ];
-
     };
+
   testScript =
     ''
       $machine->waitForUnit("prometheus.service");

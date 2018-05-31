@@ -32,12 +32,8 @@ import ../../../tests/make-test.nix ({lib, pkgs, ... }:
       networking.extraHosts = ''
         192.168.101.1 myself.fcio.net myself
       '';
-
-      users.groups.login = {
-        members = [];
-      };
-
     };
+
   testScript =
     ''
       $machine->waitForUnit("prometheus.service");
