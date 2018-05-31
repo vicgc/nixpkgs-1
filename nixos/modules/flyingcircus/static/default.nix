@@ -87,6 +87,26 @@ with lib;
       ];
     };
 
+    flyingcircus.static.firewall = {
+      trusted = [
+        # vpn-rzob.services.fcio.net
+        "172.22.49.56"
+        "195.62.126.69"
+        "2a02:248:101:62::1187"
+        "2a02:248:101:63::118f"
+
+        # vpn-whq.services.fcio.net
+        "172.16.48.35"
+        "212.122.41.150"
+        "2a02:238:f030:102::1043"
+        "2a02:238:f030:103::1073"
+
+        # WHQ ws
+        "212.122.41.192/27"
+        "2a02:238:f030:105::/64"
+      ];
+    };
+
     flyingcircus.static.ntpservers = {
       # Those are the routers and backup servers. This needs to move to the
       # directory service discovery.
