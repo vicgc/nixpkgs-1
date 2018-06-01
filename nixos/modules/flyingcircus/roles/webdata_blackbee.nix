@@ -2,7 +2,29 @@
 # Customer specific role
 
 let
+  fclib = import ../lib;
   cfg = config.flyingcircus.roles.webdata_blackbee;
+
+
+  firewallTrustedSSH = [
+    # VPN prod
+    "172.22.49.50"
+    "2a02:248:101:63::1189"
+    "2a02:248:101:62::1180"
+    "2a02:248:101:62::1190"
+    "195.62.126.67"
+
+    # VPN stag
+    "172.22.49.52"
+    "2a02:248:101:63::118b"
+    "195.62.126.68"
+    "2a02:248:101:62::1182"
+    "2a02:248:101:62::118f"
+
+    # Azure prod/stag
+    "192.168.203.0/24"
+    "192.168.204.0/24"
+  ];
 
   additional_hosts =
     if pathExists /srv/s-blackbee/hosts
@@ -60,6 +82,22 @@ in
       DefaultLimitSIGPENDING=64173
     '';
 
-  };
+    networking.firewall.extraCommands = let
+      allowed = concatStringsSep "\n"
+        (map
+          (ip: ''
+            ${fclib.iptables ip} -A nixos-fw -s ${ip} -p tcp --dport 22 \
+              -j nixos-fw-accept
+          '')
+          (config.flyingcircus.static.firewall.trusted ++ firewallTrustedSSH));
+    in
 
+    ''
+      # Counter previous ssh allow rule
+      ip46tables -D nixos-fw -p tcp --dport ssh -j nixos-fw-accept || true
+      # Allow ssh from trusted nets/hosts
+      ${allowed}
+    '';
+
+  };
 }

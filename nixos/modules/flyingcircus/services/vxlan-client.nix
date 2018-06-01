@@ -33,9 +33,9 @@ in
 
       systemd.services."network-external-routing" = rec {
         description = "Custom routing rules for external networks";
-        after = [ "network-routing-ethsrv.service" ];
+        after = [ "network-routing-ethsrv.service" "firewall.service" ];
         requires = after;
-        wantedBy = [ "network-interfaces.target" ];
+        wantedBy = [ "network.target" ];
         bindsTo = [ "sys-subsystem-net-devices-ethsrv.device" ];
         path = [ pkgs.gawk pkgs.iproute pkgs.glibc pkgs.iptables ];
 

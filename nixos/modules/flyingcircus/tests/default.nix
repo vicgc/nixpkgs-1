@@ -50,6 +50,8 @@
   rabbitmq = hydraJob (import ./rabbitmq.nix { inherit system; });
 
   sensuserver = hydraJob (import ./sensu.nix { inherit system; });
+  statshost-master = hydraJob (import ./statshost-master.nix { inherit system; });
+  statshost-global = hydraJob (import ./statshost-global.nix { inherit system; });
   systemdCycles = hydraJob (import ./systemd_cycles.nix { inherit system; });
 
   users = hydraJob (import ./users { inherit system; });

@@ -23,9 +23,9 @@ let
           (split: nameValuePair (elemAt split 0) (elemAt split 1))
             (map (combined: splitString ":" combined) labels)));
 
-    globalTags = encTags // {
-      resource_group = params.resource_group;
-    };
+    globalTags = encTags // optionalAttrs
+      (params ? resource_group)
+      { resource_group = params.resource_group; };
 
     telegrafInputs = {
       cpu = [{
@@ -56,7 +56,7 @@ let
 
 
 in mkMerge [
-  (mkIf (params ? location && params ? resource_group) {
+  ({
 
     services.telegraf.enable = true;
     services.telegraf.configDir =
