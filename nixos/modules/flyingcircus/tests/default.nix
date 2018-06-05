@@ -5,10 +5,16 @@
 
   elasticsearch = hydraJob
     (import ./elasticsearch.nix { rolename = "elasticsearch"; });
+
   elasticsearch2 = hydraJob
     (import ./elasticsearch.nix { rolename = "elasticsearch2"; });
+  elasticsearch2-cluster = hydraJob
+    (import ./elasticsearch-cluster.nix { rolename = "elasticsearch2"; });
+
   elasticsearch5 = hydraJob
     (import ./elasticsearch.nix { rolename = "elasticsearch5"; });
+  elasticsearch5-cluster = hydraJob
+    (import ./elasticsearch-cluster.nix { rolename = "elasticsearch5"; });
 
   graylog = hydraJob (import ./graylog.nix { inherit system; });
 

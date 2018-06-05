@@ -44,9 +44,13 @@ let
     else cfg.esNodes;
 
   thisNode =
-    if config.networking.domain != null
-    then "${config.networking.hostName}.${config.networking.domain}"
-    else "localhost";
+    if cfg.thisNode == null
+    then
+      if config.networking.domain != null
+      then "${config.networking.hostName}.${config.networking.domain}"
+      else "localhost"
+    else
+      cfg.thisNode;
 
   defaultClusterName = config.networking.hostName;
 
@@ -105,8 +109,18 @@ in
         '';
       };
 
+      thisNode = mkOption {
+        type = types.nullOr types.string;
+        description = ''
+          Reachable name of this node. Used for listen and connect.
+          Default: fqdn or localhost
+        '';
+        default = null;
+      };
+
       esNodes = mkOption {
         type = types.nullOr (types.listOf types.string);
+        description = "List of IPs or hostnames of elastic search instances.";
         default = null;
       };
 
