@@ -35,7 +35,6 @@ in rec {
     apacheHttpd
     audiofile
     bundlerApp
-    elasticsearch2
     elasticsearch5
     firefox
     ghostscript
@@ -107,6 +106,7 @@ in rec {
   docsplit = pkgs.callPackage ./docsplit { };
 
   easyrsa3 = pkgs.callPackage ./easyrsa { };
+  elasticsearch2 = pkgs_17_09.callPackage ./elasticsearch/2.x.nix { };
   electron = pkgs.callPackage ./electron.nix {
     gconf = pkgs.gnome.GConf;
   };
