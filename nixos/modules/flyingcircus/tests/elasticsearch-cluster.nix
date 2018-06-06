@@ -80,10 +80,11 @@ rec {
     $node1->waitUntilSucceeds(
       'curl -s "192.168.101.1:9200/_cat/health?v" | logger -s 2>&1 | grep green');
 
-
     $node1->block();
     $node1->waitUntilSucceeds(
       'curl -s "192.168.101.1:9200/_cat/health?v" | grep yellow');
+
+    $node1->sleep(120);
 
     # do the nodes find each other again?
     $node1->unblock();
