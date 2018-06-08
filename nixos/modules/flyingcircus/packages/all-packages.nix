@@ -84,6 +84,7 @@ in rec {
   busybox = pkgs.callPackage ./busybox { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
+  check-journal = pkgs.callPackage ./check-journal.nix { };
   clamav = pkgs.callPackage ./clamav.nix { };
   collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
