@@ -25,7 +25,6 @@ setup(
         'console_scripts': [
             'check_disk=fc.sensuplugins.disk:main',
             'check_cpu_steal=fc.sensuplugins.cpu:main',
-            'check_journal=fc.sensuplugins.journal:main',
             'check_journal_file=fc.sensuplugins.journalfile:main',
             'check_swap_abs=fc.sensuplugins.swap:main',
             'check_writable=fc.sensuplugins.writable:main'

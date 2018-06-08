@@ -247,6 +247,7 @@ in {
 
       path = [
         bash
+        check-journal
         coreutils
         glibc
         lm_sensors
@@ -344,7 +345,8 @@ in {
       };
       journal = {
         notification = "Journal errors in the last 10 minutes";
-        command = "${fcsensuplugins}/bin/check_journal -v https://bitbucket.org/flyingcircus/fc-logcheck-config/raw/tip/nixos-journal.yaml";
+        command = "check_journal -j ${systemd}/bin/journalctl " +
+          "https://bitbucket.org/flyingcircus/fc-logcheck-config/raw/tip/nixos-journal.yaml";
         interval = 600;
       };
       journal_file = {
