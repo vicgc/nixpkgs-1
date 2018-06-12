@@ -557,7 +557,11 @@ in
 
       phpOptions = mkOption {
         type = types.lines;
-        default = "";
+        default = ''
+          sendmail_path = /var/setuid-wrappers/sendmail -t -i
+          ; Apparently PHP doesn't use $TZ.
+          date.timezone = "${config.time.timeZone}"
+        '';
         example =
           ''
             date.timezone = "CET"
@@ -631,15 +635,6 @@ in
       });
 
     environment.systemPackages = [httpd] ++ concatMap (svc: svc.extraPath) allSubservices;
-
-    services.httpd.phpOptions =
-      ''
-        ; Needed for PHP's mail() function.
-        sendmail_path = sendmail -t -i
-
-        ; Apparently PHP doesn't use $TZ.
-        date.timezone = "${config.time.timeZone}"
-      '';
 
     systemd.services.httpd =
       { description = "Apache HTTPD";
