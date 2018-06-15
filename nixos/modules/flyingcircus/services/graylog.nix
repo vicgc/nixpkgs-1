@@ -8,6 +8,7 @@ let
   cfg = config.services.graylog;
 
   dataDir = "/var/lib/graylog";
+  pluginDir = "${dataDir}/plugins";
   pidFile = "/run/graylog/graylog.pid";
   configBool = b: if b then "true" else "false";
 
@@ -24,9 +25,15 @@ let
     web_listen_uri = ${cfg.webListenUri}
     timezone=${config.time.timeZone}
     rest_listen_uri = ${cfg.restListenUri}
-
+    plugin_dir = ${pluginDir}
     ${cfg.extraConfig}
   '';
+
+  glPlugins = pkgs.buildEnv {
+    name = "graylog-plugins";
+    paths = cfg.plugins;
+  };
+
 in
 
 {
@@ -56,23 +63,19 @@ in
       isMaster = mkOption {
         type = types.bool;
         default = true;
-        description = ''
-          Whether this is the master instance of your Graylog cluster
-        '';
+        description = "Whether this is the master instance of your Graylog cluster";
       };
 
       nodeIdFile = mkOption {
         type = types.str;
-        default = "${dataDir}/server/node-id";
+        default = "/var/lib/graylog/server/node-id";
         description = "Path of the file containing the graylog node-id";
       };
 
       passwordSecret = mkOption {
         type = types.str;
         description = ''
-          You MUST set a secret to secure/pepper the stored user passwords here.
-          Use at least 64 characters.
-
+          You MUST set a secret to secure/pepper the stored user passwords here. Use at least 64 characters.
           Generate one by using for example: pwgen -N 1 -s 96
         '';
       };
@@ -87,14 +90,12 @@ in
         type = types.str;
         example = "e3c652f0ba0b4801205814f8b6bc49672c4c74e25b497770bb89b22cdeb4e952";
         description = ''
-          You MUST specify a hash password for the root user (which you only
-          need to initially set up the system and in case you lose connectivity
-          to your authentication backend) This password cannot be changed using
-          the API or via the web interface. If you need to change it, modify it
-          here.
-
-          Create one by using for example: echo -n    | shasum -a 256
-          and use the resulting hash value as string for the option.
+          You MUST specify a hash password for the root user (which you only need to initially set up the
+          system and in case you lose connectivity to your authentication backend)
+          This password cannot be changed using the API or via the web interface. If you need to change it,
+          modify it here.
+          Create one by using for example: echo -n yourpassword | shasum -a 256
+          and use the resulting hash value as string for the option
         '';
       };
 
@@ -148,7 +149,7 @@ in
       };
 
       extraConfig = mkOption {
-        type = types.lines;
+        type = types.str;
         default = "";
         description = "Any other configuration options you might want to add";
       };
@@ -157,6 +158,12 @@ in
         type = types.str;
         default="1g";
         description = "Max Java heap (-Xms/-Xmx)";
+      };
+
+      plugins = mkOption {
+        description = "Extra graylog plugins";
+        default = [ ];
+        type = types.listOf types.package;
       };
 
     };
@@ -202,6 +209,15 @@ in
         if [[ -e ${pidFile} ]]; then
           kill -0 $(< ${pidFile} ) || rm -f ${pidFile}
         fi
+
+        rm -rf ${pluginDir} || true
+        mkdir -p ${pluginDir} -m 755
+        for declarativeplugin in `ls ${glPlugins}/bin/`; do
+          ln -sf ${glPlugins}/bin/$declarativeplugin ${pluginDir}/$declarativeplugin
+        done
+        for includedplugin in `ls ${cfg.package}/plugin/`; do
+          ln -s ${cfg.package}/plugin/$includedplugin ${pluginDir}/$includedplugin || true
+        done
       '';
       postStart = ''
         # Wait until GL is available for use

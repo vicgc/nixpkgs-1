@@ -120,7 +120,10 @@ in rec {
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { };
 
   grafana = pkgs_17_09.callPackage ./grafana { };
-  graylog = pkgs.callPackage ./graylog.nix { };
+  graylog = pkgs.callPackage ./graylog/default.nix { };
+  graylogPlugins = pkgs.recurseIntoAttrs (
+      pkgs.callPackage graylog/plugins.nix { }
+    );
 
   http-parser = pkgs.callPackage ./http-parser {
     gyp = pkgs.pythonPackages.gyp;
