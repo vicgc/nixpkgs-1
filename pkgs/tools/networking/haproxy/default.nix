@@ -2,6 +2,7 @@
 , usePcre ? true
 , stdenv, fetchurl, fetchpatch
 , openssl, zlib, lua5_3 ? null, pcre ? null
+, systemd  # FCIO
 }:
 
 assert useLua -> lua5_3 != null;
@@ -9,11 +10,12 @@ assert usePcre -> pcre != null;
 
 stdenv.mkDerivation rec {
   pname = "haproxy";
-  version = "1.8.9";
+  majorVersion = "1.8";
+  version = "${majorVersion}.9";
   name = "${pname}-${version}";
 
   src = fetchurl {
-    url = "https://www.haproxy.org/download/${stdenv.lib.versions.majorMinor version}/src/${name}.tar.gz";
+    url = "https://www.haproxy.org/download/${majorVersion}/src/${name}.tar.gz";
     sha256 = "00miblgwll3mycsgmp3gd3cn4lwsagxzgjxk5i6csnyqgj97fss3";
   };
 
@@ -29,7 +31,7 @@ stdenv.mkDerivation rec {
     sha256 = "16ckzb160anf7xih7mmqy59pfz8sdywmyblxnr7lz9xix3jwk55r";
   });
 
-  buildInputs = [ openssl zlib ]
+  buildInputs = [ openssl zlib systemd ]  # FCIO
     ++ stdenv.lib.optional useLua lua5_3
     ++ stdenv.lib.optional usePcre pcre;
 
@@ -44,6 +46,7 @@ stdenv.mkDerivation rec {
   buildFlags = [
     "USE_OPENSSL=yes"
     "USE_ZLIB=yes"
+    "USE_SYSTEMD=yes"  # FCIO
   ] ++ stdenv.lib.optionals usePcre [
     "USE_PCRE=yes"
     "USE_PCRE_JIT=yes"

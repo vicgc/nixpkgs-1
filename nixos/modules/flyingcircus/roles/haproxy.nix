@@ -75,8 +75,8 @@ in
 
    # FCIO
     systemd.services.haproxy = let
-      haproxy_ = "${pkgs.haproxy}/sbin/haproxy-systemd-wrapper -f /etc/current-config/haproxy.cfg -p /run/haproxy.pid";
-      verifyConfig = "${pkgs.haproxy}/sbin/haproxy -c -q -f /etc/current-config/haproxy.cfg";
+      haproxy_ = "${pkgs.haproxy}/bin/haproxy -f /etc/current-config/haproxy.cfg -p /run/haproxy.pid -Ws";
+      verifyConfig = "${pkgs.haproxy}/bin/haproxy -c -q -f /etc/current-config/haproxy.cfg";
       in {
       reloadIfChanged = true;
       restartTriggers = [ haproxyCfg ];
