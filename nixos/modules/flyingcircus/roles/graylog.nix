@@ -317,6 +317,10 @@ in
           in
             "mongodb://${mongodbNodes}/graylog${repl}";
         isMaster = isMaster;
+        plugins = with pkgs.graylogPlugins;
+          [ logstash
+            slack
+          ];
         extraConfig = let
             trustedProxies =
               concatStringsSep ", " (
