@@ -68,7 +68,7 @@ in
 
       nodeIdFile = mkOption {
         type = types.str;
-        default = "/var/lib/graylog/server/node-id";
+        default = "${dataDir}/server/node-id";
         description = "Path of the file containing the graylog node-id";
       };
 
