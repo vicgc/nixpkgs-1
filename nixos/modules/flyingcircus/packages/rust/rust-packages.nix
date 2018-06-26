@@ -3,17 +3,17 @@
 # buildRustPackage will automatically download dependencies from the registry
 # version that we define here. If you're having problems downloading / finding
 # a Rust library, try updating this to a newer commit.
-
 { stdenv, fetchFromGitHub, git }:
 
-stdenv.mkDerivation {
-  name = "rustRegistry-2018-06-05";
+stdenv.mkDerivation rec {
+  version = "61c40e1";
+  name = "rustRegistry-${version}";
 
   src = fetchFromGitHub {
     owner = "rust-lang";
     repo = "crates.io-index";
-    rev = "56c0168";
-    sha256 = "1i5rav3vyhgl0rx0gckcd7ks4s647w19dawqkqprbc7fvff1r56y";
+    rev = version;
+    sha256 = "1jsp72hzazgigdj3ckh96i0ids8az9j4xhp5k6zgwid2v923n47i";
   };
   phases = [ "unpackPhase" "installPhase" ];
   installPhase = ''

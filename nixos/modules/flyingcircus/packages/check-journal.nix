@@ -4,16 +4,16 @@ with rustPlatform;
 
 buildRustPackage rec {
   name = "check-journal-${version}";
-  version = "1.0.2";
+  version = "1.0.3";
 
   src = fetchFromGitHub {
     owner = "flyingcircusio";
     repo = "check_journal";
     rev = version;
-    sha256 = "10qcsrwxv2kkza84girnz3jp7k537akfdgdrj3qv7xp76smklh6b";
+    sha256 = "0ndhfa9aq8g35q6iw4kzj2di4f12wbg4fvxmcvfb54m59q7gz6ka";
   };
 
-  cargoDepsSha256 = "1j1d0yc4qzg9m5bnsappiy9vds06hwnq1hnir4rc2221ggwpjlal";
+  cargoDepsSha256 = "0znsf3f1nrfiivcszdzlz5gkxam2v97wyz5yil47z3109k3jlgp8";
   nativeBuildInputs = with pkgs; [ ronn ];
   OPENSSL_DIR = pkgs.openssl;
 
