@@ -84,6 +84,7 @@ in rec {
   busybox = pkgs.callPackage ./busybox { };
 
   cacert = pkgs.callPackage ./cacert.nix { };
+  check-journal = pkgs.callPackage ./check-journal.nix { };
   clamav = pkgs.callPackage ./clamav.nix { };
   collectd = pkgs.callPackage ./collectd {
     libsigrok = null;
@@ -119,7 +120,10 @@ in rec {
   fcuserscan = pkgs.callPackage ./fcuserscan.nix { };
 
   grafana = pkgs_17_09.callPackage ./grafana { };
-  graylog = pkgs.callPackage ./graylog.nix { };
+  graylog = pkgs.callPackage ./graylog { };
+  graylogPlugins = pkgs.recurseIntoAttrs (
+      pkgs.callPackage graylog/plugins.nix { }
+    );
 
   http-parser = pkgs.callPackage ./http-parser {
     gyp = pkgs.pythonPackages.gyp;
